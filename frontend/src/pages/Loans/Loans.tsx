@@ -30,7 +30,7 @@ const Loans: React.FC = () => {
 
       <Grid container spacing={3}>
         {[1, 2].map((item) => (
-          <Grid item xs={12} key={item}>
+          <Grid key={item}>
             <Card>
               <CardContent>
                 <Box

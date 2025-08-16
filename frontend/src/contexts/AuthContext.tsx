@@ -106,7 +106,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const login = async (email: string, password: string) => {
     dispatch({ type: "LOGIN_START" });
     try {
-      const response = await authService.login(email, password);
+      const response = await authService.login({ email, password });
       localStorage.setItem("token", response.access_token);
       dispatch({
         type: "LOGIN_SUCCESS",

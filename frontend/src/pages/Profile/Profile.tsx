@@ -19,7 +19,7 @@ const Profile: React.FC = () => {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={4}>
+        <Grid>
           <Card>
             <CardContent sx={{ textAlign: "center" }}>
               <Avatar sx={{ width: 100, height: 100, mx: "auto", mb: 2 }}>
@@ -38,32 +38,32 @@ const Profile: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={8}>
+        <Grid>
           <Card>
             <CardContent>
               <Typography variant="h6" gutterBottom>
                 Personal Information
               </Typography>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid>
                   <Typography variant="body2" color="text.secondary">
                     First Name
                   </Typography>
                   <Typography variant="body1">John</Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid>
                   <Typography variant="body2" color="text.secondary">
                     Last Name
                   </Typography>
                   <Typography variant="body1">Doe</Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid>
                   <Typography variant="body2" color="text.secondary">
                     Email
                   </Typography>
                   <Typography variant="body1">john.doe@example.com</Typography>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid>
                   <Typography variant="body2" color="text.secondary">
                     Phone
                   </Typography>

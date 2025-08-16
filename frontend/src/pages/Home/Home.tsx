@@ -139,7 +139,7 @@ const Home: React.FC = () => {
         </Typography>
         <Grid container spacing={4}>
           {features.map((feature, index) => (
-            <Grid item xs={12} sm={6} md={4} key={index}>
+            <Grid key={index}>
               <Card
                 sx={{
                   height: "100%",
@@ -172,7 +172,7 @@ const Home: React.FC = () => {
       <Box sx={{ bgcolor: "primary.main", color: "white", py: 8 }}>
         <Container maxWidth="lg">
           <Grid container spacing={4} textAlign="center">
-            <Grid item xs={12} sm={3}>
+            <Grid>
               <Typography
                 variant="h3"
                 component="div"
@@ -182,7 +182,7 @@ const Home: React.FC = () => {
               </Typography>
               <Typography variant="h6">Colleges</Typography>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid>
               <Typography
                 variant="h3"
                 component="div"
@@ -192,7 +192,7 @@ const Home: React.FC = () => {
               </Typography>
               <Typography variant="h6">Students</Typography>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid>
               <Typography
                 variant="h3"
                 component="div"
@@ -202,7 +202,7 @@ const Home: React.FC = () => {
               </Typography>
               <Typography variant="h6">Success Rate</Typography>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid>
               <Typography
                 variant="h3"
                 component="div"

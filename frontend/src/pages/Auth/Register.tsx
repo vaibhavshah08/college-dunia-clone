@@ -121,7 +121,7 @@ const Register: React.FC = () => {
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
           <Grid container spacing={2}>
-            <Grid item xs={12} sm={6}>
+            <Grid>
               <TextField
                 margin="normal"
                 required
@@ -138,7 +138,7 @@ const Register: React.FC = () => {
                 disabled={loading}
               />
             </Grid>
-            <Grid item xs={12} sm={6}>
+            <Grid>
               <TextField
                 margin="normal"
                 required

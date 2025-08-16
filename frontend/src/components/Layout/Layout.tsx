@@ -84,13 +84,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <List>
         {menuItems.map((item) => (
           <ListItem
-            button
+            component={Button}
             key={item.text}
             onClick={() => {
               navigate(item.path);
               setMobileOpen(false);
             }}
-            selected={location.pathname === item.path}
+            sx={{
+              backgroundColor:
+                location.pathname === item.path
+                  ? "rgba(255, 255, 255, 0.1)"
+                  : "transparent",
+            }}
           >
             <ListItemIcon>{item.icon}</ListItemIcon>
             <ListItemText primary={item.text} />

@@ -26,7 +26,7 @@ const Colleges: React.FC = () => {
       <Card sx={{ mb: 4 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} md={4}>
+            <Grid>
               <TextField
                 fullWidth
                 label="Search colleges..."
@@ -38,7 +38,7 @@ const Colleges: React.FC = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid>
               <FormControl fullWidth>
                 <InputLabel>Location</InputLabel>
                 <Select label="Location" defaultValue="">
@@ -49,7 +49,7 @@ const Colleges: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid>
               <FormControl fullWidth>
                 <InputLabel>Course Type</InputLabel>
                 <Select label="Course Type" defaultValue="">
@@ -60,7 +60,7 @@ const Colleges: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid>
               <FormControl fullWidth>
                 <InputLabel>Fees Range</InputLabel>
                 <Select label="Fees Range" defaultValue="">
@@ -71,7 +71,7 @@ const Colleges: React.FC = () => {
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} md={2}>
+            <Grid>
               <Button fullWidth variant="contained" startIcon={<FilterList />}>
                 Apply Filters
               </Button>
@@ -83,7 +83,7 @@ const Colleges: React.FC = () => {
       {/* College List */}
       <Grid container spacing={3}>
         {[1, 2, 3, 4, 5, 6].map((item) => (
-          <Grid item xs={12} sm={6} md={4} key={item}>
+          <Grid key={item}>
             <Card sx={{ height: "100%", cursor: "pointer" }}>
               <CardContent>
                 <Typography variant="h6" gutterBottom>

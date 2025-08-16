@@ -22,7 +22,7 @@ const AdminDashboard: React.FC = () => {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
@@ -38,7 +38,7 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
@@ -54,7 +54,7 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">
@@ -72,7 +72,7 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} sm={6} md={3}>
+        <Grid>
           <Card>
             <CardContent>
               <Box display="flex" alignItems="center">

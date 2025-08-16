@@ -19,7 +19,7 @@ const CollegeDetail: React.FC = () => {
       </Typography>
 
       <Grid container spacing={3}>
-        <Grid item xs={12} md={8}>
+        <Grid>
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h5" gutterBottom>
@@ -44,7 +44,7 @@ const CollegeDetail: React.FC = () => {
                   "Mechanical Engineering",
                   "Electrical Engineering",
                 ].map((course) => (
-                  <Grid item key={course}>
+                  <Grid key={course}>
                     <Chip label={course} variant="outlined" />
                   </Grid>
                 ))}
@@ -53,7 +53,7 @@ const CollegeDetail: React.FC = () => {
           </Card>
         </Grid>
 
-        <Grid item xs={12} md={4}>
+        <Grid>
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
