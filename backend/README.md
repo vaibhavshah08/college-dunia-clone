@@ -1,213 +1,98 @@
-# College Dunia Backend
+<p align="center">
+  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
+</p>
 
-A NestJS backend application for the College Dunia platform, providing APIs for college listings, loan applications, document management, and user authentication.
+[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
+[circleci-url]: https://circleci.com/gh/nestjs/nest
 
-## Features
+  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
+    <p align="center">
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
+<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
+<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
+<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
+<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
+<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
+  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
+    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
+  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
+</p>
+  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
+  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-- **Authentication & Authorization**
-  - JWT-based authentication
-  - Google OAuth integration
-  - Role-based access control (Student/Admin)
+## Description
 
-- **User Management**
-  - User registration and login
-  - Profile management
-  - Admin user management
+[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
-- **College Management**
-  - College listings with search and filters
-  - Course management
-  - College comparison tool
-
-- **Loan Applications**
-  - Loan application submission
-  - Application status tracking
-  - Admin approval/rejection system
-
-- **Document Management**
-  - Document upload and storage
-  - Document verification system
-  - AWS S3 integration
-
-- **Admin Dashboard**
-  - Statistics and analytics
-  - User management
-  - Content management
-
-## Tech Stack
-
-- **Framework**: NestJS (Node.js)
-- **Database**: MySQL with TypeORM
-- **Authentication**: JWT + Passport.js
-- **File Storage**: AWS S3
-- **Validation**: class-validator, class-transformer
-
-## Prerequisites
-
-- Node.js 22.x
-- MySQL 8.0+
-- AWS S3 bucket (for document storage)
-
-## Installation
-
-1. **Clone the repository and navigate to backend directory**
-
-   ```bash
-   cd backend
-   ```
-
-2. **Install dependencies**
-
-   ```bash
-   npm install
-   ```
-
-3. **Environment Setup**
-
-   ```bash
-   cp env.example .env
-   ```
-
-   Update the `.env` file with your configuration:
-   - Database credentials
-   - JWT secrets
-   - Google OAuth credentials
-   - AWS S3 credentials
-
-4. **Database Setup**
-   - Create a MySQL database named `college_dunia`
-   - The application will automatically create tables on first run
-
-5. **Run the application**
-
-   ```bash
-   # Development
-   npm run start:dev
-
-   # Production
-   npm run build
-   npm run start:prod
-   ```
-
-## API Endpoints
-
-### Authentication
-
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/auth/google` - Google OAuth initiation
-- `GET /api/auth/google/callback` - Google OAuth callback
-- `POST /api/auth/refresh` - Refresh JWT token
-
-### Users
-
-- `GET /api/users/profile` - Get user profile
-- `PUT /api/users/profile` - Update user profile
-- `GET /api/users` - Get all users (Admin only)
-- `PUT /api/users/:id/toggle-status` - Toggle user status (Admin only)
-
-### Colleges
-
-- `GET /api/colleges` - Get colleges with filters
-- `GET /api/colleges/:id` - Get college details
-- `GET /api/colleges/compare/:ids` - Compare colleges
-- `POST /api/colleges` - Create college (Admin only)
-- `PUT /api/colleges/:id` - Update college (Admin only)
-- `DELETE /api/colleges/:id` - Delete college (Admin only)
-
-### Loans
-
-- `POST /api/loans` - Submit loan application
-- `GET /api/loans/my-applications` - Get user's loan applications
-- `GET /api/loans` - Get all loan applications (Admin only)
-- `GET /api/loans/:id` - Get loan application details
-- `PUT /api/loans/:id/status` - Update loan status (Admin only)
-
-### Documents
-
-- `POST /api/documents` - Upload document
-- `GET /api/documents/my-documents` - Get user's documents
-- `GET /api/documents` - Get all documents (Admin only)
-- `GET /api/documents/:id` - Get document details
-- `PUT /api/documents/:id/verify` - Verify document (Admin only)
-- `DELETE /api/documents/:id` - Delete document
-
-### Admin
-
-- `GET /api/admin/dashboard` - Get dashboard statistics
-- `GET /api/admin/recent-activity` - Get recent activity
-
-## Database Schema
-
-The application uses the following main entities:
-
-- **Users**: User accounts and profiles
-- **Colleges**: College information and details
-- **Courses**: Course offerings by colleges
-- **LoanApplications**: Student loan applications
-- **Documents**: Uploaded documents and files
-
-## Environment Variables
-
-| Variable                | Description                | Default       |
-| ----------------------- | -------------------------- | ------------- |
-| `DB_HOST`               | Database host              | localhost     |
-| `DB_PORT`               | Database port              | 3306          |
-| `DB_USERNAME`           | Database username          | root          |
-| `DB_PASSWORD`           | Database password          | -             |
-| `DB_NAME`               | Database name              | college_dunia |
-| `JWT_SECRET`            | JWT signing secret         | -             |
-| `JWT_EXPIRES_IN`        | JWT expiration time        | 7d            |
-| `GOOGLE_CLIENT_ID`      | Google OAuth client ID     | -             |
-| `GOOGLE_CLIENT_SECRET`  | Google OAuth client secret | -             |
-| `AWS_ACCESS_KEY_ID`     | AWS access key             | -             |
-| `AWS_SECRET_ACCESS_KEY` | AWS secret key             | -             |
-| `AWS_S3_BUCKET`         | S3 bucket name             | -             |
-
-## Development
-
-### Running Tests
+## Project setup
 
 ```bash
-# Unit tests
-npm run test
-
-# E2E tests
-npm run test:e2e
-
-# Test coverage
-npm run test:cov
+$ npm install
 ```
 
-### Code Formatting
+## Compile and run the project
 
 ```bash
-npm run format
-npm run lint
+# development
+$ npm run start
+
+# watch mode
+$ npm run start:dev
+
+# production mode
+$ npm run start:prod
+```
+
+## Run tests
+
+```bash
+# unit tests
+$ npm run test
+
+# e2e tests
+$ npm run test:e2e
+
+# test coverage
+$ npm run test:cov
 ```
 
 ## Deployment
 
-1. Build the application:
+When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
 
-   ```bash
-   npm run build
-   ```
+If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
 
-2. Set production environment variables
+```bash
+$ npm install -g @nestjs/mau
+$ mau deploy
+```
 
-3. Start the application:
-   ```bash
-   npm run start:prod
-   ```
+With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
 
-## Contributing
+## Resources
 
-1. Follow the NestJS coding standards
-2. Write tests for new features
-3. Update documentation as needed
-4. Use conventional commit messages
+Check out a few resources that may come in handy when working with NestJS:
+
+- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
+- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
+- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
+- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
+- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
+- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
+- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
+- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+
+## Support
+
+Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+
+## Stay in touch
+
+- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
+- Website - [https://nestjs.com](https://nestjs.com/)
+- Twitter - [@nestframework](https://twitter.com/nestframework)
 
 ## License
 
-This project is licensed under the MIT License.
+Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).

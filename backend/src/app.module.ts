@@ -1,28 +1,22 @@
 import { Module } from '@nestjs/common';
-import { ConfigModule } from '@nestjs/config';
-import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { AuthModule } from './modules/auth/auth.module';
-import { UsersModule } from './modules/users/users.module';
-import { CollegesModule } from './modules/colleges/colleges.module';
-import { LoansModule } from './modules/loans/loans.module';
-import { DocumentsModule } from './modules/documents/documents.module';
-import { AdminModule } from './modules/admin/admin.module';
-import { databaseConfig } from './config/database.config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   imports: [
-    ConfigModule.forRoot({
-      isGlobal: true,
+    ConfigModule.forRoot({ isGlobal: true }),
+    TypeOrmModule.forRoot({
+      type: 'mysql',
+      host: process.env.DB_HOST,
+      port: 3306,
+      username: process.env.DB_USERNAME,
+      password: process.env.DB_PASSWORD,
+      database: process.env.DB_NAME,
+      autoLoadEntities: true, // Automatically loads all entities
+      synchronize: true, // ❗ For dev only (auto-create tables)
     }),
-    TypeOrmModule.forRoot(databaseConfig),
-    AuthModule,
-    UsersModule,
-    CollegesModule,
-    LoansModule,
-    DocumentsModule,
-    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],
