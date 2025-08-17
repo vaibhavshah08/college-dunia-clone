@@ -5,24 +5,36 @@ import {
   IsOptional,
   IsString,
 } from 'class-validator';
+import { IsValidPassword } from 'src/common/decorators/validate-password.decorator';
 
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
-  name: string;
+  readonly name: string;
 
   @IsEmail()
-  email: string;
+  @IsString()
+  @IsNotEmpty()
+  readonly email: string;
 
-  @MinLength(6)
-  password: string;
+  @IsNotEmpty()
+  @IsString()
+  @IsValidPassword()
+  readonly password: string;
 
+  @IsNotEmpty()
+  @IsString()
   @IsOptional()
-  course?: string;
+  readonly course?: string;
 
+  @IsNotEmpty()
+  @IsString()
   @IsOptional()
-  phone_number?: string;
+  readonly phone_number?: string;
 
+  @IsNotEmpty()
+  @IsString()
+  s;
   @IsOptional()
-  city?: string;
+  readonly city?: string;
 }

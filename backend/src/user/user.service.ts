@@ -15,7 +15,7 @@ import { CustomLogger } from 'src/core/logger/logger.service';
 @Injectable()
 export class UserService {
   constructor(
-    @InjectRepository(User) private readonly userRepo: Repository<User>,
+    @InjectRepository(User) private readonly user_repo: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly logger: CustomLogger,
   ) {}
@@ -25,37 +25,47 @@ export class UserService {
     this.logger.verbose(correlation_id, 'Start');
 
     this.logger.debug(correlation_id, 'Going to Find User in the DB');
-    const existingUser = await this.userRepo.findOne({
+
+    const existing_user = await this.user_repo.findOne({
       where: { email: create_user_dto.email },
     });
-    if (existingUser) throw new BadRequestException('Email already registered');
 
-    const hashedPassword = await bcrypt.hash(create_user_dto.password, 10);
+    if (existing_user)
+      throw new BadRequestException('Email already registered');
 
-    const user = this.userRepo.create({
+    const hashed_password = await bcrypt.hash(create_user_dto.password, 10);
+
+    const user = this.user_repo.create({
       ...create_user_dto,
-      password: hashedPassword,
+      password: hashed_password,
     });
 
-    const savedUser = await this.userRepo.save(user);
+    const saved_user = await this.user_repo.save(user);
 
     return {
       message: 'User registered successfully',
-      user: { id: savedUser.id, name: savedUser.name, email: savedUser.email },
+      user: {
+        id: saved_user.user_id,
+        name: saved_user.name,
+        email: saved_user.email,
+      },
     };
   }
 
   async login(correlation_id: string, login_user_dto: LoginUserDto) {
-    const user = await this.userRepo.findOne({
+    this.logger.setContext(this.constructor.name + '/login');
+    this.logger.verbose(correlation_id, 'Start');
+
+    const user = await this.user_repo.findOne({
       where: { email: login_user_dto.email },
     });
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
-    const isPasswordValid = await bcrypt.compare(
+    const is_password_valid = await bcrypt.compare(
       login_user_dto.password,
       user.password,
     );
-    if (!isPasswordValid)
+    if (!is_password_valid)
       throw new UnauthorizedException('Invalid credentials');
 
     if (!user.is_active || user.is_deleted || user.is_blocked) {
@@ -63,7 +73,7 @@ export class UserService {
     }
 
     const payload = {
-      sub: user.id,
+      sub: user.user_id,
       email: user.email,
       is_admin: user.is_admin,
     };
@@ -76,6 +86,6 @@ export class UserService {
   }
 
   async findById(id: number) {
-    return this.userRepo.findOne({ where: { id } });
+    return this.user_repo.findOne({ where: { user_id: id } });
   }
 }

@@ -1,9 +1,14 @@
-import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsEmail, IsNotEmpty, IsString } from 'class-validator';
+import { IsValidPassword } from 'src/common/decorators/validate-password.decorator';
 
 export class LoginUserDto {
+  @IsNotEmpty()
   @IsEmail()
-  email: string;
+  @IsString()
+  readonly email: string;
 
   @IsNotEmpty()
-  password: string;
+  @IsString()
+  @IsValidPassword()
+  readonly password: string;
 }
