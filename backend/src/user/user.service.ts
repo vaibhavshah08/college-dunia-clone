@@ -10,24 +10,30 @@ import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
+import { CustomLogger } from 'src/core/logger/logger.service';
 
 @Injectable()
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly userRepo: Repository<User>,
     private readonly jwtService: JwtService,
+    private readonly logger: CustomLogger,
   ) {}
 
-  async signup(dto: CreateUserDto) {
+  async signup(correlation_id: string, create_user_dto: CreateUserDto) {
+    this.logger.setContext(this.constructor.name + '/signup');
+    this.logger.verbose(correlation_id, 'Start');
+
+    this.logger.debug(correlation_id, 'Going to Find User in the DB');
     const existingUser = await this.userRepo.findOne({
-      where: { email: dto.email },
+      where: { email: create_user_dto.email },
     });
     if (existingUser) throw new BadRequestException('Email already registered');
 
-    const hashedPassword = await bcrypt.hash(dto.password, 10);
+    const hashedPassword = await bcrypt.hash(create_user_dto.password, 10);
 
     const user = this.userRepo.create({
-      ...dto,
+      ...create_user_dto,
       password: hashedPassword,
     });
 
@@ -39,11 +45,16 @@ export class UserService {
     };
   }
 
-  async login(dto: LoginUserDto) {
-    const user = await this.userRepo.findOne({ where: { email: dto.email } });
+  async login(correlation_id: string, login_user_dto: LoginUserDto) {
+    const user = await this.userRepo.findOne({
+      where: { email: login_user_dto.email },
+    });
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
-    const isPasswordValid = await bcrypt.compare(dto.password, user.password);
+    const isPasswordValid = await bcrypt.compare(
+      login_user_dto.password,
+      user.password,
+    );
     if (!isPasswordValid)
       throw new UnauthorizedException('Invalid credentials');
 

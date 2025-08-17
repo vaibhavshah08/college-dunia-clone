@@ -4,6 +4,7 @@ import { User } from './entities/user.entity';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { JwtModule } from '@nestjs/jwt';
+import { LoggerModule } from 'src/core/logger/logger.module';
 
 @Module({
   imports: [
@@ -12,6 +13,7 @@ import { JwtModule } from '@nestjs/jwt';
       secret: 'SECRET_KEY_CHANGE_THIS', // use ConfigService in prod
       signOptions: { expiresIn: '7d' },
     }),
+    LoggerModule,
   ],
   providers: [UserService],
   controllers: [UserController],
