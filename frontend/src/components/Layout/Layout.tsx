@@ -17,6 +17,7 @@ import {
   ListItemText,
   useTheme,
   useMediaQuery,
+  Divider,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -76,28 +77,49 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             ? [{ text: "Admin", path: "/admin", icon: <AdminPanelSettings /> }]
             : []),
         ]
-      : []),
+      : [
+          { text: "Admin Login", path: "/admin/login", icon: <AdminPanelSettings /> },
+        ]),
   ];
 
   const drawer = (
-    <Box>
-      <List>
-        {menuItems.map((item) => (
+    <Box sx={{ width: 280 }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+        <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
+          College Dunia
+        </Typography>
+      </Box>
+      <List sx={{ pt: 1 }}>
+        {menuItems.map((item, index) => (
           <ListItem
-            component={Button}
             key={item.text}
             onClick={() => {
               navigate(item.path);
               setMobileOpen(false);
             }}
             sx={{
+              mx: 1,
+              mb: 0.5,
+              borderRadius: 1,
               backgroundColor:
                 location.pathname === item.path
-                  ? "rgba(255, 255, 255, 0.1)"
+                  ? "primary.main"
                   : "transparent",
+              color: location.pathname === item.path ? "white" : "inherit",
+              "&:hover": {
+                backgroundColor: location.pathname === item.path
+                  ? "primary.dark"
+                  : "action.hover",
+              },
+              transition: "all 0.2s",
             }}
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemIcon sx={{ 
+              color: location.pathname === item.path ? "white" : "inherit",
+              minWidth: 40 
+            }}>
+              {item.icon}
+            </ListItemIcon>
             <ListItemText primary={item.text} />
           </ListItem>
         ))}
@@ -107,8 +129,8 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <AppBar position="static">
-        <Toolbar>
+      <AppBar position="static" elevation={1}>
+        <Toolbar sx={{ px: { xs: 1, sm: 2 } }}>
           {isMobile && (
             <IconButton
               color="inherit"
@@ -124,14 +146,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Typography
             variant="h6"
             component="div"
-            sx={{ flexGrow: 1, cursor: "pointer" }}
+            sx={{ 
+              flexGrow: 1, 
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: { xs: "1.1rem", sm: "1.25rem" }
+            }}
             onClick={() => navigate("/")}
           >
             College Dunia
           </Typography>
 
           {!isMobile && (
-            <Box sx={{ display: "flex", gap: 2 }}>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
               {menuItems.map((item) => (
                 <Button
                   key={item.text}
@@ -142,6 +169,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                       location.pathname === item.path
                         ? "rgba(255, 255, 255, 0.1)"
                         : "transparent",
+                    borderRadius: 1,
+                    px: 2,
+                    py: 1,
+                    "&:hover": {
+                      backgroundColor: "rgba(255, 255, 255, 0.1)",
+                    },
                   }}
                 >
                   {item.text}
@@ -151,8 +184,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           )}
 
           {isAuthenticated ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography variant="body2">
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  display: { xs: "none", sm: "block" },
+                  fontWeight: 500 
+                }}
+              >
                 {user?.firstName} {user?.lastName}
               </Typography>
               <IconButton
@@ -163,23 +202,47 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 aria-haspopup="true"
                 onClick={handleProfileMenuOpen}
                 color="inherit"
+                sx={{ ml: 1 }}
               >
-                <Avatar sx={{ width: 32, height: 32 }}>
+                <Avatar sx={{ width: 32, height: 32, bgcolor: "secondary.main" }}>
                   {user?.firstName?.charAt(0)}
                 </Avatar>
               </IconButton>
             </Box>
           ) : (
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button color="inherit" onClick={() => navigate("/login")}>
+            <Box sx={{ display: "flex", gap: 1, ml: 2 }}>
+              <Button 
+                color="inherit" 
+                onClick={() => navigate("/login")}
+                sx={{ 
+                  display: { xs: "none", sm: "block" },
+                  borderRadius: 1 
+                }}
+              >
                 Login
               </Button>
               <Button
                 variant="contained"
                 color="secondary"
                 onClick={() => navigate("/register")}
+                sx={{ borderRadius: 1 }}
               >
                 Register
+              </Button>
+              <Button
+                variant="outlined"
+                color="inherit"
+                onClick={() => navigate("/admin/login")}
+                sx={{ 
+                  display: { xs: "none", sm: "block" },
+                  borderRadius: 1,
+                  borderColor: "rgba(255, 255, 255, 0.3)",
+                  "&:hover": {
+                    borderColor: "rgba(255, 255, 255, 0.5)",
+                  }
+                }}
+              >
+                Admin
               </Button>
             </Box>
           )}
@@ -191,6 +254,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         onClick={handleMenuClose}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            minWidth: 200,
+            borderRadius: 2,
+          },
+        }}
       >
         <MenuItem onClick={() => navigate("/profile")}>
           <ListItemIcon>
@@ -198,6 +268,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </ListItemIcon>
           Profile
         </MenuItem>
+        <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <Logout fontSize="small" />
@@ -217,14 +288,14 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": {
             boxSizing: "border-box",
-            width: 240,
+            width: 280,
           },
         }}
       >
         {drawer}
       </Drawer>
 
-      <Container component="main" sx={{ flexGrow: 1, py: 3 }}>
+      <Container component="main" sx={{ flexGrow: 1, py: 3, px: { xs: 2, sm: 3 } }}>
         {children}
       </Container>
     </Box>

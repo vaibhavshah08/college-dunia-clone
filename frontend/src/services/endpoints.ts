@@ -1,76 +1,76 @@
 // API Endpoints - Centralized route constants
 
 // Base API path
-export const API_BASE = "/api";
+// export const API_BASE = "/api";
 
 // Authentication endpoints
 export const AUTH_ENDPOINTS = {
-  SIGNUP: `${API_BASE}/users/signup`,
-  LOGIN: `${API_BASE}/users/login`,
-  LOGOUT: `${API_BASE}/auth/logout`,
-  REFRESH: `${API_BASE}/auth/refresh`,
-  ME: `${API_BASE}/users/me`,
+  SIGNUP: `/users/signup`,
+  LOGIN: `/users/login`,
+  LOGOUT: `/auth/logout`,
+  REFRESH: `/auth/refresh`,
+  ME: `/users/me`,
 } as const;
 
 // User endpoints
 export const USER_ENDPOINTS = {
-  PROFILE: `${API_BASE}/users/profile`,
-  UPDATE_PROFILE: `${API_BASE}/users/profile`,
-  CHANGE_PASSWORD: `${API_BASE}/users/change-password`,
+  PROFILE: `/users/profile`,
+  UPDATE_PROFILE: `/users/profile`,
+  CHANGE_PASSWORD: `/users/change-password`,
 } as const;
 
 // College endpoints
 export const COLLEGE_ENDPOINTS = {
-  LIST: `${API_BASE}/colleges`,
-  DETAIL: (id: string) => `${API_BASE}/colleges/${id}`,
-  CREATE: `${API_BASE}/colleges`,
-  UPDATE: (id: string) => `${API_BASE}/colleges/${id}`,
-  DELETE: (id: string) => `${API_BASE}/colleges/${id}`,
-  COMPARE: `${API_BASE}/colleges/compare/list`,
-  FILTERS: `${API_BASE}/colleges/filters`,
+  LIST: `/colleges`,
+  DETAIL: (id: string) => `/colleges/${id}`,
+  CREATE: `/colleges`,
+  UPDATE: (id: string) => `/colleges/${id}`,
+  DELETE: (id: string) => `/colleges/${id}`,
+  COMPARE: `/colleges/compare/list`,
+  FILTERS: `/colleges/filters`,
 } as const;
 
 // Loan endpoints
 export const LOAN_ENDPOINTS = {
-  CREATE: `${API_BASE}/loans`,
-  LIST_MINE: `${API_BASE}/loans/me`,
-  ADMIN_LIST: `${API_BASE}/loans/admin`,
-  UPDATE_STATUS: (id: string) => `${API_BASE}/loans/${id}/status`,
-  DETAIL: (id: string) => `${API_BASE}/loans/${id}`,
+  CREATE: `/loans`,
+  LIST_MINE: `/loans/me`,
+  ADMIN_LIST: `/loans/admin`,
+  UPDATE_STATUS: (id: string) => `/loans/${id}/status`,
+  DETAIL: (id: string) => `/loans/${id}`,
 } as const;
 
 // Review endpoints
 export const REVIEW_ENDPOINTS = {
-  CREATE: `${API_BASE}/reviews`,
+  CREATE: `/reviews`,
   LIST_BY_COURSE: (courseId: string) =>
-    `${API_BASE}/reviews/course/${courseId}`,
-  ADMIN_LIST: `${API_BASE}/reviews/admin`,
-  UPDATE_STATUS: (id: string) => `${API_BASE}/reviews/${id}/status`,
+    `/reviews/course/${courseId}`,
+  ADMIN_LIST: `/reviews/admin`,
+  UPDATE_STATUS: (id: string) => `/reviews/${id}/status`,
 } as const;
 
 // Static page endpoints
 export const PAGE_ENDPOINTS = {
-  GET: (slug: string) => `${API_BASE}/pages/${slug}`,
-  CREATE: `${API_BASE}/pages`,
-  UPDATE: (slug: string) => `${API_BASE}/pages/${slug}`,
-  DELETE: (slug: string) => `${API_BASE}/pages/${slug}`,
-  LIST: `${API_BASE}/pages`,
+  GET: (slug: string) => `/pages/${slug}`,
+  CREATE: `/pages`,
+  UPDATE: (slug: string) => `/pages/${slug}`,
+  DELETE: (slug: string) => `/pages/${slug}`,
+  LIST: `/pages`,
 } as const;
 
 // Admin endpoints
 export const ADMIN_ENDPOINTS = {
-  DASHBOARD: `${API_BASE}/admin/dashboard`,
-  USERS: `${API_BASE}/admin/users`,
-  USER_DETAIL: (id: string) => `${API_BASE}/admin/users/${id}`,
-  USER_UPDATE: (id: string) => `${API_BASE}/admin/users/${id}`,
-  USER_DELETE: (id: string) => `${API_BASE}/admin/users/${id}`,
-  STATS: `${API_BASE}/admin/stats`,
+  DASHBOARD: `/admin/dashboard`,
+  USERS: `/admin/users`,
+  USER_DETAIL: (id: string) => `/admin/users/${id}`,
+  USER_UPDATE: (id: string) => `/admin/users/${id}`,
+  USER_DELETE: (id: string) => `/admin/users/${id}`,
+  STATS: `/admin/stats`,
 } as const;
 
 // App endpoints
 export const APP_ENDPOINTS = {
-  HEALTH: `${API_BASE}/health`,
-  CONFIG: `${API_BASE}/config`,
+  HEALTH: `/health`,
+  CONFIG: `/config`,
 } as const;
 
 // All endpoints combined

@@ -4,7 +4,6 @@ import {
   Typography,
   Button,
   Container,
-  Grid,
   Card,
   CardContent,
   CardMedia,
@@ -137,82 +136,103 @@ const Home: React.FC = () => {
         >
           Why Choose College Dunia?
         </Typography>
-        <Grid container spacing={4}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: {
+              xs: '1fr',
+              sm: 'repeat(2, 1fr)',
+              md: 'repeat(3, 1fr)',
+            },
+            gap: 4,
+            alignItems: 'stretch',
+          }}
+        >
           {features.map((feature, index) => (
-            <Grid key={index}>
-              <Card
-                sx={{
-                  height: "100%",
-                  display: "flex",
-                  flexDirection: "column",
-                  transition: "transform 0.2s",
-                  "&:hover": {
-                    transform: "translateY(-4px)",
-                  },
-                }}
-              >
-                <CardContent sx={{ flexGrow: 1, textAlign: "center" }}>
-                  <Box sx={{ color: "primary.main", mb: 2 }}>
-                    {feature.icon}
-                  </Box>
-                  <Typography gutterBottom variant="h5" component="h3">
-                    {feature.title}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {feature.description}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
+            <Card
+              key={index}
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                transition: "transform 0.2s, box-shadow 0.2s",
+                "&:hover": {
+                  transform: "translateY(-4px)",
+                  boxShadow: "0 8px 25px rgba(0,0,0,0.15)",
+                },
+              }}
+            >
+              <CardContent sx={{ flexGrow: 1, textAlign: "center", p: 3 }}>
+                <Box sx={{ color: "primary.main", mb: 2 }}>
+                  {feature.icon}
+                </Box>
+                <Typography gutterBottom variant="h5" component="h3" sx={{ mb: 2 }}>
+                  {feature.title}
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                  {feature.description}
+                </Typography>
+              </CardContent>
+            </Card>
           ))}
-        </Grid>
+        </Box>
       </Container>
 
       {/* Stats Section */}
       <Box sx={{ bgcolor: "primary.main", color: "white", py: 8 }}>
         <Container maxWidth="lg">
-          <Grid container spacing={4} textAlign="center">
-            <Grid>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: 'repeat(2, 1fr)',
+                sm: 'repeat(4, 1fr)',
+              },
+              gap: 4,
+              textAlign: 'center',
+            }}
+          >
+            <Box>
               <Typography
                 variant="h3"
                 component="div"
-                sx={{ fontWeight: "bold" }}
+                sx={{ fontWeight: "bold", mb: 1 }}
               >
                 1000+
               </Typography>
               <Typography variant="h6">Colleges</Typography>
-            </Grid>
-            <Grid>
+            </Box>
+            <Box>
               <Typography
                 variant="h3"
                 component="div"
-                sx={{ fontWeight: "bold" }}
+                sx={{ fontWeight: "bold", mb: 1 }}
               >
                 50K+
               </Typography>
               <Typography variant="h6">Students</Typography>
-            </Grid>
-            <Grid>
+            </Box>
+            <Box>
               <Typography
                 variant="h3"
                 component="div"
-                sx={{ fontWeight: "bold" }}
+                sx={{ fontWeight: "bold", mb: 1 }}
               >
                 95%
               </Typography>
               <Typography variant="h6">Success Rate</Typography>
-            </Grid>
-            <Grid>
+            </Box>
+            <Box>
               <Typography
                 variant="h3"
                 component="div"
-                sx={{ fontWeight: "bold" }}
+                sx={{ fontWeight: "bold", mb: 1 }}
               >
                 24/7
               </Typography>
               <Typography variant="h6">Support</Typography>
-            </Grid>
-          </Grid>
+            </Box>
+          </Box>
         </Container>
       </Box>
     </Box>

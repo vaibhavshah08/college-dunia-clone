@@ -1,17 +1,6 @@
 // API Response Types
 
 // Base response envelope
-export interface ApiResponse<T = any> {
-  data: T;
-  meta?: {
-    page?: number;
-    size?: number;
-    total?: number;
-    hasNext?: boolean;
-    hasPrev?: boolean;
-  };
-  message?: string;
-}
 
 // Error response
 export interface ApiError {

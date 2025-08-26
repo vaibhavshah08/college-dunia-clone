@@ -5,7 +5,6 @@ import {
   Box,
   Card,
   CardContent,
-  Grid,
   Button,
   Chip,
 } from "@mui/material";
@@ -28,41 +27,49 @@ const Loans: React.FC = () => {
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+          },
+          gap: 3,
+        }}
+      >
         {[1, 2].map((item) => (
-          <Grid key={item}>
-            <Card>
-              <CardContent>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Box>
-                    <Typography variant="h6" gutterBottom>
-                      Loan Application #{item}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      gutterBottom
-                    >
-                      Amount: ₹{item * 50000}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      College: Sample College {item}
-                    </Typography>
-                  </Box>
-                  <Chip
-                    label={item === 1 ? "Pending" : "Approved"}
-                    color={item === 1 ? "warning" : "success"}
-                  />
+          <Card key={item}>
+            <CardContent>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Box>
+                  <Typography variant="h6" gutterBottom>
+                    Loan Application #{item}
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Amount: ₹{item * 50000}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    College: Sample College {item}
+                  </Typography>
                 </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+                <Chip
+                  label={item === 1 ? "Pending" : "Approved"}
+                  color={item === 1 ? "warning" : "success"}
+                />
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </Box>
     </Container>
   );
 };

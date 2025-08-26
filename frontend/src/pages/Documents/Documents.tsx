@@ -5,7 +5,6 @@ import {
   Box,
   Card,
   CardContent,
-  Grid,
   Button,
   Chip,
 } from "@mui/material";
@@ -28,45 +27,53 @@ const Documents: React.FC = () => {
         </Button>
       </Box>
 
-      <Grid container spacing={3}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+          },
+          gap: 3,
+        }}
+      >
         {[1, 2, 3].map((item) => (
-          <Grid key={item}>
-            <Card>
-              <CardContent>
-                <Box display="flex" alignItems="center" mb={2}>
-                  <Description sx={{ mr: 1, color: "primary.main" }} />
-                  <Typography variant="h6">Document {item}</Typography>
-                </Box>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Type:{" "}
-                  {item === 1
-                    ? "Admission Letter"
-                    : item === 2
-                    ? "Identity Proof"
-                    : "Income Certificate"}
-                </Typography>
-                <Typography variant="body2" color="text.secondary" gutterBottom>
-                  Uploaded: {new Date().toLocaleDateString()}
-                </Typography>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="center"
-                >
-                  <Chip
-                    label={item === 1 ? "Verified" : "Pending"}
-                    color={item === 1 ? "success" : "warning"}
-                    size="small"
-                  />
-                  <Button size="small" variant="outlined">
-                    View
-                  </Button>
-                </Box>
-              </CardContent>
-            </Card>
-          </Grid>
+          <Card key={item}>
+            <CardContent>
+              <Box display="flex" alignItems="center" mb={2}>
+                <Description sx={{ mr: 1, color: "primary.main" }} />
+                <Typography variant="h6">Document {item}</Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Type:{" "}
+                {item === 1
+                  ? "Admission Letter"
+                  : item === 2
+                  ? "Identity Proof"
+                  : "Income Certificate"}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Uploaded: {new Date().toLocaleDateString()}
+              </Typography>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
+              >
+                <Chip
+                  label={item === 1 ? "Verified" : "Pending"}
+                  color={item === 1 ? "success" : "warning"}
+                  size="small"
+                />
+                <Button size="small" variant="outlined">
+                  View
+                </Button>
+              </Box>
+            </CardContent>
+          </Card>
         ))}
-      </Grid>
+      </Box>
     </Container>
   );
 };

@@ -9,7 +9,6 @@ import {
   Link,
   Alert,
   CircularProgress,
-  Grid,
 } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
@@ -116,41 +115,46 @@ const Register: React.FC = () => {
         )}
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
-          <Grid container spacing={2}>
-            <Grid>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="firstName"
-                label="First Name"
-                name="firstName"
-                autoComplete="given-name"
-                autoFocus
-                value={formData.firstName}
-                onChange={handleChange}
-                error={!!errors.firstName}
-                helperText={errors.firstName}
-                disabled={isSigningUp}
-              />
-            </Grid>
-            <Grid>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="lastName"
-                label="Last Name"
-                name="lastName"
-                autoComplete="family-name"
-                value={formData.lastName}
-                onChange={handleChange}
-                error={!!errors.lastName}
-                helperText={errors.lastName}
-                disabled={isSigningUp}
-              />
-            </Grid>
-          </Grid>
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: {
+                xs: '1fr',
+                sm: 'repeat(2, 1fr)',
+              },
+              gap: 2,
+            }}
+          >
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="firstName"
+              label="First Name"
+              name="firstName"
+              autoComplete="given-name"
+              autoFocus
+              value={formData.firstName}
+              onChange={handleChange}
+              error={!!errors.firstName}
+              helperText={errors.firstName}
+              disabled={isSigningUp}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="lastName"
+              label="Last Name"
+              name="lastName"
+              autoComplete="family-name"
+              value={formData.lastName}
+              onChange={handleChange}
+              error={!!errors.lastName}
+              helperText={errors.lastName}
+              disabled={isSigningUp}
+            />
+          </Box>
 
           <TextField
             margin="normal"

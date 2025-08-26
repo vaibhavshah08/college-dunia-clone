@@ -5,7 +5,6 @@ import {
   Box,
   Card,
   CardContent,
-  Grid,
   Chip,
   Button,
 } from "@mui/material";
@@ -18,8 +17,17 @@ const CollegeDetail: React.FC = () => {
         Sample College Details
       </Typography>
 
-      <Grid container spacing={3}>
-        <Grid>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            md: '2fr 1fr',
+          },
+          gap: 3,
+        }}
+      >
+        <Box>
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h5" gutterBottom>
@@ -38,22 +46,26 @@ const CollegeDetail: React.FC = () => {
               <Typography variant="h5" gutterBottom>
                 Courses Offered
               </Typography>
-              <Grid container spacing={1}>
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  gap: 1,
+                }}
+              >
                 {[
                   "Computer Science",
                   "Mechanical Engineering",
                   "Electrical Engineering",
                 ].map((course) => (
-                  <Grid key={course}>
-                    <Chip label={course} variant="outlined" />
-                  </Grid>
+                  <Chip key={course} label={course} variant="outlined" />
                 ))}
-              </Grid>
+              </Box>
             </CardContent>
           </Card>
-        </Grid>
+        </Box>
 
-        <Grid>
+        <Box>
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h6" gutterBottom>
@@ -113,8 +125,8 @@ const CollegeDetail: React.FC = () => {
               </Button>
             </CardContent>
           </Card>
-        </Grid>
-      </Grid>
+        </Box>
+      </Box>
     </Container>
   );
 };

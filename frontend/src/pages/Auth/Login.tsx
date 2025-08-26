@@ -71,8 +71,14 @@ const Login: React.FC = () => {
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography component="h1" variant="h4" align="center" gutterBottom>
+      <Paper elevation={3} sx={{ p: { xs: 3, sm: 4 }, borderRadius: 3 }}>
+        <Typography 
+          component="h1" 
+          variant="h4" 
+          align="center" 
+          gutterBottom
+          sx={{ fontWeight: "bold", mb: 1 }}
+        >
           Welcome Back
         </Typography>
         <Typography
@@ -85,7 +91,7 @@ const Login: React.FC = () => {
         </Typography>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
             {error}
           </Alert>
         )}
@@ -105,6 +111,7 @@ const Login: React.FC = () => {
             error={!!errors.email}
             helperText={errors.email}
             disabled={isLoggingIn}
+            sx={{ mb: 2 }}
           />
           <TextField
             margin="normal"
@@ -120,12 +127,20 @@ const Login: React.FC = () => {
             error={!!errors.password}
             helperText={errors.password}
             disabled={isLoggingIn}
+            sx={{ mb: 3 }}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
+            size="large"
+            sx={{ 
+              mt: 2, 
+              mb: 3, 
+              py: 1.5,
+              fontSize: "1.1rem",
+              fontWeight: 600,
+            }}
             disabled={isLoggingIn}
           >
             {isLoggingIn ? <CircularProgress size={24} /> : "Sign In"}
@@ -135,7 +150,18 @@ const Login: React.FC = () => {
         <Box textAlign="center">
           <Typography variant="body2" color="text.secondary">
             Don't have an account?{" "}
-            <Link component={RouterLink} to="/register" variant="body2">
+            <Link 
+              component={RouterLink} 
+              to="/register" 
+              variant="body2"
+              sx={{ 
+                fontWeight: 600,
+                textDecoration: "none",
+                "&:hover": {
+                  textDecoration: "underline",
+                },
+              }}
+            >
               Sign up here
             </Link>
           </Typography>

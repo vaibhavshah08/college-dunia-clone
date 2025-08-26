@@ -4,8 +4,7 @@ import type {
   LoanCreate,
   Loan,
   LoanStatusUpdate,
-  PaginatedResponse,
-  ApiResponse,
+  PaginatedResponse
 } from "../../types/api";
 
 export const loansApi = {
@@ -13,52 +12,52 @@ export const loansApi = {
    * Create new loan application
    */
   async createLoan(data: LoanCreate): Promise<Loan> {
-    const response = await apiClient.post<ApiResponse<Loan>>(
+    const response = await apiClient.post<Loan>(
       LOAN_ENDPOINTS.CREATE,
       data
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * Get user's loan applications
    */
   async getMyLoans(): Promise<Loan[]> {
-    const response = await apiClient.get<ApiResponse<Loan[]>>(
+    const response = await apiClient.get<Loan[]>(
       LOAN_ENDPOINTS.LIST_MINE
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * Get loan by ID
    */
   async getLoan(id: string): Promise<Loan> {
-    const response = await apiClient.get<ApiResponse<Loan>>(
+    const response = await apiClient.get<Loan>(
       LOAN_ENDPOINTS.DETAIL(id)
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * Get all loans (Admin only)
    */
   async getAllLoans(): Promise<PaginatedResponse<Loan>> {
-    const response = await apiClient.get<ApiResponse<PaginatedResponse<Loan>>>(
+    const response = await apiClient.get<PaginatedResponse<Loan>>(
       LOAN_ENDPOINTS.ADMIN_LIST
     );
-    return response.data.data;
+    return response.data;
   },
 
   /**
    * Update loan status (Admin only)
    */
   async updateLoanStatus(id: string, data: LoanStatusUpdate): Promise<Loan> {
-    const response = await apiClient.patch<ApiResponse<Loan>>(
+    const response = await apiClient.patch<Loan>(
       LOAN_ENDPOINTS.UPDATE_STATUS(id),
       data
     );
-    return response.data.data;
+    return response.data;
   },
 };
 
