@@ -189,8 +189,7 @@ let formatConsole = winston.format.combine(
       );
       print_level = print_level.toUpperCase();
       print_level = print_level.substring(0, 4);
-      const id = String(correlation_id || '');
-      return `${timestamp} | ${id.substring(
+      return `${timestamp} | ${(correlation_id as string).substring(
         0,
         6,
       )} | ${print_level} | ${message}`;
@@ -208,8 +207,7 @@ if (config.get('ENV') == 'LOCAL') {
         );
         print_level = print_level.toUpperCase();
         print_level = print_level.substring(0, 4);
-        const id = String(correlation_id || '');
-        return `${timestamp} | ${id.substring(
+        return `${timestamp} | ${(correlation_id as string).substring(
           0,
           6,
         )} | ${print_level} | ${message}`;

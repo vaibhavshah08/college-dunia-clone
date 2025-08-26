@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  BadRequestException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { Injectable, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -11,6 +7,12 @@ import { LoginUserDto } from './dto/login-user.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { CustomLogger } from 'src/core/logger/logger.service';
+import { customHttpError } from 'src/core/custom-error/error-service';
+import {
+  DATA_VALIDATION_ERROR,
+  ENTITY_NOT_FOUND,
+} from 'src/core/custom-error/error-constant';
+import { v4 as uuidv4 } from 'uuid';
 
 @Injectable()
 export class UserService {
@@ -31,12 +33,18 @@ export class UserService {
     });
 
     if (existing_user)
-      throw new BadRequestException('Email already registered');
+      throw customHttpError(
+        DATA_VALIDATION_ERROR,
+        'EMAIL_EXISTS',
+        'Email already registered',
+        HttpStatus.BAD_REQUEST,
+      );
 
     const hashed_password = await bcrypt.hash(create_user_dto.password, 10);
 
     const user = this.user_repo.create({
       ...create_user_dto,
+      user_id: uuidv4(),
       password: hashed_password,
     });
 
@@ -59,20 +67,36 @@ export class UserService {
     const user = await this.user_repo.findOne({
       where: { email: login_user_dto.email },
     });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!user)
+      throw customHttpError(
+        ENTITY_NOT_FOUND,
+        'INVALID_CREDENTIALS',
+        'Invalid credentials',
+        HttpStatus.UNAUTHORIZED,
+      );
 
     const is_password_valid = await bcrypt.compare(
       login_user_dto.password,
       user.password,
     );
     if (!is_password_valid)
-      throw new UnauthorizedException('Invalid credentials');
+      throw customHttpError(
+        ENTITY_NOT_FOUND,
+        'INVALID_CREDENTIALS',
+        'Invalid credentials',
+        HttpStatus.UNAUTHORIZED,
+      );
 
-    if (!user.is_active || user.is_deleted || user.is_blocked) {
-      throw new UnauthorizedException('Account is not active');
-    }
+    if (!user.is_active || user.is_deleted || user.is_blocked)
+      throw customHttpError(
+        DATA_VALIDATION_ERROR,
+        'ACCOUNT_INACTIVE',
+        'Account is not active',
+        HttpStatus.UNAUTHORIZED,
+      );
 
     const payload = {
+      name: user.name,
       sub: user.user_id,
       email: user.email,
       is_admin: user.is_admin,
@@ -85,7 +109,15 @@ export class UserService {
     };
   }
 
-  async findById(id: number) {
-    return this.user_repo.findOne({ where: { user_id: id } });
+  async findById(correlation_id: string, id: string) {
+    this.logger.setContext(this.constructor.name + '/findById');
+    this.logger.log(correlation_id, `Finding user by ID: ${id}`);
+    const user = await this.user_repo.findOne({ where: { user_id: id } });
+    if (user) {
+      this.logger.log(correlation_id, `User found: ${id}`);
+    } else {
+      this.logger.warn(correlation_id, `User not found: ${id}`);
+    }
+    return user;
   }
 }

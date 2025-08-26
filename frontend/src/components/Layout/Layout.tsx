@@ -29,7 +29,7 @@ import {
   Logout,
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../lib/hooks/useAuth";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -165,11 +165,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 color="inherit"
               >
                 <Avatar sx={{ width: 32, height: 32 }}>
-                  {user?.profilePicture ? (
-                    <img src={user.profilePicture} alt="Profile" />
-                  ) : (
-                    user?.firstName?.charAt(0)
-                  )}
+                  {user?.firstName?.charAt(0)}
                 </Avatar>
               </IconButton>
             </Box>

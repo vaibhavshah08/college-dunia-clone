@@ -9,11 +9,9 @@ import {
   Link,
   Alert,
   CircularProgress,
-  Divider,
 } from "@mui/material";
-import { Google as GoogleIcon } from "@mui/icons-material";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { Link as RouterLink } from "react-router-dom";
+import { useAuth } from "../../lib/hooks/useAuth";
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -21,11 +19,9 @@ const Login: React.FC = () => {
     password: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { login, isLoggingIn } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -33,6 +29,9 @@ const Login: React.FC = () => {
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+    if (error) {
+      setError("");
     }
   };
 
@@ -63,22 +62,11 @@ const Login: React.FC = () => {
       return;
     }
 
-    setLoading(true);
     try {
-      await login(formData.email, formData.password);
-      navigate("/dashboard");
+      await login(formData);
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Login failed. Please try again."
-      );
-    } finally {
-      setLoading(false);
+      setError(err.message || "Login failed. Please try again.");
     }
-  };
-
-  const handleGoogleLogin = () => {
-    // Implement Google OAuth login
-    window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
   };
 
   return (
@@ -116,7 +104,7 @@ const Login: React.FC = () => {
             onChange={handleChange}
             error={!!errors.email}
             helperText={errors.email}
-            disabled={loading}
+            disabled={isLoggingIn}
           />
           <TextField
             margin="normal"
@@ -131,35 +119,18 @@ const Login: React.FC = () => {
             onChange={handleChange}
             error={!!errors.password}
             helperText={errors.password}
-            disabled={loading}
+            disabled={isLoggingIn}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
+            disabled={isLoggingIn}
           >
-            {loading ? <CircularProgress size={24} /> : "Sign In"}
+            {isLoggingIn ? <CircularProgress size={24} /> : "Sign In"}
           </Button>
         </Box>
-
-        <Divider sx={{ my: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            OR
-          </Typography>
-        </Divider>
-
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<GoogleIcon />}
-          onClick={handleGoogleLogin}
-          disabled={loading}
-          sx={{ mb: 3 }}
-        >
-          Continue with Google
-        </Button>
 
         <Box textAlign="center">
           <Typography variant="body2" color="text.secondary">

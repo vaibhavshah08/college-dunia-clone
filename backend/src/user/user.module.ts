@@ -4,14 +4,20 @@ import { User } from './entities/user.entity';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { JwtModule } from '@nestjs/jwt';
+import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'src/core/logger/logger.module';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([User]),
-    JwtModule.register({
-      secret: 'SECRET_KEY_CHANGE_THIS', // use ConfigService in prod
-      signOptions: { expiresIn: '7d' },
+    ConfigModule,
+    JwtModule.registerAsync({
+      imports: [ConfigModule],
+      useFactory: async (config: ConfigService) => ({
+        secret: config.get<string>('JWT_SECRET') || 'CHANGE_ME_DEV',
+        signOptions: { expiresIn: '7d' },
+      }),
+      inject: [ConfigService],
     }),
     LoggerModule,
   ],

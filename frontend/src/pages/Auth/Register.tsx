@@ -12,7 +12,7 @@ import {
   Grid,
 } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../lib/hooks/useAuth";
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -24,10 +24,9 @@ const Register: React.FC = () => {
     phone: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { register } = useAuth();
+  const { signup, isSigningUp } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -84,17 +83,14 @@ const Register: React.FC = () => {
       return;
     }
 
-    setLoading(true);
     try {
-      const { confirmPassword, ...registerData } = formData;
-      await register(registerData);
-      navigate("/dashboard");
+      const { confirmPassword, ...signupData } = formData;
+      await signup(signupData);
+      // Navigation is handled by the useAuth hook
     } catch (err: any) {
       setError(
         err.response?.data?.message || "Registration failed. Please try again."
       );
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -135,7 +131,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 error={!!errors.firstName}
                 helperText={errors.firstName}
-                disabled={loading}
+                disabled={isSigningUp}
               />
             </Grid>
             <Grid>
@@ -151,7 +147,7 @@ const Register: React.FC = () => {
                 onChange={handleChange}
                 error={!!errors.lastName}
                 helperText={errors.lastName}
-                disabled={loading}
+                disabled={isSigningUp}
               />
             </Grid>
           </Grid>
@@ -168,7 +164,7 @@ const Register: React.FC = () => {
             onChange={handleChange}
             error={!!errors.email}
             helperText={errors.email}
-            disabled={loading}
+            disabled={isSigningUp}
           />
 
           <TextField
@@ -182,7 +178,7 @@ const Register: React.FC = () => {
             onChange={handleChange}
             error={!!errors.phone}
             helperText={errors.phone}
-            disabled={loading}
+            disabled={isSigningUp}
           />
 
           <TextField
@@ -198,7 +194,7 @@ const Register: React.FC = () => {
             onChange={handleChange}
             error={!!errors.password}
             helperText={errors.password}
-            disabled={loading}
+            disabled={isSigningUp}
           />
 
           <TextField
@@ -214,7 +210,7 @@ const Register: React.FC = () => {
             onChange={handleChange}
             error={!!errors.confirmPassword}
             helperText={errors.confirmPassword}
-            disabled={loading}
+            disabled={isSigningUp}
           />
 
           <Button
@@ -222,9 +218,9 @@ const Register: React.FC = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
+            disabled={isSigningUp}
           >
-            {loading ? <CircularProgress size={24} /> : "Create Account"}
+            {isSigningUp ? <CircularProgress size={24} /> : "Create Account"}
           </Button>
         </Box>
 

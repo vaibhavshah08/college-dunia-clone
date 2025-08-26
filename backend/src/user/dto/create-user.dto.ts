@@ -34,7 +34,6 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  s;
   @IsOptional()
   readonly city?: string;
 }

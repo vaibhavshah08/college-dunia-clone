@@ -1,6 +1,6 @@
 import {
   Entity,
-  PrimaryGeneratedColumn,
+  PrimaryColumn,
   Column,
   CreateDateColumn,
   UpdateDateColumn,
@@ -8,43 +8,43 @@ import {
 
 @Entity('users')
 export class User {
-  @PrimaryGeneratedColumn()
-  user_id: number;
+  @PrimaryColumn('varchar', { nullable: false })
+  user_id: string;
 
-  @Column()
+  @Column('varchar', { nullable: false })
   name: string;
 
-  @Column({ unique: true })
+  @Column('varchar', { unique: true })
   email: string;
 
-  @Column()
+  @Column('varchar')
   password: string; // hashed
 
-  @Column({ nullable: true })
+  @Column('varchar', { default: null, nullable: true })
   course: string;
 
-  @Column({ default: false })
+  @Column('boolean', { default: false })
   is_admin: boolean;
 
-  @Column({ default: true })
+  @Column('boolean', { default: true })
   is_active: boolean;
 
-  @Column({ default: false })
+  @Column('boolean', { default: false })
   is_deleted: boolean;
 
-  @Column({ default: false })
+  @Column('boolean', { default: false })
   is_blocked: boolean;
 
-  @Column({ nullable: true })
+  @Column('varchar', { default: null, nullable: true })
   phone_number: string;
 
-  @Column({ default: false })
+  @Column('boolean', { default: false })
   is_phone_verified: boolean;
 
-  @Column({ nullable: true })
+  @Column('varchar', { default: null, nullable: true })
   city: string;
 
-  @Column({ default: false })
+  @Column('boolean', { default: false })
   is_email_verified: boolean;
 
   @CreateDateColumn()

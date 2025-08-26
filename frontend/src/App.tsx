@@ -1,23 +1,48 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import { ThemeProvider, createTheme } from "@mui/material/styles";
-import { CssBaseline } from "@mui/material";
-import { QueryClient, QueryClientProvider } from "react-query";
-import { AuthProvider } from "./contexts/AuthContext";
+import { CssBaseline, CircularProgress, Box } from "@mui/material";
+import { QueryClientProvider } from "react-query";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+// Providers and configuration
+import { queryClient } from "./store/queryClient";
+import ErrorBoundary from "./components/ErrorBoundary";
+
+// Components
 import Layout from "./components/Layout/Layout";
-import Home from "./pages/Home/Home";
-import Login from "./pages/Auth/Login";
-import Register from "./pages/Auth/Register";
-import Colleges from "./pages/Colleges/Colleges";
-import CollegeDetail from "./pages/Colleges/CollegeDetail";
-import CollegeComparison from "./pages/Colleges/CollegeComparison";
-import Dashboard from "./pages/Dashboard/Dashboard";
-import AdminDashboard from "./pages/Admin/AdminDashboard";
-import Profile from "./pages/Profile/Profile";
-import Loans from "./pages/Loans/Loans";
-import Documents from "./pages/Documents/Documents";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import AdminRoute from "./components/Auth/AdminRoute";
+
+// Lazy load pages for code splitting
+const Home = React.lazy(() => import("./pages/Home/Home"));
+const Login = React.lazy(() => import("./pages/Auth/Login"));
+const Register = React.lazy(() => import("./pages/Auth/Register"));
+const Colleges = React.lazy(() => import("./pages/Colleges/Colleges"));
+const CollegeDetail = React.lazy(
+  () => import("./pages/Colleges/CollegeDetail")
+);
+const CollegeComparison = React.lazy(
+  () => import("./pages/Colleges/CollegeComparison")
+);
+const Dashboard = React.lazy(() => import("./pages/Dashboard/Dashboard"));
+const AdminDashboard = React.lazy(() => import("./pages/Admin/AdminDashboard"));
+const Profile = React.lazy(() => import("./pages/Profile/Profile"));
+const Loans = React.lazy(() => import("./pages/Loans/Loans"));
+const Documents = React.lazy(() => import("./pages/Documents/Documents"));
+
+// Loading component
+const LoadingFallback = () => (
+  <Box
+    display="flex"
+    justifyContent="center"
+    alignItems="center"
+    minHeight="100vh"
+  >
+    <CircularProgress />
+  </Box>
+);
 
 // Create a theme instance
 const theme = createTheme({
@@ -64,80 +89,86 @@ const theme = createTheme({
   },
 });
 
-// Create a client
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      retry: 1,
-      refetchOnWindowFocus: false,
-    },
-  },
-});
-
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <AuthProvider>
-          <Router>
+        <Router>
+          <ErrorBoundary>
             <Layout>
-              <Routes>
-                {/* Public Routes */}
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/colleges" element={<Colleges />} />
-                <Route path="/colleges/:id" element={<CollegeDetail />} />
-                <Route path="/compare" element={<CollegeComparison />} />
+              <Suspense fallback={<LoadingFallback />}>
+                <Routes>
+                  {/* Public Routes */}
+                  <Route path="/" element={<Home />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/colleges" element={<Colleges />} />
+                  <Route path="/colleges/:id" element={<CollegeDetail />} />
+                  <Route path="/compare" element={<CollegeComparison />} />
 
-                {/* Protected Routes */}
-                <Route
-                  path="/dashboard"
-                  element={
-                    <ProtectedRoute>
-                      <Dashboard />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/loans"
-                  element={
-                    <ProtectedRoute>
-                      <Loans />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/documents"
-                  element={
-                    <ProtectedRoute>
-                      <Documents />
-                    </ProtectedRoute>
-                  }
-                />
+                  {/* Protected Routes */}
+                  <Route
+                    path="/dashboard"
+                    element={
+                      <ProtectedRoute>
+                        <Dashboard />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/loans"
+                    element={
+                      <ProtectedRoute>
+                        <Loans />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/documents"
+                    element={
+                      <ProtectedRoute>
+                        <Documents />
+                      </ProtectedRoute>
+                    }
+                  />
 
-                {/* Admin Routes */}
-                <Route
-                  path="/admin"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-              </Routes>
+                  {/* Admin Routes */}
+                  <Route
+                    path="/admin"
+                    element={
+                      <AdminRoute>
+                        <AdminDashboard />
+                      </AdminRoute>
+                    }
+                  />
+                </Routes>
+              </Suspense>
             </Layout>
-          </Router>
-        </AuthProvider>
+          </ErrorBoundary>
+        </Router>
+
+        {/* Toast notifications */}
+        <ToastContainer
+          position="top-right"
+          autoClose={5000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+          theme="light"
+        />
       </ThemeProvider>
     </QueryClientProvider>
   );
