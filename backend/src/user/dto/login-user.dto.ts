@@ -9,6 +9,6 @@ export class LoginUserDto {
 
   @IsNotEmpty()
   @IsString()
-  @IsValidPassword()
+  // @IsValidPassword()
   readonly password: string;
 }
