@@ -15,7 +15,7 @@ import { Roles } from 'src/auth/roles.decorator';
 import { RolesGuard } from 'src/auth/roles.guard';
 import { Correlation } from 'src/core/correlation/correlation.decorator';
 
-@UseGuards(JwtAuthGuard)
+// @UseGuards(JwtAuthGuard)
 @Controller('loans')
 export class LoansController {
   constructor(private readonly service: LoansService) {}

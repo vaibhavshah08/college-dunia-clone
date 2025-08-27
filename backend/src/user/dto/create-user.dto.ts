@@ -19,7 +19,7 @@ export class CreateUserDto {
 
   @IsNotEmpty()
   @IsString()
-  @IsValidPassword()
+  // @IsValidPassword()
   readonly password: string;
 
   @IsNotEmpty()

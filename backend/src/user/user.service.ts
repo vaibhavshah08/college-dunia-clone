@@ -79,6 +79,8 @@ export class UserService {
       login_user_dto.password,
       user.password,
     );
+
+    this.logger.debug(correlation_id, 'Checking Password');
     if (!is_password_valid)
       throw customHttpError(
         ENTITY_NOT_FOUND,
@@ -95,17 +97,28 @@ export class UserService {
         HttpStatus.UNAUTHORIZED,
       );
 
+    this.logger.debug(correlation_id, 'Generating Payload');
     const payload = {
       name: user.name,
-      sub: user.user_id,
+      user_id: user.user_id,
       email: user.email,
       is_admin: user.is_admin,
     };
     const token = await this.jwtService.signAsync(payload);
 
+    this.logger.debug(
+      correlation_id,
+      `Going to send payload and token ${JSON.stringify(token)}, ${JSON.stringify(payload)}`,
+    );
+
     return {
       message: 'Login successful',
       token,
+      user: {
+        ...payload,
+        is_active: user.is_active,
+        phone_number: user?.phone_number,
+      },
     };
   }
 
