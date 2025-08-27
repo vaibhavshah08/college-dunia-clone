@@ -1,9 +1,18 @@
-import { useQuery, useMutation, useQueryClient } from "react-query";
+import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import authApi from "../../services/modules/auth.api";
 import { queryKeys } from "../../store/queryClient";
-import type { LoginRequest, SignupRequest, UserProfile } from "../../types/api";
+import { LoginRequest, SignupRequest } from "../../types/api";
+import { saveToken, removeToken, isAuthenticated } from "../../utils/tokenManager";
+
+// Custom error types
+interface ApiError {
+  status: number;
+  code: string;
+  message: string;
+  details?: any;
+}
 
 export const useAuth = () => {
   const queryClient = useQueryClient();
@@ -18,22 +27,48 @@ export const useAuth = () => {
   } = useQuery({
     queryKey: queryKeys.auth.profile,
     queryFn: authApi.getProfile,
-    retry: false,
+    retry: (failureCount, error: any) => {
+      // Don't retry on 401 (unauthorized) or 403 (forbidden)
+      if (error?.status === 401 || error?.status === 403) {
+        return false;
+      }
+      // Retry up to 2 times for other errors
+      return failureCount < 2;
+    },
     staleTime: 5 * 60 * 1000, // 5 minutes
-    enabled: !!localStorage.getItem("token"),
+    enabled: isAuthenticated(), // Use token manager to check authentication
+    onError: (error: any) => {
+      // Handle profile fetch errors
+      if (error?.status === 401) {
+        // Token expired or invalid - clear and redirect to login
+        removeToken();
+        queryClient.clear();
+        navigate("/login", { 
+          replace: true,
+          state: { from: location.pathname }
+        });
+      } else if (error?.status === 403) {
+        // User doesn't have permission
+        toast.error("Access denied. Please contact support.");
+      } else {
+        // Other errors
+        toast.error("Failed to load user profile. Please refresh the page.");
+      }
+    },
   });
 
   // Login mutation
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token);
+      // Save token using token manager
+      saveToken(data.token);
+      
       queryClient.setQueryData(queryKeys.auth.profile, {
-        id: data.user.id,
+        id: data.user.sub,
+        name: data.user.name,
         email: data.user.email,
-        firstName: data.user.firstName,
-        lastName: data.user.lastName,
-        role: data.user.role,
+        is_admin: data.user.is_admin,
         isActive: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -41,12 +76,31 @@ export const useAuth = () => {
 
       toast.success("Login successful!");
 
-      // Redirect to intended page or dashboard
-      const from = location.state?.from?.pathname || "/dashboard";
-      navigate(from, { replace: true });
+      // Redirect based on user type
+      const from = location.state?.from?.pathname;
+      if (data.user.is_admin) {
+        // Admin users go to admin dashboard
+        navigate(from || "/admin", { replace: true });
+      } else {
+        // Regular users go to user dashboard
+        navigate(from || "/dashboard", { replace: true });
+      }
     },
     onError: (error: any) => {
-      toast.error(error.message || "Login failed");
+      // Enhanced error handling for login
+      if (error?.status === 401) {
+        toast.error("Invalid email or password. Please try again.");
+      } else if (error?.status === 422) {
+        toast.error("Please check your input and try again.");
+      } else if (error?.status === 429) {
+        toast.error("Too many login attempts. Please wait a moment and try again.");
+      } else if (error?.status === 500) {
+        toast.error("Server error. Please try again later.");
+      } else if (error?.code === "NETWORK_ERROR") {
+        toast.error("Network error. Please check your connection and try again.");
+      } else {
+        toast.error(error?.message || "Login failed. Please try again.");
+      }
     },
   });
 
@@ -54,68 +108,84 @@ export const useAuth = () => {
   const signupMutation = useMutation({
     mutationFn: authApi.signup,
     onSuccess: (data) => {
-      localStorage.setItem("token", data.token);
+      // Save token using token manager
+      saveToken(data.token);
+      
       queryClient.setQueryData(queryKeys.auth.profile, {
-        id: data.user.id,
+        id: data.user.sub,
+        name: data.user.name,
         email: data.user.email,
-        firstName: data.user.firstName,
-        lastName: data.user.lastName,
-        role: data.user.role,
+        is_admin: data.user.is_admin,
         isActive: true,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
       });
 
-      toast.success("Registration successful!");
+      toast.success("Registration successful! Welcome to College Dunia!");
       navigate("/dashboard", { replace: true });
     },
     onError: (error: any) => {
-      toast.error(error.message || "Registration failed");
-    },
-  });
-
-  // Logout mutation
-  const logoutMutation = useMutation({
-    mutationFn: authApi.logout,
-    onSuccess: () => {
-      localStorage.removeItem("token");
-      queryClient.clear();
-      toast.success("Logged out successfully");
-      navigate("/login", { replace: true });
-    },
-    onError: () => {
-      // Even if logout API fails, clear local state
-      localStorage.removeItem("token");
-      queryClient.clear();
-      navigate("/login", { replace: true });
+      // Enhanced error handling for signup
+      if (error?.status === 409) {
+        toast.error("An account with this email already exists.");
+      } else if (error?.status === 422) {
+        // Handle validation errors
+        if (error?.details?.validationErrors) {
+          Object.values(error.details.validationErrors).forEach((message: any) => {
+            toast.error(message);
+          });
+        } else {
+          toast.error("Please check your input and try again.");
+        }
+      } else if (error?.status === 500) {
+        toast.error("Server error. Please try again later.");
+      } else if (error?.code === "NETWORK_ERROR") {
+        toast.error("Network error. Please check your connection and try again.");
+      } else {
+        toast.error(error?.message || "Registration failed. Please try again.");
+      }
     },
   });
 
   // Login function
   const login = async (credentials: LoginRequest) => {
-    await loginMutation.mutateAsync(credentials);
+    try {
+      await loginMutation.mutateAsync(credentials);
+    } catch (error) {
+      // Error is already handled in onError
+      throw error;
+    }
   };
 
   // Signup function
   const signup = async (userData: SignupRequest) => {
-    await signupMutation.mutateAsync(userData);
+    try {
+      await signupMutation.mutateAsync(userData);
+    } catch (error) {
+      // Error is already handled in onError
+      throw error;
+    }
   };
 
   // Logout function
   const logout = async () => {
-    await logoutMutation.mutateAsync();
+    // Simply clear token and redirect - no API call needed
+    removeToken();
+    queryClient.clear();
+    toast.success("Logged out successfully");
+    navigate("/login", { replace: true });
   };
 
-  // Check if user is authenticated
-  const isAuthenticated = !!user && !!localStorage.getItem("token");
+  // Check if user is authenticated using token manager
+  const isUserAuthenticated = isAuthenticated() && !!user;
 
   // Check if user is admin
-  const isAdmin = user?.role === "admin";
+  const isAdmin = user?.is_admin;
 
   return {
     // State
     user,
-    isAuthenticated,
+    isAuthenticated: isUserAuthenticated,
     isAdmin,
     isLoadingUser,
     userError,
@@ -123,7 +193,7 @@ export const useAuth = () => {
     // Loading states
     isLoggingIn: loginMutation.isLoading,
     isSigningUp: signupMutation.isLoading,
-    isLoggingOut: logoutMutation.isLoading,
+    isLoggingOut: false, // No longer needed since logout is instant
 
     // Functions
     login,
@@ -133,6 +203,5 @@ export const useAuth = () => {
     // Mutations (for advanced usage)
     loginMutation,
     signupMutation,
-    logoutMutation,
   };
 };

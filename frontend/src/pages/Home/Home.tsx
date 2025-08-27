@@ -1,23 +1,25 @@
 import React from "react";
 import {
-  Box,
+  Container,
   Typography,
   Button,
-  Container,
+  Box,
   Card,
   CardContent,
-  CardMedia,
+  CardActions,
   Paper,
 } from "@mui/material";
-import {
-  School,
-  Search,
-  Compare,
-  AccountBalance,
-  Description,
-  TrendingUp,
+import { 
+  School, 
+  TrendingUp, 
+  People, 
+  Star, 
+  Search, 
+  Compare, 
+  AccountBalance, 
+  Description 
 } from "@mui/icons-material";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link as RouterLink } from "react-router-dom";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();

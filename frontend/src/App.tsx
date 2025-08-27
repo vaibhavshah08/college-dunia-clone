@@ -18,7 +18,6 @@ import AdminRoute from "./components/Auth/AdminRoute";
 // Direct imports for debugging
 import Home from "./pages/Home/Home";
 import Login from "./pages/Auth/Login";
-import AdminLogin from "./pages/Auth/AdminLogin";
 import Register from "./pages/Auth/Register";
 import Colleges from "./pages/Colleges/Colleges";
 import CollegeDetail from "./pages/Colleges/CollegeDetail";
@@ -199,7 +198,6 @@ function App() {
                 {/* Public Routes */}
                 <Route path="/" element={<Home />} />
                 <Route path="/login" element={<Login />} />
-                <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/colleges" element={<Colleges />} />
                 <Route path="/colleges/:id" element={<CollegeDetail />} />
