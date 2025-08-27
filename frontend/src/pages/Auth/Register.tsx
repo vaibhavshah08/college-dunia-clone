@@ -6,17 +6,16 @@ import {
   TextField,
   Button,
   Box,
-  Link,
   Alert,
   CircularProgress,
+  Link,
 } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    name: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -40,12 +39,8 @@ const Register: React.FC = () => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
-    }
-
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
+    if (!formData.name.trim()) {
+      newErrors.name = "Name is required";
     }
 
     if (!formData.email) {
@@ -87,9 +82,23 @@ const Register: React.FC = () => {
       await signup(signupData);
       // Navigation is handled by the useAuth hook
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Registration failed. Please try again."
-      );
+      // Error is already handled by the useAuth hook, but we can set local error state
+      // for additional UI feedback if needed
+      if (err?.status === 409) {
+        setError("An account with this email already exists.");
+      } else if (err?.status === 422) {
+        // Handle validation errors
+        if (err?.details?.validationErrors) {
+          const validationMessages = Object.values(err.details.validationErrors).join(", ");
+          setError(`Validation errors: ${validationMessages}`);
+        } else {
+          setError("Please check your input and try again.");
+        }
+      } else if (err?.code === "NETWORK_ERROR") {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError("Registration failed. Please try again.");
+      }
     }
   };
 
@@ -129,29 +138,15 @@ const Register: React.FC = () => {
               margin="normal"
               required
               fullWidth
-              id="firstName"
-              label="First Name"
-              name="firstName"
-              autoComplete="given-name"
+              id="name"
+              label="Name"
+              name="name"
+              autoComplete="name"
               autoFocus
-              value={formData.firstName}
+              value={formData.name}
               onChange={handleChange}
-              error={!!errors.firstName}
-              helperText={errors.firstName}
-              disabled={isSigningUp}
-            />
-            <TextField
-              margin="normal"
-              required
-              fullWidth
-              id="lastName"
-              label="Last Name"
-              name="lastName"
-              autoComplete="family-name"
-              value={formData.lastName}
-              onChange={handleChange}
-              error={!!errors.lastName}
-              helperText={errors.lastName}
+              error={!!errors.name}
+              helperText={errors.name}
               disabled={isSigningUp}
             />
           </Box>

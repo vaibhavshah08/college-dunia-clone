@@ -65,20 +65,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   };
 
   const menuItems = [
-    { text: "Home", path: "/", icon: <School /> },
-    { text: "Colleges", path: "/colleges", icon: <School /> },
     ...(isAuthenticated
-      ? [
-          { text: "Dashboard", path: "/dashboard", icon: <Dashboard /> },
-          { text: "Profile", path: "/profile", icon: <Person /> },
-          { text: "Loans", path: "/loans", icon: <AccountBalance /> },
-          { text: "Documents", path: "/documents", icon: <Description /> },
-          ...(user?.role === "admin"
-            ? [{ text: "Admin", path: "/admin", icon: <AdminPanelSettings /> }]
-            : []),
-        ]
+      ? user?.is_admin
+        ? [
+            // Admin users only see Dashboard
+            { text: "Dashboard", path: "/admin", icon: <AdminPanelSettings /> },
+          ]
+        : [
+            // Regular users see all tabs including Home and Colleges
+            { text: "Home", path: "/", icon: <School /> },
+            { text: "Colleges", path: "/colleges", icon: <School /> },
+            { text: "Dashboard", path: "/dashboard", icon: <Dashboard /> },
+            { text: "Profile", path: "/profile", icon: <Person /> },
+            { text: "Loans", path: "/loans", icon: <AccountBalance /> },
+            { text: "Documents", path: "/documents", icon: <Description /> },
+          ]
       : [
-          { text: "Admin Login", path: "/admin/login", icon: <AdminPanelSettings /> },
+          // Non-authenticated users see Home and Colleges
+          { text: "Home", path: "/", icon: <School /> },
+          { text: "Colleges", path: "/colleges", icon: <School /> },
         ]),
   ];
 
@@ -192,7 +197,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   fontWeight: 500 
                 }}
               >
-                {user?.firstName} {user?.lastName}
+                {user?.name}
+                {user?.is_admin && (
+                  <Box
+                    component="span"
+                    sx={{
+                      ml: 1,
+                      px: 1,
+                      py: 0.25,
+                      backgroundColor: "secondary.main",
+                      color: "white",
+                      borderRadius: 1,
+                      fontSize: "0.7rem",
+                      fontWeight: "bold",
+                      textTransform: "uppercase",
+                    }}
+                  >
+                    Admin
+                  </Box>
+                )}
               </Typography>
               <IconButton
                 size="large"
@@ -205,7 +228,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 sx={{ ml: 1 }}
               >
                 <Avatar sx={{ width: 32, height: 32, bgcolor: "secondary.main" }}>
-                  {user?.firstName?.charAt(0)}
+                  {user?.name?.charAt(0)}
                 </Avatar>
               </IconButton>
             </Box>
@@ -228,21 +251,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 sx={{ borderRadius: 1 }}
               >
                 Register
-              </Button>
-              <Button
-                variant="outlined"
-                color="inherit"
-                onClick={() => navigate("/admin/login")}
-                sx={{ 
-                  display: { xs: "none", sm: "block" },
-                  borderRadius: 1,
-                  borderColor: "rgba(255, 255, 255, 0.3)",
-                  "&:hover": {
-                    borderColor: "rgba(255, 255, 255, 0.5)",
-                  }
-                }}
-              >
-                Admin
               </Button>
             </Box>
           )}

@@ -63,9 +63,22 @@ const Login: React.FC = () => {
     }
 
     try {
-      await login(formData);
+      await login({ email: formData.email, password: formData.password });
+      // Navigation is handled by the useAuth hook
     } catch (err: any) {
-      setError(err.message || "Login failed. Please try again.");
+      // Error is already handled by the useAuth hook, but we can set local error state
+      // for additional UI feedback if needed
+      if (err?.status === 401) {
+        setError("Invalid email or password. Please try again.");
+      } else if (err?.status === 422) {
+        setError("Please check your input and try again.");
+      } else if (err?.status === 429) {
+        setError("Too many login attempts. Please wait a moment and try again.");
+      } else if (err?.code === "NETWORK_ERROR") {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     }
   };
 

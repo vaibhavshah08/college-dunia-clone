@@ -35,8 +35,7 @@ export interface LoginRequest {
 export interface SignupRequest {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
+  name: string;
   phone?: string;
 }
 
@@ -44,20 +43,18 @@ export interface AuthResponse {
   message: string;
   token: string;
   user: {
-    id: string;
+    name: string;
+    sub: string;
     email: string;
-    firstName: string;
-    lastName: string;
-    role: "student" | "admin";
+    is_admin: boolean;
   };
 }
 
 export interface UserProfile {
   id: string;
+  name: string;
   email: string;
-  firstName: string;
-  lastName: string;
-  role: "student" | "admin";
+  is_admin: boolean;
   isActive: boolean;
   createdAt: string;
   updatedAt: string;

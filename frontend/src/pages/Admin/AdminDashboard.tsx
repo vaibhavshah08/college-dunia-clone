@@ -72,6 +72,7 @@ const AdminDashboard: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Sample colleges data
   const [colleges] = useState([
@@ -93,7 +94,41 @@ const AdminDashboard: React.FC = () => {
       ranking: "#2",
       status: "Active",
     },
+    {
+      id: 3,
+      name: "IIT Delhi",
+      location: "Delhi",
+      courseType: "Engineering",
+      fees: "₹2,10,000",
+      ranking: "#3",
+      status: "Active",
+    },
+    {
+      id: 4,
+      name: "JNU Delhi",
+      location: "Delhi",
+      courseType: "Arts",
+      fees: "₹50,000",
+      ranking: "#15",
+      status: "Active",
+    },
+    {
+      id: 5,
+      name: "St. Xavier's College",
+      location: "Mumbai, Maharashtra",
+      courseType: "Commerce",
+      fees: "₹80,000",
+      ranking: "#25",
+      status: "Active",
+    },
   ]);
+
+  // Filter colleges based on search query
+  const filteredColleges = colleges.filter((college) =>
+    college.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    college.location.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    college.courseType.toLowerCase().includes(searchQuery.toLowerCase())
+  );
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
@@ -122,8 +157,21 @@ const AdminDashboard: React.FC = () => {
         ranking: "",
         description: "",
       });
-    } catch (error) {
-      setMessage({ type: 'error', text: 'Failed to add college. Please try again.' });
+    } catch (error: any) {
+      // Enhanced error handling for college addition
+      if (error?.status === 409) {
+        setMessage({ type: 'error', text: 'A college with this name already exists.' });
+      } else if (error?.status === 422) {
+        setMessage({ type: 'error', text: 'Please check your input and try again.' });
+      } else if (error?.status === 403) {
+        setMessage({ type: 'error', text: 'You do not have permission to add colleges.' });
+      } else if (error?.status === 500) {
+        setMessage({ type: 'error', text: 'Server error. Please try again later.' });
+      } else if (error?.code === "NETWORK_ERROR") {
+        setMessage({ type: 'error', text: 'Network error. Please check your connection and try again.' });
+      } else {
+        setMessage({ type: 'error', text: 'Failed to add college. Please try again.' });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -147,11 +195,39 @@ const AdminDashboard: React.FC = () => {
         type: 'success', 
         text: `Excel file uploaded successfully! ${data.length} colleges imported.` 
       });
-    } catch (error) {
-      setMessage({ 
-        type: 'error', 
-        text: 'Failed to upload file. Please check the format and try again.' 
-      });
+    } catch (error: any) {
+      // Enhanced error handling for Excel upload
+      if (error?.message === 'Failed to parse Excel file') {
+        setMessage({ 
+          type: 'error', 
+          text: 'Invalid file format. Please use the provided template.' 
+        });
+      } else if (error?.status === 413) {
+        setMessage({ 
+          type: 'error', 
+          text: 'File too large. Please use a smaller file.' 
+        });
+      } else if (error?.status === 422) {
+        setMessage({ 
+          type: 'error', 
+          text: 'Invalid data in file. Please check the format and try again.' 
+        });
+      } else if (error?.status === 500) {
+        setMessage({ 
+          type: 'error', 
+          text: 'Server error. Please try again later.' 
+        });
+      } else if (error?.code === "NETWORK_ERROR") {
+        setMessage({ 
+          type: 'error', 
+          text: 'Network error. Please check your connection and try again.' 
+        });
+      } else {
+        setMessage({ 
+          type: 'error', 
+          text: 'Failed to upload file. Please check the format and try again.' 
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -412,9 +488,34 @@ const AdminDashboard: React.FC = () => {
           {/* Colleges Table */}
           <Card>
             <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Existing Colleges
-              </Typography>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Typography variant="h6">
+                  Existing Colleges
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">
+                    {filteredColleges.length} of {colleges.length} colleges
+                  </Typography>
+                </Box>
+              </Box>
+              
+              {/* Search Bar */}
+              <TextField
+                fullWidth
+                variant="outlined"
+                placeholder="Search colleges by name, location, or course type..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                sx={{ mb: 3 }}
+                InputProps={{
+                  startAdornment: (
+                    <Box sx={{ mr: 1, color: 'text.secondary' }}>
+                      🔍
+                    </Box>
+                  ),
+                }}
+              />
+
               <TableContainer>
                 <Table>
                   <TableHead>
@@ -429,30 +530,40 @@ const AdminDashboard: React.FC = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {colleges.map((college) => (
-                      <TableRow key={college.id}>
-                        <TableCell>{college.name}</TableCell>
-                        <TableCell>{college.location}</TableCell>
-                        <TableCell>{college.courseType}</TableCell>
-                        <TableCell>{college.fees}</TableCell>
-                        <TableCell>{college.ranking}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={college.status}
-                            color="success"
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <IconButton size="small" color="primary">
-                            <Edit />
-                          </IconButton>
-                          <IconButton size="small" color="error">
-                            <Delete />
-                          </IconButton>
+                    {filteredColleges.length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                          <Typography variant="body1" color="text.secondary">
+                            {searchQuery ? `No colleges found matching "${searchQuery}"` : "No colleges available"}
+                          </Typography>
                         </TableCell>
                       </TableRow>
-                    ))}
+                    ) : (
+                      filteredColleges.map((college) => (
+                        <TableRow key={college.id}>
+                          <TableCell>{college.name}</TableCell>
+                          <TableCell>{college.location}</TableCell>
+                          <TableCell>{college.courseType}</TableCell>
+                          <TableCell>{college.fees}</TableCell>
+                          <TableCell>{college.ranking}</TableCell>
+                          <TableCell>
+                            <Chip
+                              label={college.status}
+                              color="success"
+                              size="small"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <IconButton size="small" color="primary">
+                              <Edit />
+                            </IconButton>
+                            <IconButton size="small" color="error">
+                              <Delete />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>

@@ -5,6 +5,7 @@ import axios, {
   AxiosError,
 } from "axios";
 import { toast } from "react-toastify";
+import { getAuthToken, removeToken } from "../utils/tokenManager";
 
 // Environment configuration
 const API_BASE_URL = "https://66mz5dpp-7001.inc1.devtunnels.ms"
@@ -26,8 +27,8 @@ const apiClient: AxiosInstance = axios.create({
 // Request interceptor
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Add auth token
-    const token = localStorage.getItem("token");
+    // Add auth token using token manager
+    const token = getAuthToken();
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -78,7 +79,7 @@ apiClient.interceptors.response.use(
       switch (status) {
         case 401:
           // Unauthorized - clear token and redirect to login
-          localStorage.removeItem("token");
+          removeToken();
           window.location.href = "/login";
           break;
 

@@ -9,8 +9,11 @@ import {
   Button,
 } from "@mui/material";
 import { Person } from "@mui/icons-material";
+import { useAuth } from "../../lib/hooks/useAuth";
 
 const Profile: React.FC = () => {
+  const { user } = useAuth();
+
   return (
     <Container maxWidth="lg">
       <Typography variant="h4" component="h1" gutterBottom>
@@ -30,14 +33,33 @@ const Profile: React.FC = () => {
         <Card>
           <CardContent sx={{ textAlign: "center" }}>
             <Avatar sx={{ width: 100, height: 100, mx: "auto", mb: 2 }}>
-              <Person sx={{ fontSize: 60 }} />
+              {user?.name?.charAt(0) || <Person sx={{ fontSize: 60 }} />}
             </Avatar>
             <Typography variant="h6" gutterBottom>
-              John Doe
+              {user?.name || "User"}
             </Typography>
             <Typography variant="body2" color="text.secondary" gutterBottom>
-              john.doe@example.com
+              {user?.email || "user@example.com"}
             </Typography>
+            {user?.is_admin && (
+              <Typography 
+                variant="body2" 
+                sx={{ 
+                  backgroundColor: "secondary.main",
+                  color: "white",
+                  px: 1,
+                  py: 0.5,
+                  borderRadius: 1,
+                  fontSize: "0.8rem",
+                  fontWeight: "bold",
+                  textTransform: "uppercase",
+                  display: "inline-block",
+                  mb: 2
+                }}
+              >
+                Admin
+              </Typography>
+            )}
             <Button variant="outlined" sx={{ mt: 2 }}>
               Edit Profile
             </Button>
@@ -61,27 +83,29 @@ const Profile: React.FC = () => {
             >
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  First Name
+                  Full Name
                 </Typography>
-                <Typography variant="body1">John</Typography>
-              </Box>
-              <Box>
-                <Typography variant="body2" color="text.secondary">
-                  Last Name
-                </Typography>
-                <Typography variant="body1">Doe</Typography>
+                <Typography variant="body1">{user?.name || "Not provided"}</Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">
                   Email
                 </Typography>
-                <Typography variant="body1">john.doe@example.com</Typography>
+                <Typography variant="body1">{user?.email || "Not provided"}</Typography>
               </Box>
               <Box>
                 <Typography variant="body2" color="text.secondary">
-                  Phone
+                  User ID
                 </Typography>
-                <Typography variant="body1">+91 9876543210</Typography>
+                <Typography variant="body1">{user?.id || "Not available"}</Typography>
+              </Box>
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Role
+                </Typography>
+                <Typography variant="body1">
+                  {user?.is_admin ? "Administrator" : "Student"}
+                </Typography>
               </Box>
             </Box>
           </CardContent>
