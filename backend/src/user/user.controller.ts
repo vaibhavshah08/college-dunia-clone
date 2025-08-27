@@ -1,4 +1,15 @@
-import { Controller, Post, Body, Get, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  Param,
+  UploadedFile,
+  UseInterceptors,
+  BadRequestException,
+} from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
@@ -28,7 +39,50 @@ export class UserController {
 
   @UseGuards(JwtAuthGuard)
   @Get('me')
-  async me(@GetUser() user: any) {
-    return user;
+  async me(@Correlation() correlation_id: string, @GetUser() user: any) {
+    return await this.user_service.findById(correlation_id, user.user_id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id')
+  async findById(
+    @Correlation() correlation_id: string,
+    @Param('id') id: string,
+  ) {
+    return await this.user_service.findById(correlation_id, id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('upload-document')
+  @UseInterceptors(FileInterceptor('file'))
+  async uploadDocument(
+    @Correlation() correlation_id: string,
+    @GetUser() user: any,
+    @UploadedFile() file: any,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+
+    // In a real application, you would save the file to a storage service
+    // and get the document path. For now, we'll use a placeholder
+    const document_path = `/uploads/${file.filename}`;
+    return await this.user_service.uploadDocument(
+      correlation_id,
+      user.user_id,
+      document_path,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get('documents')
+  async getUserDocuments(
+    @Correlation() correlation_id: string,
+    @GetUser() user: any,
+  ) {
+    return await this.user_service.getUserDocuments(
+      correlation_id,
+      user.user_id,
+    );
   }
 }

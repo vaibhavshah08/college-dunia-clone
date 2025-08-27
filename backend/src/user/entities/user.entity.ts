@@ -8,20 +8,23 @@ import {
 
 @Entity('users')
 export class User {
-  @PrimaryColumn('varchar', { nullable: false })
+  @PrimaryColumn('varchar')
   user_id: string;
 
   @Column('varchar', { nullable: false })
-  name: string;
+  first_name: string;
 
-  @Column('varchar', { unique: true })
+  @Column('varchar', { nullable: false })
+  last_name: string;
+
+  @Column('varchar', { unique: true, nullable: false })
   email: string;
 
-  @Column('varchar')
-  password: string; // hashed
+  @Column('varchar', { nullable: true, default: null })
+  phone_number: string;
 
-  @Column('varchar', { default: null, nullable: true })
-  course: string;
+  @Column('varchar', { nullable: false })
+  password: string; // hashed
 
   @Column('boolean', { default: false })
   is_admin: boolean;
@@ -31,21 +34,6 @@ export class User {
 
   @Column('boolean', { default: false })
   is_deleted: boolean;
-
-  @Column('boolean', { default: false })
-  is_blocked: boolean;
-
-  @Column('varchar', { default: null, nullable: true })
-  phone_number: string;
-
-  @Column('boolean', { default: false })
-  is_phone_verified: boolean;
-
-  @Column('varchar', { default: null, nullable: true })
-  city: string;
-
-  @Column('boolean', { default: false })
-  is_email_verified: boolean;
 
   @CreateDateColumn()
   created_at: Date;

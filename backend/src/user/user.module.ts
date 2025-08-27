@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { User } from './entities/user.entity';
+import { Document } from './documents.entity';
 import { UserService } from './user.service';
 import { UserController } from './user.controller';
 import { JwtModule } from '@nestjs/jwt';
@@ -9,7 +10,7 @@ import { LoggerModule } from 'src/core/logger/logger.module';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([User]),
+    TypeOrmModule.forFeature([User, Document]),
     ConfigModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],

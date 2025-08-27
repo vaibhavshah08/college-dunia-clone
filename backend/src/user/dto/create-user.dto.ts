@@ -10,7 +10,11 @@ import { IsValidPassword } from 'src/common/decorators/validate-password.decorat
 export class CreateUserDto {
   @IsString()
   @IsNotEmpty()
-  readonly name: string;
+  readonly first_name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  readonly last_name: string;
 
   @IsEmail()
   @IsString()
@@ -25,15 +29,5 @@ export class CreateUserDto {
   @IsNotEmpty()
   @IsString()
   @IsOptional()
-  readonly course?: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @IsOptional()
   readonly phone_number?: string;
-
-  @IsNotEmpty()
-  @IsString()
-  @IsOptional()
-  readonly city?: string;
 }

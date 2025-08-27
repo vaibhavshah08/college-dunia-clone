@@ -1,38 +1,46 @@
-import { Entity, PrimaryColumn, Column } from 'typeorm';
-import { v4 as uuidv4 } from 'uuid';
+import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
 
 @Entity('colleges')
 export class College {
   @PrimaryColumn('varchar')
-  id: string;
+  college_id: string;
 
-  @Column('varchar')
-  name: string;
+  @Column('varchar', { nullable: false })
+  college_name: string;
 
-  @Column('varchar', { default: null, nullable: true })
-  stream: string | null;
+  @Column('varchar', { nullable: false })
+  state: string;
 
-  @Column('varchar', { default: null, nullable: true })
-  location: string | null;
+  @Column('varchar', { nullable: false })
+  city: string;
 
-  @Column('float', { default: null, nullable: true })
-  cutoff_score: number | null;
+  @Column('varchar', { nullable: false })
+  pincode: string;
 
-  @Column('int', { default: null, nullable: true })
-  ranking: number | null;
+  @Column('varchar', { nullable: true, default: null })
+  landmark: string;
 
-  @Column('int', { default: null, nullable: true })
-  fees: number | null;
+  @Column('float', { nullable: false })
+  fees: number;
 
-  @Column('json', { default: null, nullable: true })
-  facilities: any | null;
+  @Column('int', { nullable: false })
+  ranking: number;
 
-  @Column('text', { default: null, nullable: true })
-  description: string | null;
+  @Column('simple-array', { nullable: false })
+  courses_offered: string[]; // [CSE, ME, ECE]
 
-  constructor() {
-    if (!this.id) {
-      this.id = uuidv4();
-    }
-  }
+  @Column('float', { nullable: false })
+  placement_ratio: number;
+
+  @Column('int', { nullable: false })
+  year_of_establishment: number;
+
+  @Column('varchar', { nullable: false })
+  affiliation: string;
+
+  @Column('varchar', { nullable: false })
+  accreditation: string;
+
+  @CreateDateColumn()
+  created_at: Date;
 }

@@ -2,6 +2,7 @@ import { Injectable, HttpStatus } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
+import { Document } from './documents.entity';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
 import * as bcrypt from 'bcrypt';
@@ -18,119 +19,234 @@ import { v4 as uuidv4 } from 'uuid';
 export class UserService {
   constructor(
     @InjectRepository(User) private readonly user_repo: Repository<User>,
+    @InjectRepository(Document)
+    private readonly document_repo: Repository<Document>,
     private readonly jwtService: JwtService,
     private readonly logger: CustomLogger,
   ) {}
 
   async signup(correlation_id: string, create_user_dto: CreateUserDto) {
     this.logger.setContext(this.constructor.name + '/signup');
-    this.logger.verbose(correlation_id, 'Start');
+    this.logger.debug(correlation_id, 'Starting user signup process');
 
-    this.logger.debug(correlation_id, 'Going to Find User in the DB');
-
+    this.logger.debug(
+      correlation_id,
+      'Checking if user already exists in database',
+    );
     const existing_user = await this.user_repo.findOne({
       where: { email: create_user_dto.email },
     });
 
-    if (existing_user)
+    if (existing_user) {
+      this.logger.debug(correlation_id, 'User already exists with this email');
       throw customHttpError(
         DATA_VALIDATION_ERROR,
         'EMAIL_EXISTS',
         'Email already registered',
         HttpStatus.BAD_REQUEST,
       );
+    }
 
+    this.logger.debug(correlation_id, 'Hashing user password');
     const hashed_password = await bcrypt.hash(create_user_dto.password, 10);
 
+    this.logger.debug(correlation_id, 'Creating new user entity');
     const user = this.user_repo.create({
       ...create_user_dto,
       user_id: uuidv4(),
       password: hashed_password,
     });
 
+    this.logger.debug(correlation_id, 'Saving user to database');
     const saved_user = await this.user_repo.save(user);
+    this.logger.debug(
+      correlation_id,
+      `User saved successfully with ID: ${saved_user.user_id}`,
+    );
 
     return {
       message: 'User registered successfully',
-      user: {
-        id: saved_user.user_id,
-        name: saved_user.name,
+      data: {
+        user_id: saved_user.user_id,
+        first_name: saved_user.first_name,
+        last_name: saved_user.last_name,
         email: saved_user.email,
+        phone_number: saved_user.phone_number,
+        is_admin: saved_user.is_admin,
+        is_active: saved_user.is_active,
+        created_at: saved_user.created_at,
       },
     };
   }
 
   async login(correlation_id: string, login_user_dto: LoginUserDto) {
     this.logger.setContext(this.constructor.name + '/login');
-    this.logger.verbose(correlation_id, 'Start');
+    this.logger.debug(correlation_id, 'Starting user login process');
 
+    this.logger.debug(correlation_id, 'Finding user in database');
     const user = await this.user_repo.findOne({
       where: { email: login_user_dto.email },
     });
-    if (!user)
+
+    if (!user) {
+      this.logger.debug(correlation_id, 'User not found in database');
       throw customHttpError(
         ENTITY_NOT_FOUND,
         'INVALID_CREDENTIALS',
         'Invalid credentials',
         HttpStatus.UNAUTHORIZED,
       );
+    }
 
+    this.logger.debug(correlation_id, 'Validating user password');
     const is_password_valid = await bcrypt.compare(
       login_user_dto.password,
       user.password,
     );
 
-    this.logger.debug(correlation_id, 'Checking Password');
-    if (!is_password_valid)
+    if (!is_password_valid) {
+      this.logger.debug(correlation_id, 'Invalid password provided');
       throw customHttpError(
         ENTITY_NOT_FOUND,
         'INVALID_CREDENTIALS',
         'Invalid credentials',
         HttpStatus.UNAUTHORIZED,
       );
+    }
 
-    if (!user.is_active || user.is_deleted || user.is_blocked)
+    if (!user.is_active || user.is_deleted) {
+      this.logger.debug(correlation_id, 'User account is inactive or deleted');
       throw customHttpError(
         DATA_VALIDATION_ERROR,
         'ACCOUNT_INACTIVE',
         'Account is not active',
         HttpStatus.UNAUTHORIZED,
       );
+    }
 
-    this.logger.debug(correlation_id, 'Generating Payload');
+    this.logger.debug(correlation_id, 'Generating JWT token');
     const payload = {
-      name: user.name,
+      first_name: user.first_name,
+      last_name: user.last_name,
       user_id: user.user_id,
       email: user.email,
       is_admin: user.is_admin,
     };
     const token = await this.jwtService.signAsync(payload);
-
-    this.logger.debug(
-      correlation_id,
-      `Going to send payload and token ${JSON.stringify(token)}, ${JSON.stringify(payload)}`,
-    );
+    this.logger.debug(correlation_id, 'JWT token generated successfully');
 
     return {
       message: 'Login successful',
-      token,
-      user: {
-        ...payload,
-        is_active: user.is_active,
-        phone_number: user?.phone_number,
+      data: {
+        token,
+        user: {
+          user_id: user.user_id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone_number: user.phone_number,
+          is_admin: user.is_admin,
+          is_active: user.is_active,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+        },
       },
     };
   }
 
   async findById(correlation_id: string, id: string) {
     this.logger.setContext(this.constructor.name + '/findById');
-    this.logger.log(correlation_id, `Finding user by ID: ${id}`);
+    this.logger.debug(correlation_id, `Finding user by ID: ${id}`);
+
     const user = await this.user_repo.findOne({ where: { user_id: id } });
+
     if (user) {
-      this.logger.log(correlation_id, `User found: ${id}`);
+      this.logger.debug(correlation_id, `User found successfully: ${id}`);
+      return {
+        message: 'User found successfully',
+        data: {
+          user_id: user.user_id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone_number: user.phone_number,
+          is_admin: user.is_admin,
+          is_active: user.is_active,
+          is_deleted: user.is_deleted,
+          created_at: user.created_at,
+          updated_at: user.updated_at,
+        },
+      };
     } else {
-      this.logger.warn(correlation_id, `User not found: ${id}`);
+      this.logger.debug(correlation_id, `User not found: ${id}`);
+      throw customHttpError(
+        ENTITY_NOT_FOUND,
+        'USER_NOT_FOUND',
+        'User not found',
+        HttpStatus.NOT_FOUND,
+      );
     }
-    return user;
+  }
+
+  async uploadDocument(
+    correlation_id: string,
+    user_id: string,
+    document_path: string,
+  ) {
+    this.logger.setContext(this.constructor.name + '/uploadDocument');
+    this.logger.debug(correlation_id, 'Starting document upload process');
+
+    this.logger.debug(correlation_id, 'Creating new document entity');
+    const document = this.document_repo.create({
+      document_id: uuidv4(),
+      user_id: user_id,
+      document_path: document_path,
+    });
+
+    this.logger.debug(correlation_id, 'Saving document to database');
+    const saved_document = await this.document_repo.save(document);
+    this.logger.debug(
+      correlation_id,
+      `Document saved successfully with ID: ${saved_document.document_id}`,
+    );
+
+    return {
+      message: 'Document uploaded successfully',
+      data: {
+        document_id: saved_document.document_id,
+        user_id: saved_document.user_id,
+        document_path: saved_document.document_path,
+        uploaded_at: saved_document.uploaded_at,
+        created_at: saved_document.created_at,
+      },
+    };
+  }
+
+  async getUserDocuments(correlation_id: string, user_id: string) {
+    this.logger.setContext(this.constructor.name + '/getUserDocuments');
+    this.logger.debug(
+      correlation_id,
+      `Fetching documents for user: ${user_id}`,
+    );
+
+    const documents = await this.document_repo.find({
+      where: { user_id: user_id },
+    });
+
+    this.logger.debug(
+      correlation_id,
+      `Found ${documents.length} documents for user`,
+    );
+
+    return {
+      message: 'Documents retrieved successfully',
+      data: documents.map((doc) => ({
+        document_id: doc.document_id,
+        user_id: doc.user_id,
+        document_path: doc.document_path,
+        uploaded_at: doc.uploaded_at,
+        created_at: doc.created_at,
+      })),
+    };
   }
 }
