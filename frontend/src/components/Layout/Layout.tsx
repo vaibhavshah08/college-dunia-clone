@@ -28,9 +28,11 @@ import {
   AccountBalance,
   AdminPanelSettings,
   Logout,
+  Home,
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
+import Footer from "./Footer";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -45,6 +47,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  // Create full name from first_name and last_name
+  const fullName = user ? `${user.first_name} ${user.last_name}` : "";
+  const firstName = user?.first_name || "";
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -64,28 +70,32 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setMobileOpen(!mobileOpen);
   };
 
-  const menuItems = [
-    ...(isAuthenticated
-      ? user?.is_admin
-        ? [
-            // Admin users only see Dashboard
-            { text: "Dashboard", path: "/admin", icon: <AdminPanelSettings /> },
-          ]
-        : [
-            // Regular users see all tabs including Home and Colleges
-            { text: "Home", path: "/", icon: <School /> },
-            { text: "Colleges", path: "/colleges", icon: <School /> },
-            { text: "Dashboard", path: "/dashboard", icon: <Dashboard /> },
-            { text: "Profile", path: "/profile", icon: <Person /> },
-            { text: "Loans", path: "/loans", icon: <AccountBalance /> },
-            { text: "Documents", path: "/documents", icon: <Description /> },
-          ]
-      : [
-          // Non-authenticated users see Home and Colleges
-          { text: "Home", path: "/", icon: <School /> },
-          { text: "Colleges", path: "/colleges", icon: <School /> },
-        ]),
-  ];
+  // Define navigation items based on user role
+  const getMenuItems = () => {
+    if (!isAuthenticated) {
+      return [{ text: "Home", path: "/", icon: <Home /> }];
+    }
+
+    if (user?.is_admin) {
+      return [
+        {
+          text: "Admin Dashboard",
+          path: "/admin",
+          icon: <AdminPanelSettings />,
+        },
+      ];
+    }
+
+    // Regular student users
+    return [
+      { text: "Home", path: "/", icon: <Home /> },
+      { text: "Colleges", path: "/colleges", icon: <School /> },
+      { text: "Loans", path: "/loans", icon: <AccountBalance /> },
+      { text: "Documents", path: "/documents", icon: <Description /> },
+    ];
+  };
+
+  const menuItems = getMenuItems();
 
   const drawer = (
     <Box sx={{ width: 280 }}>
@@ -112,17 +122,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   : "transparent",
               color: location.pathname === item.path ? "white" : "inherit",
               "&:hover": {
-                backgroundColor: location.pathname === item.path
-                  ? "primary.dark"
-                  : "action.hover",
+                backgroundColor:
+                  location.pathname === item.path
+                    ? "primary.dark"
+                    : "action.hover",
               },
               transition: "all 0.2s",
             }}
           >
-            <ListItemIcon sx={{ 
-              color: location.pathname === item.path ? "white" : "inherit",
-              minWidth: 40 
-            }}>
+            <ListItemIcon
+              sx={{
+                color: location.pathname === item.path ? "white" : "inherit",
+                minWidth: 40,
+              }}
+            >
               {item.icon}
             </ListItemIcon>
             <ListItemText primary={item.text} />
@@ -151,11 +164,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Typography
             variant="h6"
             component="div"
-            sx={{ 
-              flexGrow: 1, 
+            sx={{
+              flexGrow: 1,
               cursor: "pointer",
               fontWeight: "bold",
-              fontSize: { xs: "1.1rem", sm: "1.25rem" }
+              fontSize: { xs: "1.1rem", sm: "1.25rem" },
             }}
             onClick={() => navigate("/")}
           >
@@ -190,19 +203,20 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
           {isAuthenticated ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  display: { xs: "none", sm: "block" },
-                  fontWeight: 500 
-                }}
-              >
-                {user?.name}
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                <Typography
+                  variant="body2"
+                  sx={{
+                    display: { xs: "none", sm: "block" },
+                    fontWeight: 500,
+                  }}
+                >
+                  {fullName}
+                </Typography>
                 {user?.is_admin && (
                   <Box
                     component="span"
                     sx={{
-                      ml: 1,
                       px: 1,
                       py: 0.25,
                       backgroundColor: "secondary.main",
@@ -216,7 +230,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                     Admin
                   </Box>
                 )}
-              </Typography>
+              </Box>
               <IconButton
                 size="large"
                 edge="end"
@@ -227,19 +241,21 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 color="inherit"
                 sx={{ ml: 1 }}
               >
-                <Avatar sx={{ width: 32, height: 32, bgcolor: "secondary.main" }}>
-                  {user?.name?.charAt(0)}
+                <Avatar
+                  sx={{ width: 32, height: 32, bgcolor: "secondary.main" }}
+                >
+                  {firstName.charAt(0)}
                 </Avatar>
               </IconButton>
             </Box>
           ) : (
             <Box sx={{ display: "flex", gap: 1, ml: 2 }}>
-              <Button 
-                color="inherit" 
+              <Button
+                color="inherit"
                 onClick={() => navigate("/login")}
-                sx={{ 
+                sx={{
                   display: { xs: "none", sm: "block" },
-                  borderRadius: 1 
+                  borderRadius: 1,
                 }}
               >
                 Login
@@ -303,9 +319,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         {drawer}
       </Drawer>
 
-      <Container component="main" sx={{ flexGrow: 1, py: 3, px: { xs: 2, sm: 3 } }}>
-        {children}
-      </Container>
+      <Box
+        sx={{
+          flexGrow: 1,
+          background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+          minHeight: "calc(100vh - 64px)",
+        }}
+      >
+        <Container component="main" sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
+          {children}
+        </Container>
+      </Box>
+      <Footer />
     </Box>
   );
 };

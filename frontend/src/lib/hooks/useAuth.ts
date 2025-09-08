@@ -4,7 +4,11 @@ import { toast } from "react-toastify";
 import authApi from "../../services/modules/auth.api";
 import { queryKeys } from "../../store/queryClient";
 import { LoginRequest, SignupRequest } from "../../types/api";
-import { saveToken, removeToken, isAuthenticated } from "../../utils/tokenManager";
+import {
+  saveToken,
+  removeToken,
+  isAuthenticated,
+} from "../../utils/tokenManager";
 
 // Custom error types
 interface ApiError {
@@ -43,9 +47,9 @@ export const useAuth = () => {
         // Token expired or invalid - clear and redirect to login
         removeToken();
         queryClient.clear();
-        navigate("/login", { 
+        navigate("/login", {
           replace: true,
-          state: { from: location.pathname }
+          state: { from: location.pathname },
         });
       } else if (error?.status === 403) {
         // User doesn't have permission
@@ -61,29 +65,40 @@ export const useAuth = () => {
   const loginMutation = useMutation({
     mutationFn: authApi.login,
     onSuccess: (data) => {
+      console.log("Login successful, data:", data);
+      console.log("User is_admin:", data.user.is_admin);
+
       // Save token using token manager
       saveToken(data.token);
-      
+      console.log("Token saved, checking authentication:", isAuthenticated());
+
       queryClient.setQueryData(queryKeys.auth.profile, {
-        id: data.user.sub,
-        name: data.user.name,
+        user_id: data.user.user_id,
+        first_name: data.user.first_name,
+        last_name: data.user.last_name,
         email: data.user.email,
+        phone_number: data.user.phone_number,
         is_admin: data.user.is_admin,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        is_active: data.user.is_active,
+        is_deleted: false,
+        created_at: data.user.created_at,
+        updated_at: data.user.updated_at,
       });
 
       toast.success("Login successful!");
 
       // Redirect based on user type
       const from = location.state?.from?.pathname;
+      console.log("Redirecting from:", from);
+
       if (data.user.is_admin) {
+        console.log("Redirecting admin to /admin");
         // Admin users go to admin dashboard
         navigate(from || "/admin", { replace: true });
       } else {
-        // Regular users go to user dashboard
-        navigate(from || "/dashboard", { replace: true });
+        console.log("Redirecting user to /");
+        // Regular users go to home page
+        navigate(from || "/", { replace: true });
       }
     },
     onError: (error: any) => {
@@ -93,11 +108,15 @@ export const useAuth = () => {
       } else if (error?.status === 422) {
         toast.error("Please check your input and try again.");
       } else if (error?.status === 429) {
-        toast.error("Too many login attempts. Please wait a moment and try again.");
+        toast.error(
+          "Too many login attempts. Please wait a moment and try again."
+        );
       } else if (error?.status === 500) {
         toast.error("Server error. Please try again later.");
       } else if (error?.code === "NETWORK_ERROR") {
-        toast.error("Network error. Please check your connection and try again.");
+        toast.error(
+          "Network error. Please check your connection and try again."
+        );
       } else {
         toast.error(error?.message || "Login failed. Please try again.");
       }
@@ -108,21 +127,10 @@ export const useAuth = () => {
   const signupMutation = useMutation({
     mutationFn: authApi.signup,
     onSuccess: (data) => {
-      // Save token using token manager
-      saveToken(data.token);
-      
-      queryClient.setQueryData(queryKeys.auth.profile, {
-        id: data.user.sub,
-        name: data.user.name,
-        email: data.user.email,
-        is_admin: data.user.is_admin,
-        isActive: true,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      });
-
-      toast.success("Registration successful! Welcome to College Dunia!");
-      navigate("/dashboard", { replace: true });
+      // Don't save token or set user data since signup doesn't return a token
+      // Just show success message and redirect to login
+      toast.success("Registration successful! Please login to continue.");
+      navigate("/login", { replace: true });
     },
     onError: (error: any) => {
       // Enhanced error handling for signup
@@ -131,16 +139,20 @@ export const useAuth = () => {
       } else if (error?.status === 422) {
         // Handle validation errors
         if (error?.details?.validationErrors) {
-          Object.values(error.details.validationErrors).forEach((message: any) => {
-            toast.error(message);
-          });
+          Object.values(error.details.validationErrors).forEach(
+            (message: any) => {
+              toast.error(message);
+            }
+          );
         } else {
           toast.error("Please check your input and try again.");
         }
       } else if (error?.status === 500) {
         toast.error("Server error. Please try again later.");
       } else if (error?.code === "NETWORK_ERROR") {
-        toast.error("Network error. Please check your connection and try again.");
+        toast.error(
+          "Network error. Please check your connection and try again."
+        );
       } else {
         toast.error(error?.message || "Registration failed. Please try again.");
       }

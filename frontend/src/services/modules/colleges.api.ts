@@ -7,17 +7,18 @@ import type {
   CollegeFilters,
   CompareRequest,
   CompareResponse,
-  PaginatedResponse
+  PaginatedResponse,
+  CollegePlacement,
 } from "../../types/api";
 
 export const collegesApi = {
   /**
    * Get colleges list with filters and pagination
    */
-  async getColleges(
-    params: CollegeListQuery
-  ): Promise<PaginatedResponse<College>> {
-    const response = await apiClient.get<PaginatedResponse<College>>(COLLEGE_ENDPOINTS.LIST, { params });
+  async getColleges(params: CollegeListQuery): Promise<College[]> {
+    const response = await apiClient.get<College[]>(COLLEGE_ENDPOINTS.LIST, {
+      params,
+    });
     return response.data;
   },
 
@@ -79,6 +80,30 @@ export const collegesApi = {
    */
   async deleteCollege(id: string): Promise<void> {
     await apiClient.delete(COLLEGE_ENDPOINTS.DELETE(id));
+  },
+
+  /**
+   * Add placement data for college (Admin only)
+   */
+  async addPlacement(
+    collegeId: string,
+    data: Partial<CollegePlacement>
+  ): Promise<CollegePlacement> {
+    const response = await apiClient.post<CollegePlacement>(
+      `${COLLEGE_ENDPOINTS.DETAIL(collegeId)}/placements`,
+      data
+    );
+    return response.data;
+  },
+
+  /**
+   * Get placement data for college
+   */
+  async getPlacements(collegeId: string): Promise<CollegePlacement[]> {
+    const response = await apiClient.get<CollegePlacement[]>(
+      `${COLLEGE_ENDPOINTS.DETAIL(collegeId)}/placements`
+    );
+    return response.data;
   },
 };
 

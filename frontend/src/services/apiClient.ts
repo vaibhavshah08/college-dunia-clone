@@ -8,8 +8,9 @@ import { toast } from "react-toastify";
 import { getAuthToken, removeToken } from "../utils/tokenManager";
 
 // Environment configuration
-const API_BASE_URL = "https://66mz5dpp-7001.inc1.devtunnels.ms"
-  // process.env.REACT_APP_API_BASE_URL || "http://localhost:3000";
+// const API_BASE_URL = "https://66mz5dpp-7001.inc1.devtunnels.ms";
+const API_BASE_URL =
+  process.env.REACT_APP_API_BASE_URL || "http://localhost:7001";
 
 // Request cancellation
 const pendingRequests = new Map<string, AbortController>();
@@ -62,6 +63,17 @@ apiClient.interceptors.response.use(
     // Clean up pending request
     const requestKey = `${response.config.method}-${response.config.url}`;
     pendingRequests.delete(requestKey);
+
+    // Extract data from the new response format
+    if (response.data && response.data.data !== undefined) {
+      // Handle double-nested structure: { message, data: { data: {...} } }
+      if (response.data.data && response.data.data.data !== undefined) {
+        response.data = response.data.data.data;
+      } else {
+        // Handle single-nested structure: { message, data: {...} }
+        response.data = response.data.data;
+      }
+    }
 
     return response;
   },

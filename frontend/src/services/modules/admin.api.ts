@@ -1,0 +1,80 @@
+import apiClient from "../apiClient";
+import type { User, PaginatedResponse } from "../../types/api";
+
+export interface AdminDashboardStats {
+  totalUsers: number;
+  totalColleges: number;
+  totalLoans: number;
+  totalDocuments: number;
+  pendingLoans: number;
+  partneredColleges: number;
+}
+
+export interface AdminUsersResponse {
+  users: User[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+}
+
+export const adminApi = {
+  /**
+   * Get admin dashboard statistics
+   */
+  async getDashboardStats(): Promise<AdminDashboardStats> {
+    const response = await apiClient.get<AdminDashboardStats>(
+      "/admin/dashboard"
+    );
+    return response.data;
+  },
+
+  /**
+   * Get all users with pagination and search
+   */
+  async getAllUsers(
+    page: number = 1,
+    limit: number = 10,
+    search?: string
+  ): Promise<AdminUsersResponse> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
+    });
+    if (search) {
+      params.append("search", search);
+    }
+
+    const response = await apiClient.get<AdminUsersResponse>(
+      `/admin/users?${params.toString()}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Create user (Admin only)
+   */
+  async createUser(userData: Partial<User>): Promise<User> {
+    const response = await apiClient.post<User>("/admin/users", userData);
+    return response.data;
+  },
+
+  /**
+   * Update user (Admin only)
+   */
+  async updateUser(id: string, userData: Partial<User>): Promise<User> {
+    const response = await apiClient.put<User>(`/admin/users/${id}`, userData);
+    return response.data;
+  },
+
+  /**
+   * Delete user (Admin only)
+   */
+  async deleteUser(id: string): Promise<void> {
+    await apiClient.delete(`/admin/users/${id}`);
+  },
+};
+
+export default adminApi;

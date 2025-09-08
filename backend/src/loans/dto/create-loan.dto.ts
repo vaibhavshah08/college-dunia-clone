@@ -1,26 +1,53 @@
 import { IsNotEmpty, IsString, IsNumber, IsOptional } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateLoanDto {
+  @ApiProperty({
+    description: 'Type of loan',
+    example: 'Education Loan',
+    enum: ['Education Loan', 'Personal Loan', 'Home Loan'],
+  })
   @IsString()
   @IsNotEmpty()
   readonly loan_type: string;
 
+  @ApiProperty({
+    description: 'Principal amount in INR',
+    example: 500000,
+  })
   @IsNumber()
   @IsNotEmpty()
   readonly principal_amount: number;
 
+  @ApiProperty({
+    description: 'Annual interest rate (percentage)',
+    example: 8.5,
+  })
   @IsNumber()
   @IsNotEmpty()
   readonly interest_rate: number;
 
+  @ApiProperty({
+    description: 'Loan term in months',
+    example: 60,
+  })
   @IsNumber()
   @IsNotEmpty()
   readonly term_months: number;
 
+  @ApiProperty({
+    description: 'College ID for education loan',
+    example: 'col_123',
+  })
   @IsString()
   @IsNotEmpty()
   readonly college_id: string;
 
+  @ApiProperty({
+    description: 'Additional description (optional)',
+    example: 'Loan for Computer Science Engineering course',
+    required: false,
+  })
   @IsString()
   @IsOptional()
   readonly description?: string;

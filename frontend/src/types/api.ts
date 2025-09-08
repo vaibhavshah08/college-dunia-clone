@@ -1,6 +1,10 @@
 // API Response Types
 
 // Base response envelope
+export interface ApiResponse<T> {
+  message: string;
+  data: T;
+}
 
 // Error response
 export interface ApiError {
@@ -33,67 +37,129 @@ export interface LoginRequest {
 }
 
 export interface SignupRequest {
+  first_name: string;
+  last_name: string;
   email: string;
   password: string;
-  name: string;
-  phone?: string;
+  phone_number?: string;
 }
 
 export interface AuthResponse {
   message: string;
-  token: string;
-  user: {
-    name: string;
-    sub: string;
+  data: {
+    token: string;
+    user: {
+      user_id: string;
+      first_name: string;
+      last_name: string;
+      email: string;
+      phone_number?: string;
+      is_admin: boolean;
+      is_active: boolean;
+      created_at: string;
+      updated_at: string;
+    };
+  };
+}
+
+export interface SignupResponse {
+  message: string;
+  data: {
+    user_id: string;
+    first_name: string;
+    last_name: string;
     email: string;
+    phone_number?: string;
     is_admin: boolean;
+    is_active: boolean;
+    created_at: string;
   };
 }
 
 export interface UserProfile {
-  id: string;
-  name: string;
+  user_id: string;
+  first_name: string;
+  last_name: string;
   email: string;
+  phone_number?: string;
   is_admin: boolean;
-  isActive: boolean;
-  createdAt: string;
-  updatedAt: string;
+  is_active: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface User {
+  user_id: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  phone_number?: string;
+  is_admin: boolean;
+  is_active: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Document Types
+export type DocumentStatus = "pending" | "approved" | "rejected";
+
+export interface Document {
+  document_id: string;
+  user_id: string;
+  document_path: string;
+  original_name: string;
+  mime_type: string;
+  file_size: number;
+  document_type?: string;
+  status: DocumentStatus;
+  rejection_reason?: string;
+  reviewed_by?: string;
+  reviewed_at?: string;
+  uploaded_at: string;
+  created_at: string;
+  updated_at: string;
+  user?: {
+    first_name: string;
+    last_name: string;
+    email: string;
+  };
 }
 
 // College Types
 export interface CollegeListQuery {
   q?: string;
-  stream?: string;
-  location?: string;
-  rankingMin?: number;
-  rankingMax?: number;
-  feesMin?: number;
-  feesMax?: number;
-  cutoffMin?: number;
-  cutoffMax?: number;
-  exams?: string[];
-  facilities?: string[];
-  ownership?: string;
-  accreditation?: string;
-  sort?: string;
-  page?: number;
-  size?: number;
+  state?: string;
+  city?: string;
+  minFees?: number;
+  maxFees?: number;
+  ranking?: number;
+  coursesOffered?: string[];
 }
 
 export interface College {
-  id: string;
-  name: string;
-  city: string;
+  college_id: string;
+  college_name: string;
   state: string;
-  ownership: string;
-  ranking: number;
+  city: string;
+  pincode: string;
+  landmark?: string;
   fees: number;
-  cutoff: number;
-  description: string;
-  facilities: FacilityInfo;
-  examsAccepted: string[];
-  createdAt: string;
-  updatedAt: string;
+  ranking: number;
+  courses_offered: string[];
+  placement_ratio: number;
+  year_of_establishment: number;
+  affiliation: string;
+  accreditation: string;
+  is_partnered: boolean;
+  avg_package?: number;
+  median_package?: number;
+  highest_package?: number;
+  placement_rate?: number;
+  top_recruiters?: string[];
+  placement_last_updated?: string;
+  created_at: string;
 }
 
 export interface CollegeDetail extends College {
@@ -178,36 +244,42 @@ export interface FAQ {
   answer: string;
 }
 
+// College Placement Types
+export interface CollegePlacement {
+  placement_id: string;
+  college_id: string;
+  year: number;
+  total_students: number;
+  placed_students: number;
+  highest_package: number;
+  average_package: number;
+}
+
 // Loan Types
 export interface LoanCreate {
-  fullName: string;
-  phone: string;
-  email: string;
-  program: string;
-  collegeId?: string;
-  fees: number;
-  amountRequested: number;
-  notes?: string;
+  loan_type: string;
+  principal_amount: number;
+  interest_rate: number;
+  term_months: number;
+  college_id: string;
+  description?: string;
 }
 
 export interface Loan {
-  id: string;
-  userId: string;
-  status: "SUBMITTED" | "IN_REVIEW" | "APPROVED" | "REJECTED";
-  fullName: string;
-  phone: string;
-  email: string;
-  program: string;
-  collegeId?: string;
-  fees: number;
-  amountRequested: number;
-  notes?: string;
-  createdAt: string;
-  updatedAt: string;
+  loan_id: string;
+  user_id: string;
+  loan_type: string;
+  principal_amount: number;
+  interest_rate: number;
+  term_months: number;
+  status: "submitted" | "under_review" | "approved" | "rejected";
+  college_id: string;
+  description?: string;
+  created_at: string;
 }
 
 export interface LoanStatusUpdate {
-  status: "SUBMITTED" | "IN_REVIEW" | "APPROVED" | "REJECTED";
+  status: "submitted" | "under_review" | "approved" | "rejected";
   notes?: string;
 }
 

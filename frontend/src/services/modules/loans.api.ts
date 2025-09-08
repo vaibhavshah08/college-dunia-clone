@@ -4,7 +4,7 @@ import type {
   LoanCreate,
   Loan,
   LoanStatusUpdate,
-  PaginatedResponse
+  PaginatedResponse,
 } from "../../types/api";
 
 export const loansApi = {
@@ -12,10 +12,7 @@ export const loansApi = {
    * Create new loan application
    */
   async createLoan(data: LoanCreate): Promise<Loan> {
-    const response = await apiClient.post<Loan>(
-      LOAN_ENDPOINTS.CREATE,
-      data
-    );
+    const response = await apiClient.post<Loan>(LOAN_ENDPOINTS.CREATE, data);
     return response.data;
   },
 
@@ -23,9 +20,7 @@ export const loansApi = {
    * Get user's loan applications
    */
   async getMyLoans(): Promise<Loan[]> {
-    const response = await apiClient.get<Loan[]>(
-      LOAN_ENDPOINTS.LIST_MINE
-    );
+    const response = await apiClient.get<Loan[]>(LOAN_ENDPOINTS.LIST_MINE);
     return response.data;
   },
 
@@ -33,20 +28,18 @@ export const loansApi = {
    * Get loan by ID
    */
   async getLoan(id: string): Promise<Loan> {
-    const response = await apiClient.get<Loan>(
-      LOAN_ENDPOINTS.DETAIL(id)
-    );
+    const response = await apiClient.get<Loan>(LOAN_ENDPOINTS.DETAIL(id));
     return response.data;
   },
 
   /**
    * Get all loans (Admin only)
    */
-  async getAllLoans(): Promise<PaginatedResponse<Loan>> {
-    const response = await apiClient.get<PaginatedResponse<Loan>>(
+  async getAllLoans(): Promise<Loan[]> {
+    const response = await apiClient.get<{ message: string; data: Loan[] }>(
       LOAN_ENDPOINTS.ADMIN_LIST
     );
-    return response.data;
+    return response.data.data;
   },
 
   /**

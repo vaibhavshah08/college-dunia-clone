@@ -244,7 +244,7 @@ export class CollegesService {
       );
     }
 
-    qb.orderBy('c.ranking', 'ASC', 'NULLS LAST');
+    qb.orderBy('c.ranking', 'ASC');
 
     this.logger.debug(correlation_id, 'Executing database query');
     const results = await qb.getMany();

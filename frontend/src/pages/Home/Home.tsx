@@ -9,15 +9,15 @@ import {
   CardActions,
   Paper,
 } from "@mui/material";
-import { 
-  School, 
-  TrendingUp, 
-  People, 
-  Star, 
-  Search, 
-  Compare, 
-  AccountBalance, 
-  Description 
+import {
+  School,
+  TrendingUp,
+  People,
+  Star,
+  Search,
+  Compare,
+  AccountBalance,
+  Description,
 } from "@mui/icons-material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 
@@ -140,14 +140,14 @@ const Home: React.FC = () => {
         </Typography>
         <Box
           sx={{
-            display: 'grid',
+            display: "grid",
             gridTemplateColumns: {
-              xs: '1fr',
-              sm: 'repeat(2, 1fr)',
-              md: 'repeat(3, 1fr)',
+              xs: "1fr",
+              sm: "repeat(2, 1fr)",
+              md: "repeat(3, 1fr)",
             },
             gap: 4,
-            alignItems: 'stretch',
+            alignItems: "stretch",
           }}
         >
           {features.map((feature, index) => (
@@ -165,13 +165,20 @@ const Home: React.FC = () => {
               }}
             >
               <CardContent sx={{ flexGrow: 1, textAlign: "center", p: 3 }}>
-                <Box sx={{ color: "primary.main", mb: 2 }}>
-                  {feature.icon}
-                </Box>
-                <Typography gutterBottom variant="h5" component="h3" sx={{ mb: 2 }}>
+                <Box sx={{ color: "primary.main", mb: 2 }}>{feature.icon}</Box>
+                <Typography
+                  gutterBottom
+                  variant="h5"
+                  component="h3"
+                  sx={{ mb: 2 }}
+                >
                   {feature.title}
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                <Typography
+                  variant="body2"
+                  color="text.secondary"
+                  sx={{ lineHeight: 1.6 }}
+                >
                   {feature.description}
                 </Typography>
               </CardContent>
@@ -179,64 +186,6 @@ const Home: React.FC = () => {
           ))}
         </Box>
       </Container>
-
-      {/* Stats Section */}
-      <Box sx={{ bgcolor: "primary.main", color: "white", py: 8 }}>
-        <Container maxWidth="lg">
-          <Box
-            sx={{
-              display: 'grid',
-              gridTemplateColumns: {
-                xs: 'repeat(2, 1fr)',
-                sm: 'repeat(4, 1fr)',
-              },
-              gap: 4,
-              textAlign: 'center',
-            }}
-          >
-            <Box>
-              <Typography
-                variant="h3"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 1 }}
-              >
-                1000+
-              </Typography>
-              <Typography variant="h6">Colleges</Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="h3"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 1 }}
-              >
-                50K+
-              </Typography>
-              <Typography variant="h6">Students</Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="h3"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 1 }}
-              >
-                95%
-              </Typography>
-              <Typography variant="h6">Success Rate</Typography>
-            </Box>
-            <Box>
-              <Typography
-                variant="h3"
-                component="div"
-                sx={{ fontWeight: "bold", mb: 1 }}
-              >
-                24/7
-              </Typography>
-              <Typography variant="h6">Support</Typography>
-            </Box>
-          </Box>
-        </Container>
-      </Box>
     </Box>
   );
 };

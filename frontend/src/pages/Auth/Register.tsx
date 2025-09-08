@@ -15,11 +15,12 @@ import { useAuth } from "../../lib/hooks/useAuth";
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
-    name: "",
+    first_name: "",
+    last_name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    phone: "",
+    phone_number: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [error, setError] = useState("");
@@ -39,8 +40,12 @@ const Register: React.FC = () => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.name.trim()) {
-      newErrors.name = "Name is required";
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = "First name is required";
+    }
+
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = "Last name is required";
     }
 
     if (!formData.email) {
@@ -61,8 +66,11 @@ const Register: React.FC = () => {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
-    if (formData.phone && !/^\+?[\d\s-()]+$/.test(formData.phone)) {
-      newErrors.phone = "Please enter a valid phone number";
+    if (
+      formData.phone_number &&
+      !/^\+?[\d\s-()]+$/.test(formData.phone_number)
+    ) {
+      newErrors.phone_number = "Please enter a valid phone number";
     }
 
     setErrors(newErrors);
@@ -89,15 +97,23 @@ const Register: React.FC = () => {
       } else if (err?.status === 422) {
         // Handle validation errors
         if (err?.details?.validationErrors) {
-          const validationMessages = Object.values(err.details.validationErrors).join(", ");
+          const validationMessages = Object.values(
+            err.details.validationErrors
+          ).join(", ");
           setError(`Validation errors: ${validationMessages}`);
         } else {
           setError("Please check your input and try again.");
         }
+      } else if (err?.status === 500) {
+        setError("Server error. Please try again later.");
       } else if (err?.code === "NETWORK_ERROR") {
         setError("Network error. Please check your connection and try again.");
+      } else if (err?.status === 400) {
+        setError("Invalid request. Please check your input.");
+      } else if (err?.status === 403) {
+        setError("Registration is currently disabled.");
       } else {
-        setError("Registration failed. Please try again.");
+        setError(err?.message || "Registration failed. Please try again.");
       }
     }
   };
@@ -126,10 +142,10 @@ const Register: React.FC = () => {
         <Box component="form" onSubmit={handleSubmit} noValidate>
           <Box
             sx={{
-              display: 'grid',
+              display: "grid",
               gridTemplateColumns: {
-                xs: '1fr',
-                sm: 'repeat(2, 1fr)',
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
               },
               gap: 2,
             }}
@@ -138,15 +154,29 @@ const Register: React.FC = () => {
               margin="normal"
               required
               fullWidth
-              id="name"
-              label="Name"
-              name="name"
-              autoComplete="name"
+              id="first_name"
+              label="First Name"
+              name="first_name"
+              autoComplete="given-name"
               autoFocus
-              value={formData.name}
+              value={formData.first_name}
               onChange={handleChange}
-              error={!!errors.name}
-              helperText={errors.name}
+              error={!!errors.first_name}
+              helperText={errors.first_name}
+              disabled={isSigningUp}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="last_name"
+              label="Last Name"
+              name="last_name"
+              autoComplete="family-name"
+              value={formData.last_name}
+              onChange={handleChange}
+              error={!!errors.last_name}
+              helperText={errors.last_name}
               disabled={isSigningUp}
             />
           </Box>
@@ -169,14 +199,14 @@ const Register: React.FC = () => {
           <TextField
             margin="normal"
             fullWidth
-            id="phone"
+            id="phone_number"
             label="Phone Number (Optional)"
-            name="phone"
+            name="phone_number"
             autoComplete="tel"
-            value={formData.phone}
+            value={formData.phone_number}
             onChange={handleChange}
-            error={!!errors.phone}
-            helperText={errors.phone}
+            error={!!errors.phone_number}
+            helperText={errors.phone_number}
             disabled={isSigningUp}
           />
 

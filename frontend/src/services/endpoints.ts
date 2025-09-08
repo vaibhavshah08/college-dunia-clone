@@ -42,8 +42,7 @@ export const LOAN_ENDPOINTS = {
 // Review endpoints
 export const REVIEW_ENDPOINTS = {
   CREATE: `/reviews`,
-  LIST_BY_COURSE: (courseId: string) =>
-    `/reviews/course/${courseId}`,
+  LIST_BY_COURSE: (courseId: string) => `/reviews/course/${courseId}`,
   ADMIN_LIST: `/reviews/admin`,
   UPDATE_STATUS: (id: string) => `/reviews/${id}/status`,
 } as const;

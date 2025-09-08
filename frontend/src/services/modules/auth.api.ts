@@ -4,6 +4,7 @@ import type {
   LoginRequest,
   SignupRequest,
   AuthResponse,
+  SignupResponse,
   UserProfile,
 } from "../../types/api";
 
@@ -11,8 +12,8 @@ export const authApi = {
   /**
    * User login
    */
-  async login(data: LoginRequest): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>(
+  async login(data: LoginRequest): Promise<AuthResponse["data"]> {
+    const response = await apiClient.post<AuthResponse["data"]>(
       AUTH_ENDPOINTS.LOGIN,
       data
     );
@@ -23,8 +24,8 @@ export const authApi = {
   /**
    * User registration
    */
-  async signup(data: SignupRequest): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>(
+  async signup(data: SignupRequest): Promise<SignupResponse["data"]> {
+    const response = await apiClient.post<SignupResponse["data"]>(
       AUTH_ENDPOINTS.SIGNUP,
       data
     );
@@ -35,17 +36,15 @@ export const authApi = {
    * Get current user profile
    */
   async getProfile(): Promise<UserProfile> {
-    const response = await apiClient.get<UserProfile>(
-      AUTH_ENDPOINTS.ME
-    );
+    const response = await apiClient.get<UserProfile>(AUTH_ENDPOINTS.ME);
     return response.data;
   },
 
   /**
    * Refresh authentication token
    */
-  async refreshToken(refreshToken: string): Promise<AuthResponse> {
-    const response = await apiClient.post<AuthResponse>(
+  async refreshToken(refreshToken: string): Promise<AuthResponse["data"]> {
+    const response = await apiClient.post<AuthResponse["data"]>(
       AUTH_ENDPOINTS.REFRESH,
       { refreshToken }
     );

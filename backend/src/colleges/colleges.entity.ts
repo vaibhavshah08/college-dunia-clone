@@ -41,6 +41,27 @@ export class College {
   @Column('varchar', { nullable: false })
   accreditation: string;
 
+  @Column('boolean', { nullable: false, default: false })
+  is_partnered: boolean;
+
+  @Column('float', { nullable: true })
+  avg_package: number;
+
+  @Column('float', { nullable: true })
+  median_package: number;
+
+  @Column('float', { nullable: true })
+  highest_package: number;
+
+  @Column('float', { nullable: true })
+  placement_rate: number;
+
+  @Column('simple-array', { nullable: true })
+  top_recruiters: string[];
+
+  @Column('timestamp', { nullable: true })
+  placement_last_updated: Date;
+
   @CreateDateColumn()
   created_at: Date;
 }

@@ -8,6 +8,8 @@ import { AuthModule } from './auth/auth.module';
 import { CollegesModule } from './colleges/colleges.module';
 import { LoansModule } from './loans/loans.module';
 import { ReviewsModule } from './reviews/reviews.module';
+import { AdminModule } from './admin/admin.module';
+import { DocumentsModule } from './documents/documents.module';
 import { LoggerModule } from 'src/core/logger/logger.module';
 
 @Module({
@@ -29,6 +31,8 @@ import { LoggerModule } from 'src/core/logger/logger.module';
     CollegesModule,
     LoansModule,
     ReviewsModule,
+    AdminModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
