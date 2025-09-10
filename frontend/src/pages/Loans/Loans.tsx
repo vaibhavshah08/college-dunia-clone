@@ -18,6 +18,7 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Pagination,
 } from "@mui/material";
 import { Add, Visibility, Refresh } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "react-query";
@@ -40,6 +41,10 @@ const Loans: React.FC = () => {
     college_id: "",
     description: "",
   });
+
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(6);
 
   // Fetch user's loans
   const {
@@ -97,6 +102,28 @@ const Loans: React.FC = () => {
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["loans", "me"] });
     queryClient.invalidateQueries({ queryKey: ["colleges"] });
+  };
+
+  // Pagination helper functions
+  const getPaginatedData = (
+    data: Loan[],
+    page: number,
+    itemsPerPage: number
+  ) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (data: Loan[], itemsPerPage: number) => {
+    return Math.ceil(data.length / itemsPerPage);
+  };
+
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setPage(value);
   };
 
   const getStatusColor = (status: string) => {
@@ -205,7 +232,7 @@ const Loans: React.FC = () => {
                 </Alert>
               </Box>
             ) : (
-              loans.map((loan: Loan) => (
+              getPaginatedData(loans, page, itemsPerPage).map((loan: Loan) => (
                 <Card key={loan.loan_id}>
                   <CardContent>
                     <Box
@@ -259,6 +286,21 @@ const Loans: React.FC = () => {
                 </Card>
               ))
             )}
+          </Box>
+        )}
+
+        {/* Pagination */}
+        {!isLoading && !error && loans.length > itemsPerPage && (
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+            <Pagination
+              count={getTotalPages(loans, itemsPerPage)}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              size="large"
+              showFirstButton
+              showLastButton
+            />
           </Box>
         )}
 

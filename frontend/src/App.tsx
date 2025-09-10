@@ -16,6 +16,7 @@ import { ComparisonProvider } from "./contexts/ComparisonContext";
 import AdminRoute from "./components/Auth/AdminRoute";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import HomeRoute from "./components/Auth/HomeRoute";
+import UserRoute from "./components/Auth/UserRoute";
 
 // Pages
 import Home from "./pages/Home/Home";
@@ -380,49 +381,49 @@ function App() {
                 <Route
                   path="/colleges"
                   element={
-                    <ProtectedRoute>
+                    <UserRoute>
                       <Colleges />
-                    </ProtectedRoute>
+                    </UserRoute>
                   }
                 />
                 <Route
                   path="/colleges/:id"
                   element={
-                    <ProtectedRoute>
+                    <UserRoute>
                       <CollegeDetail />
-                    </ProtectedRoute>
+                    </UserRoute>
                   }
                 />
                 <Route
                   path="/colleges/compare"
                   element={
-                    <ProtectedRoute>
+                    <UserRoute>
                       <CollegeComparison />
-                    </ProtectedRoute>
+                    </UserRoute>
                   }
                 />
                 <Route
                   path="/loans"
                   element={
-                    <ProtectedRoute>
+                    <UserRoute>
                       <Loans />
-                    </ProtectedRoute>
+                    </UserRoute>
                   }
                 />
                 <Route
                   path="/loans/:id"
                   element={
-                    <ProtectedRoute>
+                    <UserRoute>
                       <LoanDetail />
-                    </ProtectedRoute>
+                    </UserRoute>
                   }
                 />
                 <Route
                   path="/documents"
                   element={
-                    <ProtectedRoute>
+                    <UserRoute>
                       <Documents />
-                    </ProtectedRoute>
+                    </UserRoute>
                   }
                 />
                 <Route

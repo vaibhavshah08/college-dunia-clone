@@ -24,6 +24,7 @@ import { useAuth } from "../../lib/hooks/useAuth";
 import { useMutation, useQueryClient } from "react-query";
 import userApi from "../../services/modules/user.api";
 import { getErrorMessage } from "../../utils/errorHandler";
+import { toast } from "react-toastify";
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
@@ -42,10 +43,6 @@ const Profile: React.FC = () => {
     phone_number: string;
     password?: string;
   });
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
 
   const fullName = user ? `${user.first_name} ${user.last_name}` : "User";
   const firstName = user?.first_name || "U";
@@ -55,7 +52,7 @@ const Profile: React.FC = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["user", "profile"]);
-        setMessage({ type: "success", text: "Profile updated successfully!" });
+        toast.success("Profile updated successfully!");
         setEditDialogOpen(false);
         setEditForm({
           first_name: user?.first_name || "",
@@ -66,10 +63,7 @@ const Profile: React.FC = () => {
         });
       },
       onError: (error: any) => {
-        setMessage({
-          type: "error",
-          text: getErrorMessage(error),
-        });
+        toast.error(getErrorMessage(error));
       },
     }
   );
@@ -100,7 +94,6 @@ const Profile: React.FC = () => {
       password: "",
     });
     setEditDialogOpen(true);
-    setMessage(null);
   };
 
   return (
@@ -260,11 +253,6 @@ const Profile: React.FC = () => {
         <DialogTitle>Edit Profile</DialogTitle>
         <form onSubmit={handleEditSubmit}>
           <DialogContent>
-            {message && (
-              <Alert severity={message.type} sx={{ mb: 2 }}>
-                {message.text}
-              </Alert>
-            )}
             <Box
               sx={{
                 display: "grid",

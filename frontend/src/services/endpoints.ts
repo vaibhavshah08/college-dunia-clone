@@ -35,7 +35,8 @@ export const LOAN_ENDPOINTS = {
   CREATE: `/loans`,
   LIST_MINE: `/loans/me`,
   ADMIN_LIST: `/loans/admin`,
-  UPDATE_STATUS: (id: string) => `/loans/${id}/status`,
+  UPDATE_STATUS: (id: string, status: string) =>
+    `/loans/${id}/status/${status}`,
   DETAIL: (id: string) => `/loans/${id}`,
 } as const;
 

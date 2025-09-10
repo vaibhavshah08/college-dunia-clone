@@ -43,10 +43,9 @@ export const loansApi = {
   /**
    * Update loan status (Admin only)
    */
-  async updateLoanStatus(id: string, data: LoanStatusUpdate): Promise<Loan> {
+  async updateLoanStatus(id: string, status: string): Promise<Loan> {
     const response = await apiClient.patch<Loan>(
-      LOAN_ENDPOINTS.UPDATE_STATUS(id),
-      data
+      LOAN_ENDPOINTS.UPDATE_STATUS(id, status)
     );
     return response.data;
   },

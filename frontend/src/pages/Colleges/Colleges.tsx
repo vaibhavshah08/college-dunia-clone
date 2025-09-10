@@ -17,6 +17,7 @@ import {
   IconButton,
   Tooltip,
   Badge,
+  Pagination,
 } from "@mui/material";
 import {
   Search,
@@ -60,10 +61,36 @@ const Colleges: React.FC = () => {
     coursesOffered: [] as string[],
   });
 
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(12);
+
   // Refresh function
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["colleges"] });
     queryClient.invalidateQueries({ queryKey: ["colleges", "filters"] });
+  };
+
+  // Pagination helper functions
+  const getPaginatedData = (
+    data: College[],
+    page: number,
+    itemsPerPage: number
+  ) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (data: College[], itemsPerPage: number) => {
+    return Math.ceil(data.length / itemsPerPage);
+  };
+
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setPage(value);
   };
 
   // Convert frontend filters to API format
@@ -550,143 +577,160 @@ const Colleges: React.FC = () => {
                 </Alert>
               </Box>
             ) : (
-              colleges.map((college: College) => (
-                <Card
-                  key={college.college_id}
-                  sx={{
-                    height: "100%",
-                    cursor: "pointer",
-                    transition: "transform 0.2s, box-shadow 0.2s",
-                    position: "relative",
-                    "&:hover": {
-                      transform: "translateY(-2px)",
-                      boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-                    },
-                  }}
-                >
-                  <Box sx={{ position: "relative" }}>
-                    <ImagePlaceholder
-                      width="100%"
-                      height={180}
-                      variant="college"
-                      text={college.college_name}
-                    />
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        top: 8,
-                        right: 8,
-                        backgroundColor: "rgba(255, 255, 255, 0.9)",
-                        borderRadius: "50%",
-                        backdropFilter: "blur(10px)",
-                      }}
-                    >
-                      <Tooltip
-                        title={
-                          isInComparison(college.college_id)
-                            ? "Remove from comparison"
-                            : canAddMore
-                            ? "Add to comparison"
-                            : "Maximum colleges selected"
-                        }
-                      >
-                        <IconButton
-                          onClick={(e) => handleToggleComparison(college, e)}
-                          disabled={
-                            !isInComparison(college.college_id) && !canAddMore
-                          }
-                          color={
-                            isInComparison(college.college_id)
-                              ? "primary"
-                              : "default"
-                          }
-                          size="small"
-                        >
-                          {isInComparison(college.college_id) ? (
-                            <Remove />
-                          ) : (
-                            <Add />
-                          )}
-                        </IconButton>
-                      </Tooltip>
-                    </Box>
-                  </Box>
-                  <CardContent
-                    sx={{ p: 3 }}
-                    onClick={() => handleCollegeClick(college.college_id)}
+              getPaginatedData(colleges, page, itemsPerPage).map(
+                (college: College) => (
+                  <Card
+                    key={college.college_id}
+                    sx={{
+                      height: "100%",
+                      cursor: "pointer",
+                      transition: "transform 0.2s, box-shadow 0.2s",
+                      position: "relative",
+                      "&:hover": {
+                        transform: "translateY(-2px)",
+                        boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+                      },
+                    }}
                   >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 2,
-                      }}
-                    >
-                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
-                        {college.college_name}
-                      </Typography>
-                      {college.is_partnered && (
-                        <Chip
-                          icon={<Verified />}
-                          label="Partner"
-                          size="small"
-                          color="success"
-                          variant="filled"
-                          sx={{
-                            fontSize: "0.75rem",
-                            height: "24px",
-                            fontWeight: 600,
-                            "& .MuiChip-icon": {
-                              fontSize: "0.875rem",
-                            },
-                          }}
-                        />
-                      )}
+                    <Box sx={{ position: "relative" }}>
+                      <ImagePlaceholder
+                        width="100%"
+                        height={180}
+                        variant="college"
+                        text={college.college_name}
+                      />
+                      <Box
+                        sx={{
+                          position: "absolute",
+                          top: 8,
+                          right: 8,
+                          backgroundColor: "rgba(255, 255, 255, 0.9)",
+                          borderRadius: "50%",
+                          backdropFilter: "blur(10px)",
+                        }}
+                      >
+                        <Tooltip
+                          title={
+                            isInComparison(college.college_id)
+                              ? "Remove from comparison"
+                              : canAddMore
+                              ? "Add to comparison"
+                              : "Maximum colleges selected"
+                          }
+                        >
+                          <IconButton
+                            onClick={(e) => handleToggleComparison(college, e)}
+                            disabled={
+                              !isInComparison(college.college_id) && !canAddMore
+                            }
+                            color={
+                              isInComparison(college.college_id)
+                                ? "primary"
+                                : "default"
+                            }
+                            size="small"
+                          >
+                            {isInComparison(college.college_id) ? (
+                              <Remove />
+                            ) : (
+                              <Add />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                      </Box>
                     </Box>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      gutterBottom
+                    <CardContent
+                      sx={{ p: 3 }}
+                      onClick={() => handleCollegeClick(college.college_id)}
                     >
-                      {college.city}, {college.state}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      gutterBottom
-                      sx={{ fontWeight: 500 }}
-                    >
-                      Ranking: #{college.ranking}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      gutterBottom
-                    >
-                      Annual Fees: ₹{college.fees.toLocaleString()}
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      gutterBottom
-                    >
-                      Placement Ratio: {college.placement_ratio}%
-                    </Typography>
-                    <Typography
-                      variant="body2"
-                      color="text.secondary"
-                      sx={{ mb: 2 }}
-                    >
-                      Courses: {college.courses_offered.join(", ")}
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Established: {college.year_of_establishment}
-                    </Typography>
-                  </CardContent>
-                </Card>
-              ))
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 1,
+                          mb: 2,
+                        }}
+                      >
+                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                          {college.college_name}
+                        </Typography>
+                        {college.is_partnered && (
+                          <Chip
+                            icon={<Verified />}
+                            label="Partner"
+                            size="small"
+                            color="success"
+                            variant="filled"
+                            sx={{
+                              fontSize: "0.75rem",
+                              height: "24px",
+                              fontWeight: 600,
+                              "& .MuiChip-icon": {
+                                fontSize: "0.875rem",
+                              },
+                            }}
+                          />
+                        )}
+                      </Box>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        {college.city}, {college.state}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        gutterBottom
+                        sx={{ fontWeight: 500 }}
+                      >
+                        Ranking: #{college.ranking}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        Annual Fees: ₹{college.fees.toLocaleString()}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        gutterBottom
+                      >
+                        Placement Ratio: {college.placement_ratio}%
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        color="text.secondary"
+                        sx={{ mb: 2 }}
+                      >
+                        Courses: {college.courses_offered.join(", ")}
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Established: {college.year_of_establishment}
+                      </Typography>
+                    </CardContent>
+                  </Card>
+                )
+              )
             )}
           </Box>
+
+          {/* Pagination */}
+          {colleges.length > itemsPerPage && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+              <Pagination
+                count={getTotalPages(colleges, itemsPerPage)}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                size="large"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          )}
         </Box>
       )}
     </Container>

@@ -20,6 +20,7 @@ import {
   MenuItem,
   IconButton,
   Tooltip,
+  Pagination,
 } from "@mui/material";
 import {
   Add,
@@ -34,6 +35,7 @@ import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useAuth } from "../../lib/hooks/useAuth";
 import documentsApi from "../../services/modules/documents.api";
 import { getErrorMessage } from "../../utils/errorHandler";
+import { toast } from "react-toastify";
 import FileUpload from "../../components/FileUpload/FileUpload";
 import { Document } from "../../types/api";
 
@@ -62,10 +64,10 @@ const Documents: React.FC = () => {
     null
   );
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
+
+  // Pagination state
+  const [page, setPage] = useState(1);
+  const [itemsPerPage] = useState(8);
 
   // Fetch user documents
   const {
@@ -95,6 +97,7 @@ const Documents: React.FC = () => {
     }) => documentsApi.uploadDocument(file, name, purpose, type, documentType),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
+      toast.success("Document uploaded successfully!");
       setOpenDialog(false);
       setSelectedFile(null);
       setDocumentName("");
@@ -105,10 +108,7 @@ const Documents: React.FC = () => {
     },
     onError: (error: any) => {
       console.error("Upload failed:", error);
-      setMessage({
-        type: "error",
-        text: getErrorMessage(error),
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -191,16 +191,10 @@ const Documents: React.FC = () => {
     mutationFn: (documentId: string) => documentsApi.deleteDocument(documentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
-      setMessage({
-        type: "success",
-        text: "Document deleted successfully!",
-      });
+      toast.success("Document deleted successfully!");
     },
     onError: (error: any) => {
-      setMessage({
-        type: "error",
-        text: getErrorMessage(error),
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -218,6 +212,28 @@ const Documents: React.FC = () => {
 
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["documents"] });
+  };
+
+  // Pagination helper functions
+  const getPaginatedData = (
+    data: Document[],
+    page: number,
+    itemsPerPage: number
+  ) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (data: Document[], itemsPerPage: number) => {
+    return Math.ceil(data.length / itemsPerPage);
+  };
+
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setPage(value);
   };
 
   const getFileType = (filename: string) => {
@@ -318,15 +334,6 @@ const Documents: React.FC = () => {
       )}
 
       {/* Message State */}
-      {message && (
-        <Alert
-          severity={message.type}
-          sx={{ mb: 3 }}
-          onClose={() => setMessage(null)}
-        >
-          {message.text}
-        </Alert>
-      )}
 
       {/* Documents List */}
       {!isLoading && !error && (
@@ -349,95 +356,113 @@ const Documents: React.FC = () => {
               </Alert>
             </Box>
           ) : (
-            documents.map((document: Document) => (
-              <Card key={document.document_id}>
-                <CardContent>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    {getFileIcon(document.document_path)}
-                    <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-                      {document.name || document.document_path.split("/").pop()}
+            getPaginatedData(documents, page, itemsPerPage).map(
+              (document: Document) => (
+                <Card key={document.document_id}>
+                  <CardContent>
+                    <Box display="flex" alignItems="center" mb={2}>
+                      {getFileIcon(document.document_path)}
+                      <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
+                        {document.name ||
+                          document.document_path.split("/").pop()}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      Purpose: {document.purpose}
                     </Typography>
-                  </Box>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Purpose: {document.purpose}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Type: {document.type.replace("_", " ")}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Uploaded:{" "}
-                    {new Date(document.uploaded_at).toLocaleDateString()}
-                  </Typography>
-                  <Box
-                    display="flex"
-                    justifyContent="space-between"
-                    alignItems="center"
-                    mt={2}
-                  >
-                    <Chip
-                      label={
-                        document.status?.charAt(0).toUpperCase() +
-                          document.status?.slice(1) || "Uploaded"
-                      }
-                      color={
-                        document.status === "approved"
-                          ? "success"
-                          : document.status === "rejected"
-                          ? "error"
-                          : document.status === "pending"
-                          ? "warning"
-                          : "default"
-                      }
-                      size="small"
-                    />
-                    <Box>
-                      <Tooltip title="View Document">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDocumentView(document)}
-                        >
-                          <Visibility />
-                        </IconButton>
-                      </Tooltip>
-                      <Tooltip title="Download Document">
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleDocumentDownload(document)}
-                        >
-                          <Download />
-                        </IconButton>
-                      </Tooltip>
-                      {document.status === "pending" && (
-                        <Tooltip title="Delete Document">
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      Type: {document.type.replace("_", " ")}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      Uploaded:{" "}
+                      {new Date(document.uploaded_at).toLocaleDateString()}
+                    </Typography>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mt={2}
+                    >
+                      <Chip
+                        label={
+                          document.status?.charAt(0).toUpperCase() +
+                            document.status?.slice(1) || "Uploaded"
+                        }
+                        color={
+                          document.status === "approved"
+                            ? "success"
+                            : document.status === "rejected"
+                            ? "error"
+                            : document.status === "pending"
+                            ? "warning"
+                            : "default"
+                        }
+                        size="small"
+                      />
+                      <Box>
+                        <Tooltip title="View Document">
                           <IconButton
                             size="small"
-                            color="error"
-                            onClick={() => handleDocumentDelete(document)}
-                            disabled={deleteDocumentMutation.isLoading}
+                            onClick={() => handleDocumentView(document)}
                           >
-                            <Delete />
+                            <Visibility />
                           </IconButton>
                         </Tooltip>
-                      )}
+                        <Tooltip title="Download Document">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleDocumentDownload(document)}
+                          >
+                            <Download />
+                          </IconButton>
+                        </Tooltip>
+                        {document.status === "pending" && (
+                          <Tooltip title="Delete Document">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDocumentDelete(document)}
+                              disabled={deleteDocumentMutation.isLoading}
+                            >
+                              <Delete />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                      </Box>
                     </Box>
-                  </Box>
-                </CardContent>
-              </Card>
-            ))
+                  </CardContent>
+                </Card>
+              )
+            )
           )}
+        </Box>
+      )}
+
+      {/* Pagination */}
+      {!isLoading && !error && documents.length > itemsPerPage && (
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+          <Pagination
+            count={getTotalPages(documents, itemsPerPage)}
+            page={page}
+            onChange={handlePageChange}
+            color="primary"
+            size="large"
+            showFirstButton
+            showLastButton
+          />
         </Box>
       )}
 

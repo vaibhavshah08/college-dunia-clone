@@ -30,6 +30,7 @@ import {
   DialogTitle,
   DialogContent,
   DialogActions,
+  Pagination,
 } from "@mui/material";
 import {
   People,
@@ -54,6 +55,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
+import { toast } from "react-toastify";
 import collegesApi from "../../services/modules/colleges.api";
 import loansApi from "../../services/modules/loans.api";
 import documentsApi from "../../services/modules/documents.api";
@@ -96,6 +98,11 @@ const AdminDashboard: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
+  const [collegesPage, setCollegesPage] = useState(1);
+  const [usersPage, setUsersPage] = useState(1);
+  const [documentsPage, setDocumentsPage] = useState(1);
+  const [loansPage, setLoansPage] = useState(1);
+  const [itemsPerPage] = useState(10);
   const [collegeForm, setCollegeForm] = useState({
     college_name: "",
     state: "",
@@ -117,10 +124,6 @@ const AdminDashboard: React.FC = () => {
     top_recruiters: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [message, setMessage] = useState<{
-    type: "success" | "error";
-    text: string;
-  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
@@ -128,6 +131,8 @@ const AdminDashboard: React.FC = () => {
   const [collegeDialogOpen, setCollegeDialogOpen] = useState(false);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
+  const [loanDialogOpen, setLoanDialogOpen] = useState(false);
+  const [selectedLoan, setSelectedLoan] = useState<Loan | null>(null);
   const [userForm, setUserForm] = useState({
     first_name: "",
     last_name: "",
@@ -186,7 +191,7 @@ const AdminDashboard: React.FC = () => {
     mutationFn: collegesApi.createCollege,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
-      setMessage({ type: "success", text: "College created successfully!" });
+      toast.success("College created successfully!");
       setCollegeForm({
         college_name: "",
         state: "",
@@ -210,10 +215,7 @@ const AdminDashboard: React.FC = () => {
       setCollegeDialogOpen(false);
     },
     onError: (error: any) => {
-      setMessage({
-        type: "error",
-        text: error?.message || "Failed to create college",
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -223,15 +225,12 @@ const AdminDashboard: React.FC = () => {
       collegesApi.updateCollege(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
-      setMessage({ type: "success", text: "College updated successfully!" });
+      toast.success("College updated successfully!");
       setCollegeDialogOpen(false);
       setEditingCollege(null);
     },
     onError: (error: any) => {
-      setMessage({
-        type: "error",
-        text: error?.message || "Failed to update college",
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -240,13 +239,10 @@ const AdminDashboard: React.FC = () => {
     mutationFn: collegesApi.deleteCollege,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
-      setMessage({ type: "success", text: "College deleted successfully!" });
+      toast.success("College deleted successfully!");
     },
     onError: (error: any) => {
-      setMessage({
-        type: "error",
-        text: error?.message || "Failed to delete college",
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -263,16 +259,10 @@ const AdminDashboard: React.FC = () => {
     }) => documentsApi.updateDocumentStatus(id, status, rejectionReason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
-      setMessage({
-        type: "success",
-        text: "Document status updated successfully!",
-      });
+      toast.success("Document status updated successfully!");
     },
     onError: (error: any) => {
-      setMessage({
-        type: "error",
-        text: error?.message || "Failed to update document status",
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -280,13 +270,10 @@ const AdminDashboard: React.FC = () => {
     mutationFn: documentsApi.deleteDocument,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
-      setMessage({ type: "success", text: "Document deleted successfully!" });
+      toast.success("Document deleted successfully!");
     },
     onError: (error: any) => {
-      setMessage({
-        type: "error",
-        text: error?.message || "Failed to delete document",
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -295,7 +282,7 @@ const AdminDashboard: React.FC = () => {
     mutationFn: adminApi.createUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
-      setMessage({ type: "success", text: "User created successfully!" });
+      toast.success("User created successfully!");
       setUserDialogOpen(false);
       setUserForm({
         first_name: "",
@@ -308,10 +295,7 @@ const AdminDashboard: React.FC = () => {
       });
     },
     onError: (error: any) => {
-      setMessage({
-        type: "error",
-        text: getErrorMessage(error),
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -320,15 +304,12 @@ const AdminDashboard: React.FC = () => {
       adminApi.updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
-      setMessage({ type: "success", text: "User updated successfully!" });
+      toast.success("User updated successfully!");
       setUserDialogOpen(false);
       setEditingUser(null);
     },
     onError: (error: any) => {
-      setMessage({
-        type: "error",
-        text: getErrorMessage(error),
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -336,13 +317,10 @@ const AdminDashboard: React.FC = () => {
     mutationFn: adminApi.deleteUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
-      setMessage({ type: "success", text: "User deleted successfully!" });
+      toast.success("User deleted successfully!");
     },
     onError: (error: any) => {
-      setMessage({
-        type: "error",
-        text: getErrorMessage(error),
-      });
+      toast.error(getErrorMessage(error));
     },
   });
 
@@ -383,7 +361,6 @@ const AdminDashboard: React.FC = () => {
   const handleAddCollege = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setMessage(null);
 
     try {
       const collegeData = {
@@ -429,10 +406,7 @@ const AdminDashboard: React.FC = () => {
         createCollegeMutation.mutate(collegeData);
       }
     } catch (error: any) {
-      setMessage({
-        type: "error",
-        text: "Failed to save college. Please try again.",
-      });
+      toast.error("Failed to save college. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -499,51 +473,59 @@ const AdminDashboard: React.FC = () => {
     if (!file) return;
 
     setIsSubmitting(true);
-    setMessage(null);
 
     try {
       // Parse the uploaded file
       const data = await parseExcelFile(file);
       console.log("Parsed data:", data);
 
+      // Map CSV data to college schema
+      const collegesData = data.map((row: any) => ({
+        college_name: row["College Name"],
+        state: row["State"],
+        city: row["City"],
+        pincode: row["Pincode"].toString(),
+        landmark: row["Landmark"] || "",
+        fees: row["Fees (₹)"],
+        ranking: row["Ranking"],
+        courses_offered: row["Courses Offered"],
+        placement_ratio: row["Placement Ratio (%)"],
+        year_of_establishment: row["Year of Establishment"],
+        affiliation: row["Affiliation"],
+        accreditation: row["Accreditation"],
+        is_partnered: row["Is Partnered"],
+        avg_package: row["Avg Package (₹)"] || 0,
+        median_package: row["Median Package (₹)"] || 0,
+        highest_package: row["Highest Package (₹)"] || 0,
+        placement_rate: row["Placement Rate (%)"] || 0,
+        top_recruiters: row["Top Recruiters"] || [],
+      }));
+
       // Simulate API call to save colleges
       await new Promise((resolve) => setTimeout(resolve, 2000));
-      setMessage({
-        type: "success",
-        text: `Excel file uploaded successfully! ${data.length} colleges imported.`,
-      });
+      toast.success(
+        `Excel file uploaded successfully! ${collegesData.length} colleges imported.`
+      );
     } catch (error: any) {
       // Enhanced error handling for Excel upload
       if (error?.message === "Failed to parse Excel file") {
-        setMessage({
-          type: "error",
-          text: "Invalid Excel file format. Please use the provided template.",
-        });
+        toast.error(
+          "Invalid Excel file format. Please use the provided template."
+        );
       } else if (error?.status === 413) {
-        setMessage({
-          type: "error",
-          text: "File too large. Please upload a smaller file.",
-        });
+        toast.error("File too large. Please upload a smaller file.");
       } else if (error?.status === 415) {
-        setMessage({
-          type: "error",
-          text: "Unsupported file type. Please upload an Excel file (.xlsx or .xls).",
-        });
+        toast.error(
+          "Unsupported file type. Please upload an Excel file (.xlsx or .xls)."
+        );
       } else if (error?.status === 500) {
-        setMessage({
-          type: "error",
-          text: "Server error. Please try again later.",
-        });
+        toast.error("Server error. Please try again later.");
       } else if (error?.code === "NETWORK_ERROR") {
-        setMessage({
-          type: "error",
-          text: "Network error. Please check your connection and try again.",
-        });
+        toast.error(
+          "Network error. Please check your connection and try again."
+        );
       } else {
-        setMessage({
-          type: "error",
-          text: "Failed to upload file. Please try again.",
-        });
+        toast.error("Failed to upload file. Please try again.");
       }
     } finally {
       setIsSubmitting(false);
@@ -580,20 +562,14 @@ const AdminDashboard: React.FC = () => {
   // Loan action mutations
   const updateLoanStatusMutation = useMutation(
     ({ id, status }: { id: string; status: string }) =>
-      loansApi.updateLoanStatus(id, { status: status as any }),
+      loansApi.updateLoanStatus(id, status),
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["loans", "admin"]);
-        setMessage({
-          type: "success",
-          text: "Loan status updated successfully!",
-        });
+        toast.success("Loan status updated successfully!");
       },
       onError: (error: any) => {
-        setMessage({
-          type: "error",
-          text: getErrorMessage(error),
-        });
+        toast.error(getErrorMessage(error));
       },
     }
   );
@@ -603,6 +579,11 @@ const AdminDashboard: React.FC = () => {
     updateLoanStatusMutation.mutate({ id: loanId, status });
   };
 
+  const handleLoanView = (loan: Loan) => {
+    setSelectedLoan(loan);
+    setLoanDialogOpen(true);
+  };
+
   // Refresh all data
   const handleRefresh = () => {
     queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
@@ -610,10 +591,56 @@ const AdminDashboard: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
     queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
     queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-    setMessage({
-      type: "success",
-      text: "Data refreshed successfully!",
-    });
+    toast.success("Data refreshed successfully!");
+  };
+
+  // Card click handlers to navigate to respective tabs
+  const handleCardClick = (tabIndex: number) => {
+    setTabValue(tabIndex);
+  };
+
+  // Pagination helper functions
+  const getPaginatedData = (
+    data: any[],
+    page: number,
+    itemsPerPage: number
+  ) => {
+    const startIndex = (page - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return data.slice(startIndex, endIndex);
+  };
+
+  const getTotalPages = (data: any[], itemsPerPage: number) => {
+    return Math.ceil(data.length / itemsPerPage);
+  };
+
+  // Pagination handlers
+  const handleCollegesPageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setCollegesPage(value);
+  };
+
+  const handleUsersPageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setUsersPage(value);
+  };
+
+  const handleDocumentsPageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setDocumentsPage(value);
+  };
+
+  const handleLoansPageChange = (
+    event: React.ChangeEvent<unknown>,
+    value: number
+  ) => {
+    setLoansPage(value);
   };
 
   // User management handlers
@@ -628,7 +655,6 @@ const AdminDashboard: React.FC = () => {
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    setMessage(null);
 
     try {
       if (editingUser) {
@@ -649,20 +675,14 @@ const AdminDashboard: React.FC = () => {
       } else {
         // For new users, password is required
         if (!userForm.password) {
-          setMessage({
-            type: "error",
-            text: "Password is required for new users.",
-          });
+          toast.error("Password is required for new users.");
           setIsSubmitting(false);
           return;
         }
         createUserMutation.mutate(userForm);
       }
     } catch (error: any) {
-      setMessage({
-        type: "error",
-        text: "Failed to save user. Please try again.",
-      });
+      toast.error("Failed to save user. Please try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -690,7 +710,6 @@ const AdminDashboard: React.FC = () => {
 
   const handleOpenUserDialog = () => {
     setEditingUser(null);
-    setMessage(null);
     setUserForm({
       first_name: "",
       last_name: "",
@@ -750,7 +769,19 @@ const AdminDashboard: React.FC = () => {
           mb: 4,
         }}
       >
-        <Card sx={{ height: "100%" }}>
+        <Card
+          sx={{
+            height: "100%",
+            cursor: "pointer",
+            transition:
+              "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: 3,
+            },
+          }}
+          onClick={() => handleCardClick(1)}
+        >
           <CardContent sx={{ p: 3 }}>
             <Box display="flex" alignItems="center">
               <People sx={{ fontSize: 40, color: "primary.main", mr: 2 }} />
@@ -766,7 +797,19 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card sx={{ height: "100%" }}>
+        <Card
+          sx={{
+            height: "100%",
+            cursor: "pointer",
+            transition:
+              "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: 3,
+            },
+          }}
+          onClick={() => handleCardClick(0)}
+        >
           <CardContent sx={{ p: 3 }}>
             <Box display="flex" alignItems="center">
               <School sx={{ fontSize: 40, color: "success.main", mr: 2 }} />
@@ -782,7 +825,19 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card sx={{ height: "100%" }}>
+        <Card
+          sx={{
+            height: "100%",
+            cursor: "pointer",
+            transition:
+              "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: 3,
+            },
+          }}
+          onClick={() => handleCardClick(3)}
+        >
           <CardContent sx={{ p: 3 }}>
             <Box display="flex" alignItems="center">
               <AccountBalance
@@ -800,7 +855,19 @@ const AdminDashboard: React.FC = () => {
           </CardContent>
         </Card>
 
-        <Card sx={{ height: "100%" }}>
+        <Card
+          sx={{
+            height: "100%",
+            cursor: "pointer",
+            transition:
+              "transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out",
+            "&:hover": {
+              transform: "translateY(-2px)",
+              boxShadow: 3,
+            },
+          }}
+          onClick={() => handleCardClick(2)}
+        >
           <CardContent sx={{ p: 3 }}>
             <Box display="flex" alignItems="center">
               <Description
@@ -840,12 +907,6 @@ const AdminDashboard: React.FC = () => {
               Add colleges manually or upload via Excel sheet
             </Typography>
           </Box>
-
-          {message && (
-            <Alert severity={message.type} sx={{ mb: 3 }}>
-              {message.text}
-            </Alert>
-          )}
 
           <Box
             sx={{
@@ -978,7 +1039,11 @@ const AdminDashboard: React.FC = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      filteredColleges.map((college) => (
+                      getPaginatedData(
+                        filteredColleges,
+                        collegesPage,
+                        itemsPerPage
+                      ).map((college) => (
                         <TableRow key={college.college_id}>
                           <TableCell>{college.college_name}</TableCell>
                           <TableCell>
@@ -994,7 +1059,7 @@ const AdminDashboard: React.FC = () => {
                             >
                               {college.courses_offered
                                 .slice(0, 2)
-                                .map((course, index) => (
+                                .map((course: string, index: number) => (
                                   <Chip
                                     key={index}
                                     label={course}
@@ -1040,6 +1105,17 @@ const AdminDashboard: React.FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+              {filteredColleges.length > itemsPerPage && (
+                <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+                  <Pagination
+                    count={getTotalPages(filteredColleges, itemsPerPage)}
+                    page={collegesPage}
+                    onChange={handleCollegesPageChange}
+                    color="primary"
+                    size="large"
+                  />
+                </Box>
+              )}
             </CardContent>
           </Card>
         </TabPanel>
@@ -1126,52 +1202,65 @@ const AdminDashboard: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  users.map((user: User) => (
-                    <TableRow key={user.user_id}>
-                      <TableCell>
-                        {user.first_name} {user.last_name}
-                      </TableCell>
-                      <TableCell>{user.email}</TableCell>
-                      <TableCell>{user.phone_number || "N/A"}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={user.is_admin ? "Admin" : "User"}
-                          color={user.is_admin ? "primary" : "default"}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={user.is_active ? "Active" : "Inactive"}
-                          color={user.is_active ? "success" : "error"}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        {new Date(user.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleEditUser(user)}
-                        >
-                          <Edit />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => handleDeleteUser(user.user_id)}
-                        >
-                          <Delete />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  getPaginatedData(users, usersPage, itemsPerPage).map(
+                    (user: User) => (
+                      <TableRow key={user.user_id}>
+                        <TableCell>
+                          {user.first_name} {user.last_name}
+                        </TableCell>
+                        <TableCell>{user.email}</TableCell>
+                        <TableCell>{user.phone_number || "N/A"}</TableCell>
+                        <TableCell>
+                          <Chip
+                            label={user.is_admin ? "Admin" : "User"}
+                            color={user.is_admin ? "primary" : "default"}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={user.is_active ? "Active" : "Inactive"}
+                            color={user.is_active ? "success" : "error"}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          {new Date(user.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleEditUser(user)}
+                          >
+                            <Edit />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => handleDeleteUser(user.user_id)}
+                          >
+                            <Delete />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )
                 )}
               </TableBody>
             </Table>
           </TableContainer>
+          {users.length > itemsPerPage && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              <Pagination
+                count={getTotalPages(users, itemsPerPage)}
+                page={usersPage}
+                onChange={handleUsersPageChange}
+                color="primary"
+                size="large"
+              />
+            </Box>
+          )}
         </TabPanel>
 
         {/* Documents Tab */}
@@ -1244,124 +1333,141 @@ const AdminDashboard: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  documents.map((document: Document) => (
-                    <TableRow key={document.document_id}>
-                      <TableCell>
-                        {document.user
-                          ? `${document.user.first_name} ${document.user.last_name}`
-                          : `User ${document.user_id}`}
-                      </TableCell>
-                      <TableCell>
-                        {document.document_type || "General"}
-                      </TableCell>
-                      <TableCell>
-                        <Box
-                          sx={{ display: "flex", alignItems: "center", gap: 1 }}
-                        >
-                          <AttachFile fontSize="small" />
-                          {document.original_name}
-                        </Box>
-                      </TableCell>
-                      <TableCell>
-                        {(document.file_size / 1024 / 1024).toFixed(2)} MB
-                      </TableCell>
-                      <TableCell>
-                        {new Date(document.uploaded_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={
-                            document.status.charAt(0).toUpperCase() +
-                            document.status.slice(1)
-                          }
-                          color={getStatusColor(document.status) as any}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleDocumentView(document)}
-                        >
-                          <Visibility />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => {
-                            documentsApi
-                              .downloadDocument(document.document_id)
-                              .then((blob) => {
-                                const url = window.URL.createObjectURL(blob);
-                                const a = window.document.createElement("a");
-                                a.href = url;
-                                a.download = document.original_name;
-                                window.document.body.appendChild(a);
-                                a.click();
-                                window.URL.revokeObjectURL(url);
-                                window.document.body.removeChild(a);
-                              })
-                              .catch((error) => {
-                                console.error("Download failed:", error);
-                                // Fallback to direct URL
-                                window.open(
-                                  `/api/documents/${document.document_id}/download`,
-                                  "_blank"
-                                );
-                              });
-                          }}
-                        >
-                          <Download />
-                        </IconButton>
-                        {document.status === "pending" && (
-                          <>
-                            <IconButton
-                              size="small"
-                              color="success"
-                              onClick={() =>
-                                handleDocumentAction(
-                                  document.document_id,
-                                  "approve"
-                                )
-                              }
-                            >
-                              <CheckCircle />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => {
-                                const reason = prompt("Rejection reason:");
-                                if (reason) {
+                  getPaginatedData(documents, documentsPage, itemsPerPage).map(
+                    (document: Document) => (
+                      <TableRow key={document.document_id}>
+                        <TableCell>
+                          {document.user
+                            ? `${document.user.first_name} ${document.user.last_name}`
+                            : `User ${document.user_id}`}
+                        </TableCell>
+                        <TableCell>
+                          {document.document_type || "General"}
+                        </TableCell>
+                        <TableCell>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              gap: 1,
+                            }}
+                          >
+                            <AttachFile fontSize="small" />
+                            {document.original_name}
+                          </Box>
+                        </TableCell>
+                        <TableCell>
+                          {(document.file_size / 1024 / 1024).toFixed(2)} MB
+                        </TableCell>
+                        <TableCell>
+                          {new Date(document.uploaded_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={
+                              document.status.charAt(0).toUpperCase() +
+                              document.status.slice(1)
+                            }
+                            color={getStatusColor(document.status) as any}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleDocumentView(document)}
+                          >
+                            <Visibility />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => {
+                              documentsApi
+                                .downloadDocument(document.document_id)
+                                .then((blob) => {
+                                  const url = window.URL.createObjectURL(blob);
+                                  const a = window.document.createElement("a");
+                                  a.href = url;
+                                  a.download = document.original_name;
+                                  window.document.body.appendChild(a);
+                                  a.click();
+                                  window.URL.revokeObjectURL(url);
+                                  window.document.body.removeChild(a);
+                                })
+                                .catch((error) => {
+                                  console.error("Download failed:", error);
+                                  // Fallback to direct URL
+                                  window.open(
+                                    `/api/documents/${document.document_id}/download`,
+                                    "_blank"
+                                  );
+                                });
+                            }}
+                          >
+                            <Download />
+                          </IconButton>
+                          {document.status === "pending" && (
+                            <>
+                              <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() =>
                                   handleDocumentAction(
                                     document.document_id,
-                                    "reject",
-                                    reason
-                                  );
+                                    "approve"
+                                  )
                                 }
-                              }}
-                            >
-                              <Cancel />
-                            </IconButton>
-                          </>
-                        )}
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() =>
-                            handleDeleteDocument(document.document_id)
-                          }
-                        >
-                          <Delete />
-                        </IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))
+                              >
+                                <CheckCircle />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => {
+                                  const reason = prompt("Rejection reason:");
+                                  if (reason) {
+                                    handleDocumentAction(
+                                      document.document_id,
+                                      "reject",
+                                      reason
+                                    );
+                                  }
+                                }}
+                              >
+                                <Cancel />
+                              </IconButton>
+                            </>
+                          )}
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() =>
+                              handleDeleteDocument(document.document_id)
+                            }
+                          >
+                            <Delete />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )
                 )}
               </TableBody>
             </Table>
           </TableContainer>
+          {documents.length > itemsPerPage && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              <Pagination
+                count={getTotalPages(documents, itemsPerPage)}
+                page={documentsPage}
+                onChange={handleDocumentsPageChange}
+                color="primary"
+                size="large"
+              />
+            </Box>
+          )}
         </TabPanel>
 
         {/* Loans Tab */}
@@ -1420,61 +1526,74 @@ const AdminDashboard: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  filteredLoans.map((loan) => (
-                    <TableRow key={loan.loan_id}>
-                      <TableCell>User {loan.user_id}</TableCell>
-                      <TableCell>{loan.loan_type}</TableCell>
-                      <TableCell>
-                        ₹{loan.principal_amount.toLocaleString()}
-                      </TableCell>
-                      <TableCell>College {loan.college_id}</TableCell>
-                      <TableCell>
-                        {new Date(loan.created_at).toLocaleDateString()}
-                      </TableCell>
-                      <TableCell>
-                        <Chip
-                          label={loan.status.replace("_", " ").toUpperCase()}
-                          color={getStatusColor(loan.status) as any}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => navigate(`/loans/${loan.loan_id}`)}
-                        >
-                          <Visibility />
-                        </IconButton>
-                        {loan.status === "submitted" && (
-                          <>
-                            <IconButton
-                              size="small"
-                              color="success"
-                              onClick={() =>
-                                handleLoanAction(loan.loan_id, "approve")
-                              }
-                            >
-                              <CheckCircle />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() =>
-                                handleLoanAction(loan.loan_id, "reject")
-                              }
-                            >
-                              <Cancel />
-                            </IconButton>
-                          </>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
+                  getPaginatedData(filteredLoans, loansPage, itemsPerPage).map(
+                    (loan) => (
+                      <TableRow key={loan.loan_id}>
+                        <TableCell>User {loan.user_id}</TableCell>
+                        <TableCell>{loan.loan_type}</TableCell>
+                        <TableCell>
+                          ₹{loan.principal_amount.toLocaleString()}
+                        </TableCell>
+                        <TableCell>College {loan.college_id}</TableCell>
+                        <TableCell>
+                          {new Date(loan.created_at).toLocaleDateString()}
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={loan.status.replace("_", " ").toUpperCase()}
+                            color={getStatusColor(loan.status) as any}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleLoanView(loan)}
+                          >
+                            <Visibility />
+                          </IconButton>
+                          {loan.status === "submitted" && (
+                            <>
+                              <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() =>
+                                  handleLoanAction(loan.loan_id, "approve")
+                                }
+                              >
+                                <CheckCircle />
+                              </IconButton>
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() =>
+                                  handleLoanAction(loan.loan_id, "reject")
+                                }
+                              >
+                                <Cancel />
+                              </IconButton>
+                            </>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )
+                  )
                 )}
               </TableBody>
             </Table>
           </TableContainer>
+          {filteredLoans.length > itemsPerPage && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              <Pagination
+                count={getTotalPages(filteredLoans, itemsPerPage)}
+                page={loansPage}
+                onChange={handleLoansPageChange}
+                color="primary"
+                size="large"
+              />
+            </Box>
+          )}
         </TabPanel>
       </Paper>
 
@@ -1919,20 +2038,12 @@ const AdminDashboard: React.FC = () => {
       {/* User Dialog */}
       <Dialog
         open={userDialogOpen}
-        onClose={() => {
-          setUserDialogOpen(false);
-          setMessage(null);
-        }}
+        onClose={() => setUserDialogOpen(false)}
         maxWidth="md"
         fullWidth
       >
         <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
         <DialogContent>
-          {message && (
-            <Alert severity={message.type} sx={{ mb: 2 }}>
-              {message.text}
-            </Alert>
-          )}
           <Box component="form" onSubmit={handleAddUser} sx={{ mt: 2 }}>
             <Box
               sx={{
@@ -2048,6 +2159,121 @@ const AdminDashboard: React.FC = () => {
               "Add User"
             )}
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Loan Details Dialog */}
+      <Dialog
+        open={loanDialogOpen}
+        onClose={() => {
+          setLoanDialogOpen(false);
+          setSelectedLoan(null);
+        }}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>Loan Details</DialogTitle>
+        <DialogContent>
+          {selectedLoan && (
+            <Box sx={{ mt: 2 }}>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  gap: 2,
+                  mb: 3,
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Loan ID
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedLoan.loan_id}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    User ID
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedLoan.user_id}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Loan Type
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedLoan.loan_type}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Principal Amount
+                  </Typography>
+                  <Typography variant="body1">
+                    ₹{selectedLoan.principal_amount.toLocaleString()}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Interest Rate
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedLoan.interest_rate}%
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Term (Months)
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedLoan.term_months}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Status
+                  </Typography>
+                  <Chip
+                    label={selectedLoan.status.replace("_", " ").toUpperCase()}
+                    color={getStatusColor(selectedLoan.status) as any}
+                    size="small"
+                  />
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    College ID
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedLoan.college_id}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Created At
+                  </Typography>
+                  <Typography variant="body1">
+                    {new Date(selectedLoan.created_at).toLocaleDateString()}
+                  </Typography>
+                </Box>
+              </Box>
+              {selectedLoan.description && (
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Description
+                  </Typography>
+                  <Typography variant="body1" sx={{ mt: 1 }}>
+                    {selectedLoan.description}
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLoanDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
     </Container>
