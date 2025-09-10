@@ -10,6 +10,12 @@ import {
 import { User } from './entities/user.entity';
 
 export type DocumentStatus = 'pending' | 'approved' | 'rejected';
+export type DocumentType =
+  | 'ID_PROOF'
+  | 'ADDRESS_PROOF'
+  | 'MARKSHEET'
+  | 'PHOTO'
+  | 'OTHER';
 
 @Entity('documents')
 export class Document {
@@ -33,6 +39,18 @@ export class Document {
 
   @Column('varchar', { nullable: true })
   document_type: string;
+
+  @Column('varchar', { nullable: false })
+  name: string;
+
+  @Column('varchar', { nullable: false })
+  purpose: string;
+
+  @Column('enum', {
+    enum: ['ID_PROOF', 'ADDRESS_PROOF', 'MARKSHEET', 'PHOTO', 'OTHER'],
+    nullable: false,
+  })
+  type: DocumentType;
 
   @Column('enum', {
     enum: ['pending', 'approved', 'rejected'],

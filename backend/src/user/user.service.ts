@@ -249,4 +249,158 @@ export class UserService {
       })),
     };
   }
+
+  async updateUser(
+    correlation_id: string,
+    user_id: string,
+    update_user_dto: any,
+    current_user: any,
+  ) {
+    this.logger.setContext(this.constructor.name + '/updateUser');
+    this.logger.debug(
+      correlation_id,
+      `Updating user ${user_id} by user ${current_user.user_id}`,
+    );
+
+    // Check if user exists
+    const user = await this.user_repo.findOne({ where: { user_id: user_id } });
+    if (!user) {
+      this.logger.debug(correlation_id, `User not found: ${user_id}`);
+      throw customHttpError(
+        ENTITY_NOT_FOUND,
+        'USER_NOT_FOUND',
+        'User not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Check if current user can update this user
+    // Users can only update their own profile unless they are admin
+    if (current_user.user_id !== user_id && !current_user.is_admin) {
+      this.logger.debug(
+        correlation_id,
+        `User ${current_user.user_id} is not authorized to update user ${user_id}`,
+      );
+      throw customHttpError(
+        DATA_VALIDATION_ERROR,
+        'UNAUTHORIZED_UPDATE',
+        'You can only update your own profile',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    // If updating password, hash it
+    if (update_user_dto.password) {
+      this.logger.debug(correlation_id, 'Hashing new password');
+      update_user_dto.password = await bcrypt.hash(
+        update_user_dto.password,
+        10,
+      );
+    }
+
+    // If updating email, check if it's already taken by another user
+    if (update_user_dto.email && update_user_dto.email !== user.email) {
+      const existing_user = await this.user_repo.findOne({
+        where: { email: update_user_dto.email },
+      });
+      if (existing_user && existing_user.user_id !== user_id) {
+        this.logger.debug(
+          correlation_id,
+          'Email already exists for another user',
+        );
+        throw customHttpError(
+          DATA_VALIDATION_ERROR,
+          'EMAIL_EXISTS',
+          'Email already registered',
+          HttpStatus.BAD_REQUEST,
+        );
+      }
+    }
+
+    // Non-admin users cannot change admin status or active status
+    if (!current_user.is_admin) {
+      delete update_user_dto.is_admin;
+      delete update_user_dto.is_active;
+    }
+
+    this.logger.debug(correlation_id, 'Updating user in database');
+    await this.user_repo.update(user_id, update_user_dto);
+
+    // Fetch updated user
+    const updated_user = await this.user_repo.findOne({
+      where: { user_id: user_id },
+    });
+    if (!updated_user) {
+      throw customHttpError(
+        ENTITY_NOT_FOUND,
+        'USER_NOT_FOUND',
+        'User not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    this.logger.debug(correlation_id, `User ${user_id} updated successfully`);
+
+    return {
+      message: 'User updated successfully',
+      data: {
+        user_id: updated_user.user_id,
+        first_name: updated_user.first_name,
+        last_name: updated_user.last_name,
+        email: updated_user.email,
+        phone_number: updated_user.phone_number,
+        is_admin: updated_user.is_admin,
+        is_active: updated_user.is_active,
+        updated_at: updated_user.updated_at,
+      },
+    };
+  }
+
+  async deleteUser(correlation_id: string, user_id: string, current_user: any) {
+    this.logger.setContext(this.constructor.name + '/deleteUser');
+    this.logger.debug(
+      correlation_id,
+      `Deleting user ${user_id} by user ${current_user.user_id}`,
+    );
+
+    // Only admins can delete users
+    if (!current_user.is_admin) {
+      this.logger.debug(
+        correlation_id,
+        `User ${current_user.user_id} is not authorized to delete users`,
+      );
+      throw customHttpError(
+        DATA_VALIDATION_ERROR,
+        'UNAUTHORIZED_DELETE',
+        'Only admins can delete users',
+        HttpStatus.FORBIDDEN,
+      );
+    }
+
+    // Check if user exists
+    const user = await this.user_repo.findOne({ where: { user_id: user_id } });
+    if (!user) {
+      this.logger.debug(correlation_id, `User not found: ${user_id}`);
+      throw customHttpError(
+        ENTITY_NOT_FOUND,
+        'USER_NOT_FOUND',
+        'User not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Soft delete the user
+    this.logger.debug(correlation_id, 'Soft deleting user');
+    await this.user_repo.update(user_id, {
+      is_deleted: true,
+      is_active: false,
+    });
+
+    this.logger.debug(correlation_id, `User ${user_id} deleted successfully`);
+
+    return {
+      message: 'User deleted successfully',
+      data: { user_id },
+    };
+  }
 }

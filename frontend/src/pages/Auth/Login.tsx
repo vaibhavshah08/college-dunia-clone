@@ -66,14 +66,15 @@ const Login: React.FC = () => {
       await login({ email: formData.email, password: formData.password });
       // Navigation is handled by the useAuth hook
     } catch (err: any) {
-      // Error is already handled by the useAuth hook, but we can set local error state
-      // for additional UI feedback if needed
+      // Set local error state for UI feedback
       if (err?.status === 401) {
         setError("Invalid email or password. Please try again.");
       } else if (err?.status === 422) {
         setError("Please check your input and try again.");
       } else if (err?.status === 429) {
-        setError("Too many login attempts. Please wait a moment and try again.");
+        setError(
+          "Too many login attempts. Please wait a moment and try again."
+        );
       } else if (err?.code === "NETWORK_ERROR") {
         setError("Network error. Please check your connection and try again.");
       } else {
@@ -85,10 +86,10 @@ const Login: React.FC = () => {
   return (
     <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
       <Paper elevation={3} sx={{ p: { xs: 3, sm: 4 }, borderRadius: 3 }}>
-        <Typography 
-          component="h1" 
-          variant="h4" 
-          align="center" 
+        <Typography
+          component="h1"
+          variant="h4"
+          align="center"
           gutterBottom
           sx={{ fontWeight: "bold", mb: 1 }}
         >
@@ -147,9 +148,9 @@ const Login: React.FC = () => {
             fullWidth
             variant="contained"
             size="large"
-            sx={{ 
-              mt: 2, 
-              mb: 3, 
+            sx={{
+              mt: 2,
+              mb: 3,
               py: 1.5,
               fontSize: "1.1rem",
               fontWeight: 600,
@@ -163,11 +164,11 @@ const Login: React.FC = () => {
         <Box textAlign="center">
           <Typography variant="body2" color="text.secondary">
             Don't have an account?{" "}
-            <Link 
-              component={RouterLink} 
-              to="/register" 
+            <Link
+              component={RouterLink}
+              to="/register"
               variant="body2"
-              sx={{ 
+              sx={{
                 fontWeight: 600,
                 textDecoration: "none",
                 "&:hover": {

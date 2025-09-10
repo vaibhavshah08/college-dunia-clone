@@ -49,8 +49,10 @@ import {
   Phone,
   CalendarToday,
   AttachFile,
+  Refresh,
 } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "react-query";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
 import collegesApi from "../../services/modules/colleges.api";
 import loansApi from "../../services/modules/loans.api";
@@ -58,6 +60,14 @@ import documentsApi from "../../services/modules/documents.api";
 import adminApi from "../../services/modules/admin.api";
 import { College, Loan, Document, User, DocumentStatus } from "../../types/api";
 import { downloadExcelTemplate, parseExcelFile } from "../../utils/excelUtils";
+import { getErrorMessage } from "../../utils/errorHandler";
+
+// Get file URL for preview
+const getFileUrl = (documentPath: string) => {
+  const API_BASE_URL =
+    process.env.REACT_APP_API_BASE_URL || "http://localhost:7001";
+  return `${API_BASE_URL}${documentPath}`;
+};
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -84,6 +94,7 @@ function TabPanel(props: TabPanelProps) {
 const AdminDashboard: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [tabValue, setTabValue] = useState(0);
   const [collegeForm, setCollegeForm] = useState({
     college_name: "",
@@ -122,6 +133,7 @@ const AdminDashboard: React.FC = () => {
     last_name: "",
     email: "",
     phone_number: "",
+    password: "",
     is_admin: false,
     is_active: true,
   });
@@ -135,10 +147,17 @@ const AdminDashboard: React.FC = () => {
     enabled: isAuthenticated,
   });
 
-  const { data: loans = [], isLoading: loansLoading } = useQuery({
+  const {
+    data: loans = [],
+    isLoading: loansLoading,
+    error: loansError,
+  } = useQuery({
     queryKey: ["loans", "admin"],
     queryFn: loansApi.getAllLoans,
     enabled: isAuthenticated,
+    onError: (error) => {
+      console.error("Loans fetch error:", error);
+    },
   });
 
   const { data: documentsData, isLoading: documentsLoading } = useQuery({
@@ -282,6 +301,7 @@ const AdminDashboard: React.FC = () => {
         first_name: "",
         last_name: "",
         email: "",
+        password: "",
         phone_number: "",
         is_admin: false,
         is_active: true,
@@ -290,7 +310,7 @@ const AdminDashboard: React.FC = () => {
     onError: (error: any) => {
       setMessage({
         type: "error",
-        text: error?.message || "Failed to create user",
+        text: getErrorMessage(error),
       });
     },
   });
@@ -307,7 +327,7 @@ const AdminDashboard: React.FC = () => {
     onError: (error: any) => {
       setMessage({
         type: "error",
-        text: error?.message || "Failed to update user",
+        text: getErrorMessage(error),
       });
     },
   });
@@ -321,7 +341,7 @@ const AdminDashboard: React.FC = () => {
     onError: (error: any) => {
       setMessage({
         type: "error",
-        text: error?.message || "Failed to delete user",
+        text: getErrorMessage(error),
       });
     },
   });
@@ -557,10 +577,43 @@ const AdminDashboard: React.FC = () => {
     }
   };
 
+  // Loan action mutations
+  const updateLoanStatusMutation = useMutation(
+    ({ id, status }: { id: string; status: string }) =>
+      loansApi.updateLoanStatus(id, { status: status as any }),
+    {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["loans", "admin"]);
+        setMessage({
+          type: "success",
+          text: "Loan status updated successfully!",
+        });
+      },
+      onError: (error: any) => {
+        setMessage({
+          type: "error",
+          text: getErrorMessage(error),
+        });
+      },
+    }
+  );
+
   const handleLoanAction = (loanId: string, action: "approve" | "reject") => {
-    // Simulate API call
-    console.log(`${action} loan ${loanId}`);
-    // Update loan status in state
+    const status = action === "approve" ? "approved" : "rejected";
+    updateLoanStatusMutation.mutate({ id: loanId, status });
+  };
+
+  // Refresh all data
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
+    queryClient.invalidateQueries({ queryKey: ["loans", "admin"] });
+    queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
+    queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
+    queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
+    setMessage({
+      type: "success",
+      text: "Data refreshed successfully!",
+    });
   };
 
   // User management handlers
@@ -579,11 +632,30 @@ const AdminDashboard: React.FC = () => {
 
     try {
       if (editingUser) {
+        // For editing, only include password if it's provided
+        const dataToUpdate = {
+          first_name: userForm.first_name,
+          last_name: userForm.last_name,
+          email: userForm.email,
+          phone_number: userForm.phone_number,
+          is_admin: userForm.is_admin,
+          is_active: userForm.is_active,
+          ...(userForm.password && { password: userForm.password }),
+        };
         updateUserMutation.mutate({
           id: editingUser.user_id,
-          data: userForm,
+          data: dataToUpdate,
         });
       } else {
+        // For new users, password is required
+        if (!userForm.password) {
+          setMessage({
+            type: "error",
+            text: "Password is required for new users.",
+          });
+          setIsSubmitting(false);
+          return;
+        }
         createUserMutation.mutate(userForm);
       }
     } catch (error: any) {
@@ -603,6 +675,7 @@ const AdminDashboard: React.FC = () => {
       last_name: user.last_name,
       email: user.email,
       phone_number: user.phone_number || "",
+      password: "", // Don't pre-fill password for editing
       is_admin: user.is_admin,
       is_active: user.is_active,
     });
@@ -617,10 +690,12 @@ const AdminDashboard: React.FC = () => {
 
   const handleOpenUserDialog = () => {
     setEditingUser(null);
+    setMessage(null);
     setUserForm({
       first_name: "",
       last_name: "",
       email: "",
+      password: "",
       phone_number: "",
       is_admin: false,
       is_active: true,
@@ -645,9 +720,26 @@ const AdminDashboard: React.FC = () => {
 
   return (
     <Container maxWidth="xl" sx={{ py: 4 }}>
-      <Typography variant="h4" gutterBottom sx={{ fontWeight: "bold", mb: 4 }}>
-        Admin Dashboard
-      </Typography>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 4,
+        }}
+      >
+        <Typography variant="h4" sx={{ fontWeight: "bold" }}>
+          Platform Stats
+        </Typography>
+        <Button
+          variant="outlined"
+          startIcon={<Refresh />}
+          onClick={handleRefresh}
+          sx={{ minWidth: 120 }}
+        >
+          Refresh
+        </Button>
+      </Box>
 
       {/* Stats Cards */}
       <Box
@@ -1197,9 +1289,28 @@ const AdminDashboard: React.FC = () => {
                         <IconButton
                           size="small"
                           color="primary"
-                          onClick={() =>
-                            documentsApi.downloadDocument(document.document_id)
-                          }
+                          onClick={() => {
+                            documentsApi
+                              .downloadDocument(document.document_id)
+                              .then((blob) => {
+                                const url = window.URL.createObjectURL(blob);
+                                const a = window.document.createElement("a");
+                                a.href = url;
+                                a.download = document.original_name;
+                                window.document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                window.document.body.removeChild(a);
+                              })
+                              .catch((error) => {
+                                console.error("Download failed:", error);
+                                // Fallback to direct URL
+                                window.open(
+                                  `/api/documents/${document.document_id}/download`,
+                                  "_blank"
+                                );
+                              });
+                          }}
                         >
                           <Download />
                         </IconButton>
@@ -1331,9 +1442,7 @@ const AdminDashboard: React.FC = () => {
                         <IconButton
                           size="small"
                           color="primary"
-                          onClick={() =>
-                            window.open(`/api/loans/${loan.loan_id}`, "_blank")
-                          }
+                          onClick={() => navigate(`/loans/${loan.loan_id}`)}
                         >
                           <Visibility />
                         </IconButton>
@@ -1381,36 +1490,138 @@ const AdminDashboard: React.FC = () => {
           {selectedDocument && (
             <Box>
               <Typography variant="h6" gutterBottom>
-                {selectedDocument.document_type}
+                {selectedDocument.name ||
+                  selectedDocument.document_type ||
+                  "Document"}
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Uploaded by: {selectedDocument.user_name}
+                <strong>Purpose:</strong> {selectedDocument.purpose}
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                File: {selectedDocument.file_name}
+                <strong>Type:</strong>{" "}
+                {selectedDocument.type?.replace("_", " ") ||
+                  selectedDocument.document_type}
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Uploaded: {selectedDocument.uploaded_at}
+                <strong>Uploaded by:</strong>{" "}
+                {selectedDocument.user
+                  ? `${selectedDocument.user.first_name} ${selectedDocument.user.last_name}`
+                  : `User ${selectedDocument.user_id}`}
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                Status: {selectedDocument.status}
+                <strong>File:</strong> {selectedDocument.original_name}
               </Typography>
-              {/* Add document preview here */}
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Size:</strong>{" "}
+                {(selectedDocument.file_size / 1024 / 1024).toFixed(2)} MB
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Uploaded:</strong>{" "}
+                {new Date(selectedDocument.uploaded_at).toLocaleDateString()}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                <strong>Status:</strong>{" "}
+                {selectedDocument.status?.charAt(0).toUpperCase() +
+                  selectedDocument.status?.slice(1)}
+              </Typography>
+              {selectedDocument.rejection_reason && (
+                <Typography variant="body2" color="error" gutterBottom>
+                  <strong>Rejection Reason:</strong>{" "}
+                  {selectedDocument.rejection_reason}
+                </Typography>
+              )}
+              {selectedDocument.reviewed_by && (
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <strong>Reviewed by:</strong> {selectedDocument.reviewed_by}
+                </Typography>
+              )}
+              {selectedDocument.reviewed_at && (
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <strong>Reviewed on:</strong>{" "}
+                  {new Date(selectedDocument.reviewed_at).toLocaleDateString()}
+                </Typography>
+              )}
+
+              {/* Document Preview Section */}
               <Box
                 sx={{
-                  mt: 2,
+                  mt: 3,
                   p: 2,
                   border: "1px solid #ddd",
                   borderRadius: 1,
                   textAlign: "center",
+                  backgroundColor: "#f5f5f5",
                 }}
               >
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="h6" gutterBottom>
                   Document Preview
                 </Typography>
-                <Typography variant="caption" color="text.secondary">
-                  PDF viewer or image preview would be displayed here
-                </Typography>
+                {selectedDocument.mime_type?.startsWith("image/") ? (
+                  <Box>
+                    <img
+                      src={getFileUrl(selectedDocument.document_path)}
+                      alt={selectedDocument.original_name}
+                      style={{
+                        maxWidth: "100%",
+                        maxHeight: "400px",
+                        objectFit: "contain",
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const nextElement = e.currentTarget
+                          .nextElementSibling as HTMLElement;
+                        if (nextElement) {
+                          nextElement.style.display = "block";
+                        }
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      style={{ display: "none" }}
+                    >
+                      Image preview not available
+                    </Typography>
+                  </Box>
+                ) : selectedDocument.mime_type === "application/pdf" ? (
+                  <Box>
+                    <iframe
+                      src={getFileUrl(selectedDocument.document_path)}
+                      width="100%"
+                      height="400px"
+                      style={{ border: "none" }}
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none";
+                        const nextElement = e.currentTarget
+                          .nextElementSibling as HTMLElement;
+                        if (nextElement) {
+                          nextElement.style.display = "block";
+                        }
+                      }}
+                    />
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      style={{ display: "none" }}
+                    >
+                      PDF preview not available. Click download to view the
+                      file.
+                    </Typography>
+                  </Box>
+                ) : (
+                  <Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      Preview not available for this file type
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Click download to view the file
+                    </Typography>
+                  </Box>
+                )}
               </Box>
             </Box>
           )}
@@ -1422,10 +1633,27 @@ const AdminDashboard: React.FC = () => {
             startIcon={<Download />}
             onClick={() => {
               if (selectedDocument) {
-                window.open(
-                  `/api/documents/${selectedDocument.id}/download`,
-                  "_blank"
-                );
+                // Use the documentsApi for proper authentication
+                documentsApi
+                  .downloadDocument(selectedDocument.document_id)
+                  .then((blob) => {
+                    const url = window.URL.createObjectURL(blob);
+                    const a = window.document.createElement("a");
+                    a.href = url;
+                    a.download = selectedDocument.original_name;
+                    window.document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    window.document.body.removeChild(a);
+                  })
+                  .catch((error) => {
+                    console.error("Download failed:", error);
+                    // Fallback to direct URL
+                    window.open(
+                      `/api/documents/${selectedDocument.document_id}/download`,
+                      "_blank"
+                    );
+                  });
               }
             }}
           >
@@ -1594,11 +1822,15 @@ const AdminDashboard: React.FC = () => {
                   gap: 2,
                 }}
               >
-                <FormControl fullWidth>
-                  <InputLabel>Partnered College</InputLabel>
+                <FormControl fullWidth variant="outlined">
+                  <InputLabel id="partnered-college-label">
+                    Partnered College
+                  </InputLabel>
                   <Select
+                    labelId="partnered-college-label"
                     name="is_partnered"
                     value={collegeForm.is_partnered ? "true" : "false"}
+                    label="Partnered College"
                     onChange={(e) => {
                       const value = e.target.value === "true";
                       setCollegeForm((prev) => ({
@@ -1687,12 +1919,20 @@ const AdminDashboard: React.FC = () => {
       {/* User Dialog */}
       <Dialog
         open={userDialogOpen}
-        onClose={() => setUserDialogOpen(false)}
+        onClose={() => {
+          setUserDialogOpen(false);
+          setMessage(null);
+        }}
         maxWidth="md"
         fullWidth
       >
         <DialogTitle>{editingUser ? "Edit User" : "Add New User"}</DialogTitle>
         <DialogContent>
+          {message && (
+            <Alert severity={message.type} sx={{ mb: 2 }}>
+              {message.text}
+            </Alert>
+          )}
           <Box component="form" onSubmit={handleAddUser} sx={{ mt: 2 }}>
             <Box
               sx={{
@@ -1741,11 +1981,28 @@ const AdminDashboard: React.FC = () => {
                 onChange={handleUserFormChange}
                 disabled={isSubmitting}
               />
-              <FormControl fullWidth>
-                <InputLabel>Role</InputLabel>
+              <TextField
+                fullWidth
+                label="Password"
+                name="password"
+                type="password"
+                value={userForm.password}
+                onChange={handleUserFormChange}
+                disabled={isSubmitting}
+                required={!editingUser}
+                helperText={
+                  editingUser
+                    ? "Leave blank to keep current password"
+                    : "Password is required for new users"
+                }
+              />
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="role-label">Role</InputLabel>
                 <Select
+                  labelId="role-label"
                   name="is_admin"
                   value={userForm.is_admin ? "true" : "false"}
+                  label="Role"
                   onChange={(e) => {
                     const value = e.target.value === "true";
                     setUserForm((prev) => ({ ...prev, is_admin: value }));
@@ -1756,11 +2013,13 @@ const AdminDashboard: React.FC = () => {
                   <MenuItem value="true">Admin</MenuItem>
                 </Select>
               </FormControl>
-              <FormControl fullWidth>
-                <InputLabel>Status</InputLabel>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="status-label">Status</InputLabel>
                 <Select
+                  labelId="status-label"
                   name="is_active"
                   value={userForm.is_active ? "true" : "false"}
+                  label="Status"
                   onChange={(e) => {
                     const value = e.target.value === "true";
                     setUserForm((prev) => ({ ...prev, is_active: value }));

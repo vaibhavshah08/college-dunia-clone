@@ -5,9 +5,18 @@ export const documentsApi = {
   /**
    * Upload document
    */
-  async uploadDocument(file: File, documentType?: string): Promise<Document> {
+  async uploadDocument(
+    file: File,
+    name: string,
+    purpose: string,
+    type: string,
+    documentType?: string
+  ): Promise<Document> {
     const formData = new FormData();
     formData.append("file", file);
+    formData.append("name", name);
+    formData.append("purpose", purpose);
+    formData.append("type", type);
     if (documentType) {
       formData.append("document_type", documentType);
     }

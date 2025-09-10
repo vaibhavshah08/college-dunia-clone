@@ -68,6 +68,13 @@ export class CollegesService {
         affiliation: saved_entity.affiliation,
         accreditation: saved_entity.accreditation,
         created_at: saved_entity.created_at,
+        is_partnered: saved_entity.is_partnered,
+        avg_package: saved_entity.avg_package,
+        median_package: saved_entity.median_package,
+        highest_package: saved_entity.highest_package,
+        placement_rate: saved_entity.placement_rate,
+        top_recruiters: saved_entity.top_recruiters,
+        placement_last_updated: saved_entity.placement_last_updated,
       },
     };
   }
@@ -119,6 +126,13 @@ export class CollegesService {
         affiliation: saved_entity.affiliation,
         accreditation: saved_entity.accreditation,
         created_at: saved_entity.created_at,
+        is_partnered: saved_entity.is_partnered,
+        avg_package: saved_entity.avg_package,
+        median_package: saved_entity.median_package,
+        highest_package: saved_entity.highest_package,
+        placement_rate: saved_entity.placement_rate,
+        top_recruiters: saved_entity.top_recruiters,
+        placement_last_updated: saved_entity.placement_last_updated,
       },
     };
   }
@@ -183,6 +197,13 @@ export class CollegesService {
         affiliation: existing.affiliation,
         accreditation: existing.accreditation,
         created_at: existing.created_at,
+        is_partnered: existing.is_partnered,
+        avg_package: existing.avg_package,
+        median_package: existing.median_package,
+        highest_package: existing.highest_package,
+        placement_rate: existing.placement_rate,
+        top_recruiters: existing.top_recruiters,
+        placement_last_updated: existing.placement_last_updated,
       },
     };
   }
@@ -267,6 +288,13 @@ export class CollegesService {
         affiliation: college.affiliation,
         accreditation: college.accreditation,
         created_at: college.created_at,
+        is_partnered: college.is_partnered,
+        avg_package: college.avg_package,
+        median_package: college.median_package,
+        highest_package: college.highest_package,
+        placement_rate: college.placement_rate,
+        top_recruiters: college.top_recruiters,
+        placement_last_updated: college.placement_last_updated,
       })),
     };
   }
@@ -300,6 +328,13 @@ export class CollegesService {
         affiliation: college.affiliation,
         accreditation: college.accreditation,
         created_at: college.created_at,
+        is_partnered: college.is_partnered,
+        avg_package: college.avg_package,
+        median_package: college.median_package,
+        highest_package: college.highest_package,
+        placement_rate: college.placement_rate,
+        top_recruiters: college.top_recruiters,
+        placement_last_updated: college.placement_last_updated,
       })),
     };
   }

@@ -102,24 +102,16 @@ export const useAuth = () => {
       }
     },
     onError: (error: any) => {
-      // Enhanced error handling for login
-      if (error?.status === 401) {
-        toast.error("Invalid email or password. Please try again.");
-      } else if (error?.status === 422) {
-        toast.error("Please check your input and try again.");
-      } else if (error?.status === 429) {
-        toast.error(
-          "Too many login attempts. Please wait a moment and try again."
-        );
-      } else if (error?.status === 500) {
+      // Don't show toast errors for login - let the component handle inline errors
+      // Only show toast for unexpected errors
+      if (error?.status === 500) {
         toast.error("Server error. Please try again later.");
       } else if (error?.code === "NETWORK_ERROR") {
         toast.error(
           "Network error. Please check your connection and try again."
         );
-      } else {
-        toast.error(error?.message || "Login failed. Please try again.");
       }
+      // For 401, 422, 429 errors, let the component handle them with inline messages
     },
   });
 

@@ -3,11 +3,11 @@ import { Navigate } from "react-router-dom";
 import { CircularProgress, Box } from "@mui/material";
 import { useAuth } from "../../lib/hooks/useAuth";
 
-interface AdminRouteProps {
+interface HomeRouteProps {
   children: React.ReactNode;
 }
 
-const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
+const HomeRoute: React.FC<HomeRouteProps> = ({ children }) => {
   const { isAuthenticated, isLoadingUser, user } = useAuth();
 
   if (isLoadingUser) {
@@ -24,14 +24,16 @@ const AdminRoute: React.FC<AdminRouteProps> = ({ children }) => {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <>{children}</>;
   }
 
-  if (!user?.is_admin) {
-    return <Navigate to="/" replace />;
+  // If user is authenticated and is admin, redirect to admin dashboard
+  if (user?.is_admin) {
+    return <Navigate to="/admin" replace />;
   }
 
+  // If user is authenticated but not admin, show home page
   return <>{children}</>;
 };
 
-export default AdminRoute;
+export default HomeRoute;

@@ -8,6 +8,8 @@ import {
   UploadedFile,
   UseInterceptors,
   BadRequestException,
+  Put,
+  Delete,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -20,6 +22,7 @@ import {
 import { UserService } from './user.service';
 import { CreateUserDto } from './dto/create-user.dto';
 import { LoginUserDto } from './dto/login-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 import { Correlation } from 'src/core/correlation/correlation.decorator';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { GetUser } from 'src/auth/get-user.decorator';
@@ -178,6 +181,91 @@ export class UserController {
     return await this.user_service.getUserDocuments(
       correlation_id,
       user.user_id,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Put(':id')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update user profile' })
+  @ApiBody({ type: UpdateUserDto })
+  @ApiResponse({
+    status: 200,
+    description: 'User updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            user_id: { type: 'string' },
+            first_name: { type: 'string' },
+            last_name: { type: 'string' },
+            email: { type: 'string' },
+            phone_number: { type: 'string' },
+            is_admin: { type: 'boolean' },
+            is_active: { type: 'boolean' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Can only update own profile',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async updateUser(
+    @Correlation() correlation_id: string,
+    @Param('id') user_id: string,
+    @Body() update_user_dto: UpdateUserDto,
+    @GetUser() current_user: any,
+  ) {
+    return await this.user_service.updateUser(
+      correlation_id,
+      user_id,
+      update_user_dto,
+      current_user,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete(':id')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete user (Admin only)' })
+  @ApiResponse({
+    status: 200,
+    description: 'User deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            user_id: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async deleteUser(
+    @Correlation() correlation_id: string,
+    @Param('id') user_id: string,
+    @GetUser() current_user: any,
+  ) {
+    return await this.user_service.deleteUser(
+      correlation_id,
+      user_id,
+      current_user,
     );
   }
 }

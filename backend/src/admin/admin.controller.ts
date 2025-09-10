@@ -17,12 +17,16 @@ import {
   ApiBearerAuth,
   ApiQuery,
   ApiParam,
+  ApiBody,
 } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Correlation } from 'src/core/correlation/correlation.decorator';
+import { GetUser } from '../auth/get-user.decorator';
+import { AdminUpdateUserDto } from '../user/dto/admin-update-user.dto';
+import { AdminCreateUserDto } from '../user/dto/admin-create-user.dto';
 
 @ApiTags('Admin')
 @Controller('admin')
@@ -61,6 +65,46 @@ export class AdminController {
   })
   async getDashboardStats(@Correlation() correlation_id: string) {
     return await this.adminService.getDashboardStats(correlation_id);
+  }
+
+  @Post('users')
+  @ApiOperation({ summary: 'Create new user (Admin only)' })
+  @ApiBody({ type: AdminCreateUserDto })
+  @ApiResponse({
+    status: 201,
+    description: 'User created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            user_id: { type: 'string' },
+            first_name: { type: 'string' },
+            last_name: { type: 'string' },
+            email: { type: 'string' },
+            phone_number: { type: 'string' },
+            is_admin: { type: 'boolean' },
+            is_active: { type: 'boolean' },
+            created_at: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 409, description: 'User already exists' })
+  async createUser(
+    @Correlation() correlation_id: string,
+    @Body() create_user_dto: AdminCreateUserDto,
+    @GetUser() current_user: any,
+  ) {
+    return await this.adminService.createUser(
+      correlation_id,
+      create_user_dto,
+      current_user,
+    );
   }
 
   @Get('users')
@@ -200,6 +244,81 @@ export class AdminController {
       correlation_id,
       documentId,
       status,
+    );
+  }
+
+  @Put('users/:id')
+  @ApiOperation({ summary: 'Update any user (Admin only)' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiBody({ type: AdminUpdateUserDto })
+  @ApiResponse({
+    status: 200,
+    description: 'User updated successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            user_id: { type: 'string' },
+            first_name: { type: 'string' },
+            last_name: { type: 'string' },
+            email: { type: 'string' },
+            phone_number: { type: 'string' },
+            is_admin: { type: 'boolean' },
+            is_active: { type: 'boolean' },
+            updated_at: { type: 'string', format: 'date-time' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 400, description: 'Bad request' })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async updateUser(
+    @Correlation() correlation_id: string,
+    @Param('id') user_id: string,
+    @Body() update_user_dto: AdminUpdateUserDto,
+    @GetUser() current_user: any,
+  ) {
+    return await this.adminService.updateUser(
+      correlation_id,
+      user_id,
+      update_user_dto,
+      current_user,
+    );
+  }
+
+  @Delete('users/:id')
+  @ApiOperation({ summary: 'Delete user (Admin only)' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User deleted successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            user_id: { type: 'string' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async deleteUser(
+    @Correlation() correlation_id: string,
+    @Param('id') user_id: string,
+    @GetUser() current_user: any,
+  ) {
+    return await this.adminService.deleteUser(
+      correlation_id,
+      user_id,
+      current_user,
     );
   }
 }

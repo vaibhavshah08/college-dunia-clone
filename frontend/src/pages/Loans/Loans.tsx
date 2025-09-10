@@ -19,7 +19,7 @@ import {
   Select,
   MenuItem,
 } from "@mui/material";
-import { Add, Visibility } from "@mui/icons-material";
+import { Add, Visibility, Refresh } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
@@ -94,6 +94,11 @@ const Loans: React.FC = () => {
     createLoanMutation.mutate(formData);
   };
 
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["loans", "me"] });
+    queryClient.invalidateQueries({ queryKey: ["colleges"] });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "approved":
@@ -143,13 +148,22 @@ const Loans: React.FC = () => {
           <Typography variant="h4" component="h1">
             Loan Applications
           </Typography>
-          <Button
-            variant="contained"
-            startIcon={<Add />}
-            onClick={() => setOpenDialog(true)}
-          >
-            Apply for Loan
-          </Button>
+          <Box display="flex" gap={2}>
+            <Button
+              variant="outlined"
+              startIcon={<Refresh />}
+              onClick={handleRefresh}
+            >
+              Refresh
+            </Button>
+            <Button
+              variant="contained"
+              startIcon={<Add />}
+              onClick={() => setOpenDialog(true)}
+            >
+              Apply for Loan
+            </Button>
+          </Box>
         </Box>
 
         {/* Loading State */}

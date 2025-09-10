@@ -28,6 +28,7 @@ const Footer: React.FC = () => {
         color: "white",
         py: 4,
         mt: "auto",
+        boxShadow: "0 -2px 8px rgba(0,0,0,0.1)",
       }}
     >
       <Container maxWidth="lg">
@@ -43,7 +44,10 @@ const Footer: React.FC = () => {
             <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
               College Dunia
             </Typography>
-            <Typography variant="body2" sx={{ mb: 2 }}>
+            <Typography
+              variant="body2"
+              sx={{ mb: 2, color: "rgba(255, 255, 255, 0.9)" }}
+            >
               Your trusted partner in educational journey. Find the best
               colleges, secure loans, and manage your academic documents all in
               one place.
@@ -95,18 +99,29 @@ const Footer: React.FC = () => {
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Email fontSize="small" />
-                <Typography variant="body2">
+                <Email fontSize="small" sx={{ color: "white" }} />
+                <Typography
+                  variant="body2"
+                  sx={{ color: "rgba(255, 255, 255, 0.9)" }}
+                >
                   support@collegedunia.com
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Phone fontSize="small" />
-                <Typography variant="body2">+1 (555) 123-4567</Typography>
+                <Phone fontSize="small" sx={{ color: "white" }} />
+                <Typography
+                  variant="body2"
+                  sx={{ color: "rgba(255, 255, 255, 0.9)" }}
+                >
+                  +1 (555) 123-4567
+                </Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <LocationOn fontSize="small" />
-                <Typography variant="body2">
+                <LocationOn fontSize="small" sx={{ color: "white" }} />
+                <Typography
+                  variant="body2"
+                  sx={{ color: "rgba(255, 255, 255, 0.9)" }}
+                >
                   123 Education St, Learning City, LC 12345
                 </Typography>
               </Box>
@@ -114,7 +129,7 @@ const Footer: React.FC = () => {
           </Box>
         </Box>
 
-        <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.2)" }} />
+        <Divider sx={{ my: 3, borderColor: "rgba(255,255,255,0.3)" }} />
 
         {/* Bottom Section */}
         <Box
@@ -126,21 +141,41 @@ const Footer: React.FC = () => {
             gap: 2,
           }}
         >
-          <Typography variant="body2">
+          <Typography
+            variant="body2"
+            sx={{ color: "rgba(255, 255, 255, 0.9)" }}
+          >
             © {currentYear} College Dunia. All rights reserved.
           </Typography>
           <Box sx={{ display: "flex", gap: 3 }}>
             <Link
               href="/privacy"
-              color="inherit"
-              sx={{ textDecoration: "none" }}
+              sx={{
+                textDecoration: "none",
+                color: "white",
+                "&:hover": { textDecoration: "underline" },
+              }}
             >
               Privacy Policy
             </Link>
-            <Link href="/terms" color="inherit" sx={{ textDecoration: "none" }}>
+            <Link
+              href="/terms"
+              sx={{
+                textDecoration: "none",
+                color: "white",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
               Terms of Service
             </Link>
-            <Link href="/help" color="inherit" sx={{ textDecoration: "none" }}>
+            <Link
+              href="/help"
+              sx={{
+                textDecoration: "none",
+                color: "white",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
               Help & Support
             </Link>
           </Box>

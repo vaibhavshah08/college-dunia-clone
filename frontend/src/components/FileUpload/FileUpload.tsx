@@ -39,7 +39,7 @@ const FileUpload: React.FC<FileUploadProps> = ({
     "image/jpeg": [".jpg", ".jpeg"],
     "image/png": [".png"],
   },
-  maxSize = 5 * 1024 * 1024, // 5MB
+  maxSize = 10 * 1024 * 1024, // 10MB
   multiple = false,
   disabled = false,
   loading = false,

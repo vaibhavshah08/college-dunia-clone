@@ -30,6 +30,8 @@ import {
   Business,
   Engineering,
   Science,
+  Handshake,
+  Verified,
 } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
@@ -103,14 +105,27 @@ const CollegeDetail: React.FC = () => {
         <Button variant="outlined" onClick={handleBackToList} sx={{ mb: 2 }}>
           ← Back to Colleges
         </Button>
-        <Typography
-          variant="h3"
-          component="h1"
-          gutterBottom
-          sx={{ fontWeight: "bold" }}
-        >
-          {collegeData.college_name}
-        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
+          <Typography variant="h3" component="h1" sx={{ fontWeight: "bold" }}>
+            {collegeData.college_name}
+          </Typography>
+          {collegeData.is_partnered && (
+            <Chip
+              icon={<Verified />}
+              label="Verified Partner"
+              color="success"
+              variant="filled"
+              sx={{
+                fontSize: "0.875rem",
+                height: "32px",
+                fontWeight: 600,
+                "& .MuiChip-icon": {
+                  fontSize: "1rem",
+                },
+              }}
+            />
+          )}
+        </Box>
         <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
           <Chip
             icon={<Star />}

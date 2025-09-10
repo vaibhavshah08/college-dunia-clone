@@ -40,6 +40,9 @@ export class DocumentsService {
     correlation_id: string,
     user_id: string,
     file: Express.Multer.File,
+    name: string,
+    purpose: string,
+    type: string,
     document_type?: string,
   ) {
     this.logger.setContext(this.constructor.name + '/uploadDocument');
@@ -86,6 +89,9 @@ export class DocumentsService {
         mime_type: file.mimetype,
         file_size: file.size,
         document_type: document_type || 'general',
+        name,
+        purpose,
+        type: type as any, // Type will be validated by the enum constraint
         status: 'pending' as DocumentStatus,
       });
 

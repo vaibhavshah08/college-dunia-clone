@@ -12,6 +12,11 @@ import Layout from "./components/Layout/Layout";
 // Contexts
 import { ComparisonProvider } from "./contexts/ComparisonContext";
 
+// Auth Components
+import AdminRoute from "./components/Auth/AdminRoute";
+import ProtectedRoute from "./components/Auth/ProtectedRoute";
+import HomeRoute from "./components/Auth/HomeRoute";
+
 // Pages
 import Home from "./pages/Home/Home";
 import Colleges from "./pages/Colleges/Colleges";
@@ -25,28 +30,29 @@ import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
 
-// Create a more interesting theme with modern gradients
+// Create a modern, high-contrast theme
 const theme = createTheme({
   palette: {
+    mode: "light", // Switch to light mode for better readability
     primary: {
-      main: "#6366f1",
-      light: "#818cf8",
-      dark: "#4f46e5",
-      contrastText: "#ffffff",
+      main: "#1976D2", // Deep blue
+      light: "#42A5F5",
+      dark: "#1565C0",
+      contrastText: "#FFFFFF",
     },
     secondary: {
-      main: "#ec4899",
-      light: "#f472b6",
-      dark: "#db2777",
-      contrastText: "#ffffff",
+      main: "#FF6F00", // Orange for accents
+      light: "#FF8F00",
+      dark: "#E65100",
+      contrastText: "#FFFFFF",
     },
     background: {
-      default: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
-      paper: "#ffffff",
+      default: "#FAFAFA", // Very light grey background
+      paper: "#FFFFFF", // Pure white for cards
     },
     text: {
-      primary: "#1f2937",
-      secondary: "#6b7280",
+      primary: "#212121", // Dark grey for excellent contrast
+      secondary: "#757575", // Medium grey for secondary text
     },
     success: {
       main: "#10b981",
@@ -107,28 +113,35 @@ const theme = createTheme({
     MuiButton: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
-          padding: "10px 20px",
+          borderRadius: 8,
+          padding: "12px 24px",
           fontWeight: 600,
           textTransform: "none",
-          transition: "all 0.3s ease",
+          transition: "all 0.2s ease",
         },
         contained: {
-          background: "linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)",
-          boxShadow: "0 4px 14px 0 rgba(99, 102, 241, 0.39)",
+          backgroundColor: "#1976D2",
+          color: "#FFFFFF",
+          boxShadow: "0 2px 8px rgba(25, 118, 210, 0.3)",
           "&:hover": {
-            background: "linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%)",
-            boxShadow: "0 6px 20px 0 rgba(99, 102, 241, 0.5)",
-            transform: "translateY(-2px)",
+            backgroundColor: "#1565C0",
+            boxShadow: "0 4px 12px rgba(25, 118, 210, 0.4)",
+            transform: "translateY(-1px)",
           },
         },
         outlined: {
-          borderColor: "#6366f1",
-          color: "#6366f1",
+          borderColor: "#1976D2",
+          color: "#1976D2",
           "&:hover": {
-            borderColor: "#4f46e5",
-            backgroundColor: "rgba(99, 102, 241, 0.04)",
+            borderColor: "#1565C0",
+            backgroundColor: "rgba(25, 118, 210, 0.08)",
             transform: "translateY(-1px)",
+          },
+        },
+        text: {
+          color: "#1976D2",
+          "&:hover": {
+            backgroundColor: "rgba(25, 118, 210, 0.08)",
           },
         },
       },
@@ -136,15 +149,15 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
-          borderRadius: 16,
-          border: "1px solid rgba(99, 102, 241, 0.1)",
-          transition: "all 0.3s ease",
+          backgroundColor: "#FFFFFF", // Pure white for maximum contrast
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08)",
+          borderRadius: 12,
+          border: "1px solid #E0E0E0", // Light border
+          transition: "all 0.2s ease",
           "&:hover": {
-            boxShadow: "0 8px 30px rgba(99, 102, 241, 0.15)",
-            transform: "translateY(-4px)",
-            borderColor: "rgba(99, 102, 241, 0.2)",
+            boxShadow: "0 8px 24px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1)",
+            transform: "translateY(-2px)",
+            borderColor: "#1976D2",
           },
         },
       },
@@ -152,17 +165,18 @@ const theme = createTheme({
     MuiAppBar: {
       styleOverrides: {
         root: {
-          background: "linear-gradient(135deg, #1e293b 0%, #334155 100%)",
-          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-          borderRadius: 0,
+          backgroundColor: "#FFFFFF",
+          boxShadow: "0 2px 8px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08)",
+          borderBottom: "1px solid #E0E0E0",
         },
       },
     },
     MuiPaper: {
       styleOverrides: {
         root: {
-          borderRadius: 16,
-          background: "linear-gradient(145deg, #ffffff 0%, #f8fafc 100%)",
+          borderRadius: 12,
+          backgroundColor: "#FFFFFF", // Pure white
+          border: "1px solid #E0E0E0", // Light border
         },
       },
     },
@@ -170,18 +184,35 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           "& .MuiOutlinedInput-root": {
-            borderRadius: 12,
-            transition: "all 0.3s ease",
+            borderRadius: 8,
+            backgroundColor: "#FFFFFF",
+            transition: "all 0.2s ease",
             "&:hover": {
               "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#6366f1",
+                borderColor: "#1976D2",
               },
             },
             "&.Mui-focused": {
               "& .MuiOutlinedInput-notchedOutline": {
-                borderColor: "#6366f1",
+                borderColor: "#1976D2",
                 borderWidth: 2,
               },
+            },
+            "& .MuiOutlinedInput-notchedOutline": {
+              borderColor: "#BDBDBD",
+            },
+          },
+          "& .MuiInputLabel-root": {
+            color: "#757575",
+            "&.Mui-focused": {
+              color: "#1976D2",
+            },
+          },
+          "& .MuiInputBase-input": {
+            color: "#212121",
+            "&::placeholder": {
+              color: "#9E9E9E",
+              opacity: 1,
             },
           },
         },
@@ -190,15 +221,128 @@ const theme = createTheme({
     MuiChip: {
       styleOverrides: {
         root: {
-          borderRadius: 8,
+          borderRadius: 6,
           fontWeight: 500,
+          backgroundColor: "#1976D2",
+          color: "#FFFFFF",
+          "&:hover": {
+            backgroundColor: "#1565C0",
+          },
+        },
+        colorPrimary: {
+          backgroundColor: "#1976D2",
+          color: "#FFFFFF",
+        },
+        colorSecondary: {
+          backgroundColor: "#FF6F00",
+          color: "#FFFFFF",
         },
       },
     },
     MuiAlert: {
       styleOverrides: {
         root: {
-          borderRadius: 12,
+          borderRadius: 8,
+          backgroundColor: "#FFFFFF",
+          color: "#212121",
+          border: "1px solid #E0E0E0",
+        },
+        standardSuccess: {
+          backgroundColor: "rgba(16, 185, 129, 0.1)",
+          borderColor: "#10B981",
+        },
+        standardError: {
+          backgroundColor: "rgba(239, 68, 68, 0.1)",
+          borderColor: "#EF4444",
+        },
+        standardWarning: {
+          backgroundColor: "rgba(245, 158, 11, 0.1)",
+          borderColor: "#F59E0B",
+        },
+        standardInfo: {
+          backgroundColor: "rgba(25, 118, 210, 0.1)",
+          borderColor: "#1976D2",
+        },
+      },
+    },
+    MuiSelect: {
+      styleOverrides: {
+        root: {
+          color: "#212121",
+          "& .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#BDBDBD",
+          },
+          "&:hover .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#1976D2",
+          },
+          "&.Mui-focused .MuiOutlinedInput-notchedOutline": {
+            borderColor: "#1976D2",
+          },
+        },
+      },
+    },
+    MuiMenuItem: {
+      styleOverrides: {
+        root: {
+          color: "#212121",
+          backgroundColor: "#FFFFFF",
+          "&:hover": {
+            backgroundColor: "rgba(25, 118, 210, 0.08)",
+          },
+          "&.Mui-selected": {
+            backgroundColor: "rgba(25, 118, 210, 0.12)",
+            "&:hover": {
+              backgroundColor: "rgba(25, 118, 210, 0.16)",
+            },
+          },
+        },
+      },
+    },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: "#757575",
+          "&.Mui-focused": {
+            color: "#1976D2",
+          },
+        },
+      },
+    },
+    MuiTypography: {
+      styleOverrides: {
+        root: {
+          color: "#212121",
+        },
+        h1: {
+          color: "#212121",
+          fontWeight: 700,
+        },
+        h2: {
+          color: "#212121",
+          fontWeight: 600,
+        },
+        h3: {
+          color: "#212121",
+          fontWeight: 600,
+        },
+        h4: {
+          color: "#212121",
+          fontWeight: 600,
+        },
+        h5: {
+          color: "#212121",
+          fontWeight: 500,
+        },
+        h6: {
+          color: "#212121",
+          fontWeight: 500,
+        },
+        body1: {
+          color: "#212121",
+        },
+        body2: {
+          color: "#757575",
+          fontWeight: 400,
         },
       },
     },
@@ -225,18 +369,78 @@ function App() {
           <Router>
             <Layout>
               <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/colleges" element={<Colleges />} />
-                <Route path="/colleges/:id" element={<CollegeDetail />} />
+                <Route
+                  path="/"
+                  element={
+                    <HomeRoute>
+                      <Home />
+                    </HomeRoute>
+                  }
+                />
+                <Route
+                  path="/colleges"
+                  element={
+                    <ProtectedRoute>
+                      <Colleges />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/colleges/:id"
+                  element={
+                    <ProtectedRoute>
+                      <CollegeDetail />
+                    </ProtectedRoute>
+                  }
+                />
                 <Route
                   path="/colleges/compare"
-                  element={<CollegeComparison />}
+                  element={
+                    <ProtectedRoute>
+                      <CollegeComparison />
+                    </ProtectedRoute>
+                  }
                 />
-                <Route path="/loans" element={<Loans />} />
-                <Route path="/loans/:id" element={<LoanDetail />} />
-                <Route path="/documents" element={<Documents />} />
-                <Route path="/profile" element={<Profile />} />
-                <Route path="/admin" element={<AdminDashboard />} />
+                <Route
+                  path="/loans"
+                  element={
+                    <ProtectedRoute>
+                      <Loans />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/loans/:id"
+                  element={
+                    <ProtectedRoute>
+                      <LoanDetail />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/documents"
+                  element={
+                    <ProtectedRoute>
+                      <Documents />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/profile"
+                  element={
+                    <ProtectedRoute>
+                      <Profile />
+                    </ProtectedRoute>
+                  }
+                />
+                <Route
+                  path="/admin"
+                  element={
+                    <AdminRoute>
+                      <AdminDashboard />
+                    </AdminRoute>
+                  }
+                />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
               </Routes>
@@ -244,7 +448,7 @@ function App() {
           </Router>
         </ComparisonProvider>
         <ToastContainer
-          position="top-right"
+          position="bottom-center"
           autoClose={5000}
           hideProgressBar={false}
           newestOnTop={false}

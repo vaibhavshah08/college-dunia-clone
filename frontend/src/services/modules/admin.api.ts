@@ -56,8 +56,8 @@ export const adminApi = {
   /**
    * Create user (Admin only)
    */
-  async createUser(userData: Partial<User>): Promise<User> {
-    const response = await apiClient.post<User>("/admin/users", userData);
+  async createUser(userData: any): Promise<any> {
+    const response = await apiClient.post<any>("/admin/users", userData);
     return response.data;
   },
 

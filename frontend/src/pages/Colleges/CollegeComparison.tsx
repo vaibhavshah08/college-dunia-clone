@@ -21,7 +21,13 @@ import {
   IconButton,
   Tooltip,
 } from "@mui/material";
-import { Add, Remove, ArrowBack } from "@mui/icons-material";
+import {
+  Add,
+  Remove,
+  ArrowBack,
+  Handshake,
+  Verified,
+} from "@mui/icons-material";
 import { useQuery } from "react-query";
 import { useNavigate } from "react-router-dom";
 import { useComparison } from "../../contexts/ComparisonContext";
@@ -172,7 +178,28 @@ const CollegeComparison: React.FC = () => {
                   <TableCell sx={{ fontWeight: "bold" }}>Criteria</TableCell>
                   {selectedColleges.map((college, index) => (
                     <TableCell key={index} sx={{ fontWeight: "bold" }}>
-                      {college.college_name}
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", gap: 1 }}
+                      >
+                        <span>{college.college_name}</span>
+                        {college.is_partnered && (
+                          <Chip
+                            icon={<Verified />}
+                            label="Partner"
+                            size="small"
+                            color="success"
+                            variant="filled"
+                            sx={{
+                              fontSize: "0.75rem",
+                              height: "20px",
+                              fontWeight: 600,
+                              "& .MuiChip-icon": {
+                                fontSize: "0.75rem",
+                              },
+                            }}
+                          />
+                        )}
+                      </Box>
                     </TableCell>
                   ))}
                 </TableRow>

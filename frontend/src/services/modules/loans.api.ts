@@ -36,10 +36,8 @@ export const loansApi = {
    * Get all loans (Admin only)
    */
   async getAllLoans(): Promise<Loan[]> {
-    const response = await apiClient.get<{ message: string; data: Loan[] }>(
-      LOAN_ENDPOINTS.ADMIN_LIST
-    );
-    return response.data.data;
+    const response = await apiClient.get<Loan[]>(LOAN_ENDPOINTS.ADMIN_LIST);
+    return response.data;
   },
 
   /**

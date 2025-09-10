@@ -90,9 +90,9 @@ apiClient.interceptors.response.use(
 
       switch (status) {
         case 401:
-          // Unauthorized - clear token and redirect to login
+          // Unauthorized - clear token but don't redirect automatically
+          // Let the component handle the redirect
           removeToken();
-          window.location.href = "/login";
           break;
 
         case 403:

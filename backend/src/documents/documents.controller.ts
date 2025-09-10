@@ -52,9 +52,22 @@ export class DocumentsController {
           type: 'string',
           format: 'binary',
         },
+        name: {
+          type: 'string',
+          description: 'Document name (required)',
+        },
+        purpose: {
+          type: 'string',
+          description: 'Document purpose (required)',
+        },
+        type: {
+          type: 'string',
+          enum: ['ID_PROOF', 'ADDRESS_PROOF', 'MARKSHEET', 'PHOTO', 'OTHER'],
+          description: 'Document type (required)',
+        },
         document_type: {
           type: 'string',
-          description: 'Type of document (optional)',
+          description: 'Legacy document type (optional)',
         },
       },
     },
@@ -66,15 +79,30 @@ export class DocumentsController {
     @Correlation() correlation_id: string,
     @GetUser() user: any,
     @UploadedFile() file: Express.Multer.File,
+    @Body('name') name: string,
+    @Body('purpose') purpose: string,
+    @Body('type') type: string,
     @Body('document_type') document_type?: string,
   ) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
     }
+    if (!name) {
+      throw new BadRequestException('Document name is required');
+    }
+    if (!purpose) {
+      throw new BadRequestException('Document purpose is required');
+    }
+    if (!type) {
+      throw new BadRequestException('Document type is required');
+    }
     return await this.documentsService.uploadDocument(
       correlation_id,
       user.user_id,
       file,
+      name,
+      purpose,
+      type,
       document_type,
     );
   }
@@ -212,6 +240,32 @@ export class DocumentsController {
       correlation_id,
       documentId,
     );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Get(':id/preview')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Preview document' })
+  @ApiParam({ name: 'id', description: 'Document ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Document preview served successfully',
+  })
+  @ApiResponse({ status: 404, description: 'Document not found' })
+  async previewDocument(
+    @Correlation() correlation_id: string,
+    @Param('id') documentId: string,
+    @Res() res: Response,
+  ) {
+    const result = await this.documentsService.serveDocument(
+      correlation_id,
+      documentId,
+    );
+
+    res.setHeader('Content-Type', result.mimeType);
+    res.setHeader('Cache-Control', 'public, max-age=3600'); // Cache for 1 hour
+
+    return res.sendFile(result.filePath);
   }
 
   @UseGuards(JwtAuthGuard)

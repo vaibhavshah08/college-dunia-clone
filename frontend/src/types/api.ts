@@ -104,6 +104,12 @@ export interface User {
 
 // Document Types
 export type DocumentStatus = "pending" | "approved" | "rejected";
+export type DocumentType =
+  | "ID_PROOF"
+  | "ADDRESS_PROOF"
+  | "MARKSHEET"
+  | "PHOTO"
+  | "OTHER";
 
 export interface Document {
   document_id: string;
@@ -113,6 +119,9 @@ export interface Document {
   mime_type: string;
   file_size: number;
   document_type?: string;
+  name: string;
+  purpose: string;
+  type: DocumentType;
   status: DocumentStatus;
   rejection_reason?: string;
   reviewed_by?: string;
@@ -135,7 +144,7 @@ export interface CollegeListQuery {
   minFees?: number;
   maxFees?: number;
   ranking?: number;
-  coursesOffered?: string[];
+  coursesOffered?: string;
 }
 
 export interface College {

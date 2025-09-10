@@ -148,10 +148,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
       <AppBar position="static" elevation={1}>
-        <Toolbar sx={{ px: { xs: 1, sm: 2 } }}>
+        <Toolbar sx={{ px: { xs: 1, sm: 2 }, color: "text.primary" }}>
           {isMobile && (
             <IconButton
-              color="inherit"
+              color="primary"
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
@@ -180,18 +180,19 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               {menuItems.map((item) => (
                 <Button
                   key={item.text}
-                  color="inherit"
+                  color="primary"
                   onClick={() => navigate(item.path)}
                   sx={{
                     backgroundColor:
                       location.pathname === item.path
-                        ? "rgba(255, 255, 255, 0.1)"
+                        ? "rgba(25, 118, 210, 0.1)"
                         : "transparent",
                     borderRadius: 1,
                     px: 2,
                     py: 1,
+                    color: "text.primary",
                     "&:hover": {
-                      backgroundColor: "rgba(255, 255, 255, 0.1)",
+                      backgroundColor: "rgba(25, 118, 210, 0.08)",
                     },
                   }}
                 >
@@ -203,34 +204,6 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
           {isAuthenticated ? (
             <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
-              <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                <Typography
-                  variant="body2"
-                  sx={{
-                    display: { xs: "none", sm: "block" },
-                    fontWeight: 500,
-                  }}
-                >
-                  {fullName}
-                </Typography>
-                {user?.is_admin && (
-                  <Box
-                    component="span"
-                    sx={{
-                      px: 1,
-                      py: 0.25,
-                      backgroundColor: "secondary.main",
-                      color: "white",
-                      borderRadius: 1,
-                      fontSize: "0.7rem",
-                      fontWeight: "bold",
-                      textTransform: "uppercase",
-                    }}
-                  >
-                    Admin
-                  </Box>
-                )}
-              </Box>
               <IconButton
                 size="large"
                 edge="end"
@@ -238,12 +211,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 aria-controls="primary-search-account-menu"
                 aria-haspopup="true"
                 onClick={handleProfileMenuOpen}
-                color="inherit"
-                sx={{ ml: 1 }}
+                color="primary"
               >
-                <Avatar
-                  sx={{ width: 32, height: 32, bgcolor: "secondary.main" }}
-                >
+                <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main" }}>
                   {firstName.charAt(0)}
                 </Avatar>
               </IconButton>
@@ -322,7 +292,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Box
         sx={{
           flexGrow: 1,
-          background: "linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)",
+          backgroundColor: "background.default",
           minHeight: "calc(100vh - 64px)",
         }}
       >

@@ -16,11 +16,22 @@ import {
   Chip,
   IconButton,
   Tooltip,
+  Badge,
 } from "@mui/material";
-import { Search, School, Compare, Add, Remove } from "@mui/icons-material";
+import {
+  Search,
+  School,
+  Compare,
+  Add,
+  Remove,
+  Business,
+  Star,
+  Verified,
+  Refresh,
+} from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
-import { useQuery } from "react-query";
+import { useQuery, useQueryClient } from "react-query";
 import { useComparison } from "../../contexts/ComparisonContext";
 import collegesApi from "../../services/modules/colleges.api";
 import ImagePlaceholder from "../../components/ImagePlaceholder/ImagePlaceholder";
@@ -29,6 +40,7 @@ import { College } from "../../types/api";
 const Colleges: React.FC = () => {
   const navigate = useNavigate();
   const { isAuthenticated } = useAuth();
+  const queryClient = useQueryClient();
   const {
     selectedColleges,
     addToComparison,
@@ -45,8 +57,30 @@ const Colleges: React.FC = () => {
     minFees: undefined as number | undefined,
     maxFees: undefined as number | undefined,
     ranking: undefined as number | undefined,
-    coursesOffered: undefined as string[] | undefined,
+    coursesOffered: [] as string[],
   });
+
+  // Refresh function
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ["colleges"] });
+    queryClient.invalidateQueries({ queryKey: ["colleges", "filters"] });
+  };
+
+  // Convert frontend filters to API format
+  const getApiFilters = () => {
+    return {
+      q: filters.q || undefined,
+      state: filters.state || undefined,
+      city: filters.city || undefined,
+      minFees: filters.minFees || undefined,
+      maxFees: filters.maxFees || undefined,
+      ranking: filters.ranking || undefined,
+      coursesOffered:
+        filters.coursesOffered.length > 0
+          ? filters.coursesOffered.join(",")
+          : undefined,
+    };
+  };
 
   // Fetch colleges from API with reactive filtering
   const {
@@ -55,7 +89,7 @@ const Colleges: React.FC = () => {
     error,
   } = useQuery<College[], Error>({
     queryKey: ["colleges", filters],
-    queryFn: () => collegesApi.getColleges(filters),
+    queryFn: () => collegesApi.getColleges(getApiFilters()),
     enabled: isAuthenticated,
   });
 
@@ -66,24 +100,65 @@ const Colleges: React.FC = () => {
     navigate(`/colleges/${collegeId}`);
   };
 
-  const handleFilterChange = (field: string, value: string) => {
-    setFilters((prev) => ({
-      ...prev,
-      [field]:
-        field === "minFees" || field === "maxFees" || field === "ranking"
-          ? value
-            ? Number(value)
-            : undefined
-          : field === "coursesOffered"
-          ? value
-            ? value.split(",")
-            : undefined
-          : value,
-    }));
+  const handleFilterChange = (field: string, value: any) => {
+    setFilters((prev) => {
+      const newFilters = {
+        ...prev,
+        [field]:
+          field === "minFees" || field === "maxFees" || field === "ranking"
+            ? value
+              ? Number(value)
+              : undefined
+            : field === "coursesOffered"
+            ? Array.isArray(value)
+              ? value
+              : []
+            : value,
+      };
+
+      // Validate that minFees is not greater than maxFees
+      if (field === "minFees" && newFilters.minFees && newFilters.maxFees) {
+        if (newFilters.minFees > newFilters.maxFees) {
+          newFilters.maxFees = newFilters.minFees;
+        }
+      }
+      if (field === "maxFees" && newFilters.minFees && newFilters.maxFees) {
+        if (newFilters.maxFees < newFilters.minFees) {
+          newFilters.minFees = newFilters.maxFees;
+        }
+      }
+
+      return newFilters;
+    });
   };
 
   const handleCompareColleges = () => {
     navigate("/colleges/compare");
+  };
+
+  // Check if any filters are active
+  const hasActiveFilters = () => {
+    return (
+      filters.q !== "" ||
+      filters.state !== "" ||
+      filters.city !== "" ||
+      filters.minFees !== undefined ||
+      filters.maxFees !== undefined ||
+      filters.ranking !== undefined ||
+      filters.coursesOffered.length > 0
+    );
+  };
+
+  const clearFilters = () => {
+    setFilters({
+      q: "",
+      state: "",
+      city: "",
+      minFees: undefined,
+      maxFees: undefined,
+      ranking: undefined,
+      coursesOffered: [],
+    });
   };
 
   const handleToggleComparison = (
@@ -148,6 +223,14 @@ const Colleges: React.FC = () => {
           Find Colleges
         </Typography>
         <Box display="flex" alignItems="center" gap={2}>
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={handleRefresh}
+            size="small"
+          >
+            Refresh
+          </Button>
           {selectedColleges.length > 0 && (
             <Box display="flex" alignItems="center" gap={1}>
               <Typography variant="body2" color="text.secondary">
@@ -180,17 +263,18 @@ const Colleges: React.FC = () => {
 
       {/* Search and Filters */}
       <Card sx={{ mb: 4 }}>
-        <CardContent sx={{ p: 3 }}>
+        <CardContent sx={{ p: 2 }}>
+          {/* First Row: Search and Location Filters */}
           <Box
             sx={{
               display: "grid",
               gridTemplateColumns: {
                 xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(4, 1fr)",
+                sm: "2fr 1fr 1fr",
+                md: "2fr 1fr 1fr",
               },
-              gap: 3,
-              alignItems: "center",
+              gap: 2,
+              mb: 2,
             }}
           >
             <TextField
@@ -199,13 +283,14 @@ const Colleges: React.FC = () => {
               variant="outlined"
               value={filters.q}
               onChange={(e) => handleFilterChange("q", e.target.value)}
+              size="small"
               InputProps={{
                 startAdornment: (
                   <Search sx={{ mr: 1, color: "text.secondary" }} />
                 ),
               }}
             />
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel>State</InputLabel>
               <Select
                 label="State"
@@ -220,7 +305,7 @@ const Colleges: React.FC = () => {
                 <MenuItem value="Tamil Nadu">Tamil Nadu</MenuItem>
               </Select>
             </FormControl>
-            <FormControl fullWidth>
+            <FormControl fullWidth size="small">
               <InputLabel>City</InputLabel>
               <Select
                 label="City"
@@ -235,20 +320,130 @@ const Colleges: React.FC = () => {
                 <MenuItem value="Chennai">Chennai</MenuItem>
               </Select>
             </FormControl>
-            <FormControl fullWidth>
-              <InputLabel>Min Fees</InputLabel>
-              <Select
-                label="Min Fees"
-                value={filters.minFees?.toString() || ""}
+          </Box>
+
+          {/* Second Row: Fees Range, Courses, and Actions */}
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "1fr 1fr 1fr auto",
+                md: "1fr 1fr 1fr auto",
+              },
+              gap: 2,
+              alignItems: "end",
+            }}
+          >
+            <Box
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "1fr auto 1fr",
+                },
+                gap: 1,
+                alignItems: "end",
+              }}
+            >
+              <TextField
+                fullWidth
+                label="Min Fees (₹)"
+                type="number"
+                value={filters.minFees || ""}
                 onChange={(e) => handleFilterChange("minFees", e.target.value)}
+                placeholder="0"
+                inputProps={{ min: 0, step: 1000 }}
+                size="small"
+              />
+              <Typography
+                variant="body2"
+                sx={{
+                  color: "text.secondary",
+                  px: 1,
+                  alignSelf: "center",
+                  display: { xs: "none", sm: "block" },
+                }}
               >
-                <MenuItem value="">No Minimum</MenuItem>
-                <MenuItem value="0">₹0</MenuItem>
-                <MenuItem value="50000">₹50,000</MenuItem>
-                <MenuItem value="100000">₹1,00,000</MenuItem>
-                <MenuItem value="200000">₹2,00,000</MenuItem>
+                to
+              </Typography>
+              <TextField
+                fullWidth
+                label="Max Fees (₹)"
+                type="number"
+                value={filters.maxFees || ""}
+                onChange={(e) => handleFilterChange("maxFees", e.target.value)}
+                placeholder="No limit"
+                inputProps={{ min: 0, step: 1000 }}
+                size="small"
+              />
+            </Box>
+            <FormControl fullWidth size="small">
+              <InputLabel>Courses</InputLabel>
+              <Select
+                label="Courses"
+                value={filters.coursesOffered}
+                onChange={(e) =>
+                  handleFilterChange("coursesOffered", e.target.value)
+                }
+                multiple
+                renderValue={(selected) => (
+                  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                    {(selected as string[]).map((value) => (
+                      <Chip key={value} label={value} size="small" />
+                    ))}
+                  </Box>
+                )}
+              >
+                <MenuItem value="Computer Science Engineering">
+                  Computer Science Engineering
+                </MenuItem>
+                <MenuItem value="Mechanical Engineering">
+                  Mechanical Engineering
+                </MenuItem>
+                <MenuItem value="Electrical Engineering">
+                  Electrical Engineering
+                </MenuItem>
+                <MenuItem value="Electronics & Communication">
+                  Electronics & Communication
+                </MenuItem>
+                <MenuItem value="Civil Engineering">Civil Engineering</MenuItem>
+                <MenuItem value="Chemical Engineering">
+                  Chemical Engineering
+                </MenuItem>
+                <MenuItem value="Aerospace Engineering">
+                  Aerospace Engineering
+                </MenuItem>
+                <MenuItem value="Biotechnology">Biotechnology</MenuItem>
+                <MenuItem value="Information Technology">
+                  Information Technology
+                </MenuItem>
+                <MenuItem value="Data Science">Data Science</MenuItem>
+                <MenuItem value="Artificial Intelligence">
+                  Artificial Intelligence
+                </MenuItem>
+                <MenuItem value="Business Administration">
+                  Business Administration
+                </MenuItem>
               </Select>
             </FormControl>
+            <Button
+              variant="outlined"
+              onClick={clearFilters}
+              startIcon={<Remove />}
+              size="small"
+              disabled={!hasActiveFilters()}
+              sx={{
+                height: "40px",
+                opacity: hasActiveFilters() ? 1 : 0.5,
+                color: hasActiveFilters() ? "primary.main" : "text.disabled",
+                borderColor: hasActiveFilters()
+                  ? "primary.main"
+                  : "text.disabled",
+              }}
+            >
+              Clear
+            </Button>
           </Box>
         </CardContent>
       </Card>
@@ -274,136 +469,224 @@ const Colleges: React.FC = () => {
 
       {/* College List */}
       {!isLoadingTyped && !error && (
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(3, 1fr)",
-            },
-            gap: 3,
-            alignItems: "stretch",
-          }}
-        >
-          {colleges.length === 0 ? (
-            <Box sx={{ gridColumn: "1 / -1" }}>
-              <Alert severity="info">
-                No colleges found matching your criteria. Try adjusting your
-                filters.
-              </Alert>
-            </Box>
-          ) : (
-            colleges.map((college: College) => (
-              <Card
-                key={college.college_id}
-                sx={{
-                  height: "100%",
-                  cursor: "pointer",
-                  transition: "transform 0.2s, box-shadow 0.2s",
-                  position: "relative",
-                  "&:hover": {
-                    transform: "translateY(-2px)",
-                    boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
-                  },
-                }}
-              >
-                <Box sx={{ position: "relative" }}>
-                  <ImagePlaceholder
-                    width="100%"
-                    height={180}
-                    variant="college"
-                    text={college.college_name}
+        <Box>
+          {/* Filter Summary */}
+          {hasActiveFilters() && (
+            <Box
+              sx={{
+                mb: 2,
+                p: 2,
+                backgroundColor: "primary.50",
+                borderRadius: 1,
+              }}
+            >
+              <Typography variant="body2" color="primary.main" sx={{ mb: 1 }}>
+                <strong>Active Filters:</strong>
+              </Typography>
+              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                {filters.q && (
+                  <Chip
+                    label={`Search: "${filters.q}"`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
                   />
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      top: 8,
-                      right: 8,
-                      backgroundColor: "rgba(255, 255, 255, 0.9)",
-                      borderRadius: "50%",
-                      backdropFilter: "blur(10px)",
-                    }}
-                  >
-                    <Tooltip
-                      title={
-                        isInComparison(college.college_id)
-                          ? "Remove from comparison"
-                          : canAddMore
-                          ? "Add to comparison"
-                          : "Maximum colleges selected"
-                      }
-                    >
-                      <IconButton
-                        onClick={(e) => handleToggleComparison(college, e)}
-                        disabled={
-                          !isInComparison(college.college_id) && !canAddMore
-                        }
-                        color={
-                          isInComparison(college.college_id)
-                            ? "primary"
-                            : "default"
-                        }
-                        size="small"
-                      >
-                        {isInComparison(college.college_id) ? (
-                          <Remove />
-                        ) : (
-                          <Add />
-                        )}
-                      </IconButton>
-                    </Tooltip>
-                  </Box>
-                </Box>
-                <CardContent
-                  sx={{ p: 3 }}
-                  onClick={() => handleCollegeClick(college.college_id)}
-                >
-                  <Typography variant="h6" sx={{ fontWeight: 600, mb: 2 }}>
-                    {college.college_name}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    {college.city}, {college.state}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    gutterBottom
-                    sx={{ fontWeight: 500 }}
-                  >
-                    Ranking: #{college.ranking}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Annual Fees: ₹{college.fees.toLocaleString()}
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    gutterBottom
-                  >
-                    Placement Ratio: {college.placement_ratio}%
-                  </Typography>
-                  <Typography
-                    variant="body2"
-                    color="text.secondary"
-                    sx={{ mb: 2 }}
-                  >
-                    Courses: {college.courses_offered.join(", ")}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    Established: {college.year_of_establishment}
-                  </Typography>
-                </CardContent>
-              </Card>
-            ))
+                )}
+                {filters.state && (
+                  <Chip
+                    label={`State: ${filters.state}`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                )}
+                {filters.city && (
+                  <Chip
+                    label={`City: ${filters.city}`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                )}
+                {(filters.minFees || filters.maxFees) && (
+                  <Chip
+                    label={`Fees: ₹${
+                      filters.minFees?.toLocaleString() || "0"
+                    } - ₹${filters.maxFees?.toLocaleString() || "∞"}`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                )}
+                {filters.coursesOffered.length > 0 && (
+                  <Chip
+                    label={`Courses: ${filters.coursesOffered.length} selected`}
+                    size="small"
+                    color="primary"
+                    variant="outlined"
+                  />
+                )}
+              </Box>
+            </Box>
           )}
+
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(3, 1fr)",
+              },
+              gap: 3,
+              alignItems: "stretch",
+            }}
+          >
+            {colleges.length === 0 ? (
+              <Box sx={{ gridColumn: "1 / -1" }}>
+                <Alert severity="info">
+                  No colleges found matching your criteria. Try adjusting your
+                  filters.
+                </Alert>
+              </Box>
+            ) : (
+              colleges.map((college: College) => (
+                <Card
+                  key={college.college_id}
+                  sx={{
+                    height: "100%",
+                    cursor: "pointer",
+                    transition: "transform 0.2s, box-shadow 0.2s",
+                    position: "relative",
+                    "&:hover": {
+                      transform: "translateY(-2px)",
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.12)",
+                    },
+                  }}
+                >
+                  <Box sx={{ position: "relative" }}>
+                    <ImagePlaceholder
+                      width="100%"
+                      height={180}
+                      variant="college"
+                      text={college.college_name}
+                    />
+                    <Box
+                      sx={{
+                        position: "absolute",
+                        top: 8,
+                        right: 8,
+                        backgroundColor: "rgba(255, 255, 255, 0.9)",
+                        borderRadius: "50%",
+                        backdropFilter: "blur(10px)",
+                      }}
+                    >
+                      <Tooltip
+                        title={
+                          isInComparison(college.college_id)
+                            ? "Remove from comparison"
+                            : canAddMore
+                            ? "Add to comparison"
+                            : "Maximum colleges selected"
+                        }
+                      >
+                        <IconButton
+                          onClick={(e) => handleToggleComparison(college, e)}
+                          disabled={
+                            !isInComparison(college.college_id) && !canAddMore
+                          }
+                          color={
+                            isInComparison(college.college_id)
+                              ? "primary"
+                              : "default"
+                          }
+                          size="small"
+                        >
+                          {isInComparison(college.college_id) ? (
+                            <Remove />
+                          ) : (
+                            <Add />
+                          )}
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
+                  </Box>
+                  <CardContent
+                    sx={{ p: 3 }}
+                    onClick={() => handleCollegeClick(college.college_id)}
+                  >
+                    <Box
+                      sx={{
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 1,
+                        mb: 2,
+                      }}
+                    >
+                      <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        {college.college_name}
+                      </Typography>
+                      {college.is_partnered && (
+                        <Chip
+                          icon={<Verified />}
+                          label="Partner"
+                          size="small"
+                          color="success"
+                          variant="filled"
+                          sx={{
+                            fontSize: "0.75rem",
+                            height: "24px",
+                            fontWeight: 600,
+                            "& .MuiChip-icon": {
+                              fontSize: "0.875rem",
+                            },
+                          }}
+                        />
+                      )}
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      {college.city}, {college.state}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      gutterBottom
+                      sx={{ fontWeight: 500 }}
+                    >
+                      Ranking: #{college.ranking}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      Annual Fees: ₹{college.fees.toLocaleString()}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      Placement Ratio: {college.placement_ratio}%
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      sx={{ mb: 2 }}
+                    >
+                      Courses: {college.courses_offered.join(", ")}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Established: {college.year_of_establishment}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ))
+            )}
+          </Box>
         </Box>
       )}
     </Container>
