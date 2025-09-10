@@ -9,11 +9,9 @@ import {
   Link,
   Alert,
   CircularProgress,
-  Divider,
 } from "@mui/material";
-import { Google as GoogleIcon } from "@mui/icons-material";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { Link as RouterLink } from "react-router-dom";
+import { useAuth } from "../../lib/hooks/useAuth";
 
 const Login: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -21,11 +19,9 @@ const Login: React.FC = () => {
     password: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { login } = useAuth();
-  const navigate = useNavigate();
+  const { login, isLoggingIn } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -33,6 +29,9 @@ const Login: React.FC = () => {
     // Clear error when user starts typing
     if (errors[name]) {
       setErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+    if (error) {
+      setError("");
     }
   };
 
@@ -63,28 +62,37 @@ const Login: React.FC = () => {
       return;
     }
 
-    setLoading(true);
     try {
-      await login(formData.email, formData.password);
-      navigate("/dashboard");
+      await login({ email: formData.email, password: formData.password });
+      // Navigation is handled by the useAuth hook
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Login failed. Please try again."
-      );
-    } finally {
-      setLoading(false);
+      // Set local error state for UI feedback
+      if (err?.status === 401) {
+        setError("Invalid email or password. Please try again.");
+      } else if (err?.status === 422) {
+        setError("Please check your input and try again.");
+      } else if (err?.status === 429) {
+        setError(
+          "Too many login attempts. Please wait a moment and try again."
+        );
+      } else if (err?.code === "NETWORK_ERROR") {
+        setError("Network error. Please check your connection and try again.");
+      } else {
+        setError("Login failed. Please try again.");
+      }
     }
-  };
-
-  const handleGoogleLogin = () => {
-    // Implement Google OAuth login
-    window.location.href = `${process.env.REACT_APP_API_URL}/auth/google`;
   };
 
   return (
     <Container maxWidth="sm" sx={{ mt: 4, mb: 4 }}>
-      <Paper elevation={3} sx={{ p: 4 }}>
-        <Typography component="h1" variant="h4" align="center" gutterBottom>
+      <Paper elevation={3} sx={{ p: { xs: 3, sm: 4 }, borderRadius: 3 }}>
+        <Typography
+          component="h1"
+          variant="h4"
+          align="center"
+          gutterBottom
+          sx={{ fontWeight: "bold", mb: 1 }}
+        >
           Welcome Back
         </Typography>
         <Typography
@@ -97,7 +105,7 @@ const Login: React.FC = () => {
         </Typography>
 
         {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
+          <Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
             {error}
           </Alert>
         )}
@@ -116,7 +124,8 @@ const Login: React.FC = () => {
             onChange={handleChange}
             error={!!errors.email}
             helperText={errors.email}
-            disabled={loading}
+            disabled={isLoggingIn}
+            sx={{ mb: 2 }}
           />
           <TextField
             margin="normal"
@@ -131,40 +140,42 @@ const Login: React.FC = () => {
             onChange={handleChange}
             error={!!errors.password}
             helperText={errors.password}
-            disabled={loading}
+            disabled={isLoggingIn}
+            sx={{ mb: 3 }}
           />
           <Button
             type="submit"
             fullWidth
             variant="contained"
-            sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
+            size="large"
+            sx={{
+              mt: 2,
+              mb: 3,
+              py: 1.5,
+              fontSize: "1.1rem",
+              fontWeight: 600,
+            }}
+            disabled={isLoggingIn}
           >
-            {loading ? <CircularProgress size={24} /> : "Sign In"}
+            {isLoggingIn ? <CircularProgress size={24} /> : "Sign In"}
           </Button>
         </Box>
-
-        <Divider sx={{ my: 3 }}>
-          <Typography variant="body2" color="text.secondary">
-            OR
-          </Typography>
-        </Divider>
-
-        <Button
-          fullWidth
-          variant="outlined"
-          startIcon={<GoogleIcon />}
-          onClick={handleGoogleLogin}
-          disabled={loading}
-          sx={{ mb: 3 }}
-        >
-          Continue with Google
-        </Button>
 
         <Box textAlign="center">
           <Typography variant="body2" color="text.secondary">
             Don't have an account?{" "}
-            <Link component={RouterLink} to="/register" variant="body2">
+            <Link
+              component={RouterLink}
+              to="/register"
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                textDecoration: "none",
+                "&:hover": {
+                  textDecoration: "underline",
+                },
+              }}
+            >
               Sign up here
             </Link>
           </Typography>

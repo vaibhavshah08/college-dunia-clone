@@ -17,6 +17,7 @@ import {
   ListItemText,
   useTheme,
   useMediaQuery,
+  Divider,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -27,9 +28,11 @@ import {
   AccountBalance,
   AdminPanelSettings,
   Logout,
+  Home,
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../lib/hooks/useAuth";
+import Footer from "./Footer";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -44,6 +47,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   const [anchorEl, setAnchorEl] = React.useState<null | HTMLElement>(null);
   const [mobileOpen, setMobileOpen] = React.useState(false);
+
+  // Create full name from first_name and last_name
+  const fullName = user ? `${user.first_name} ${user.last_name}` : "";
+  const firstName = user?.first_name || "";
 
   const handleProfileMenuOpen = (event: React.MouseEvent<HTMLElement>) => {
     setAnchorEl(event.currentTarget);
@@ -63,41 +70,74 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     setMobileOpen(!mobileOpen);
   };
 
-  const menuItems = [
-    { text: "Home", path: "/", icon: <School /> },
-    { text: "Colleges", path: "/colleges", icon: <School /> },
-    ...(isAuthenticated
-      ? [
-          { text: "Dashboard", path: "/dashboard", icon: <Dashboard /> },
-          { text: "Profile", path: "/profile", icon: <Person /> },
-          { text: "Loans", path: "/loans", icon: <AccountBalance /> },
-          { text: "Documents", path: "/documents", icon: <Description /> },
-          ...(user?.role === "admin"
-            ? [{ text: "Admin", path: "/admin", icon: <AdminPanelSettings /> }]
-            : []),
-        ]
-      : []),
-  ];
+  // Define navigation items based on user role
+  const getMenuItems = () => {
+    if (!isAuthenticated) {
+      return [{ text: "Home", path: "/", icon: <Home /> }];
+    }
+
+    if (user?.is_admin) {
+      return [
+        {
+          text: "Admin Dashboard",
+          path: "/admin",
+          icon: <AdminPanelSettings />,
+        },
+      ];
+    }
+
+    // Regular student users
+    return [
+      { text: "Home", path: "/", icon: <Home /> },
+      { text: "Colleges", path: "/colleges", icon: <School /> },
+      { text: "Loans", path: "/loans", icon: <AccountBalance /> },
+      { text: "Documents", path: "/documents", icon: <Description /> },
+    ];
+  };
+
+  const menuItems = getMenuItems();
 
   const drawer = (
-    <Box>
-      <List>
-        {menuItems.map((item) => (
+    <Box sx={{ width: 280 }}>
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+        <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
+          College Dunia
+        </Typography>
+      </Box>
+      <List sx={{ pt: 1 }}>
+        {menuItems.map((item, index) => (
           <ListItem
-            component={Button}
             key={item.text}
             onClick={() => {
               navigate(item.path);
               setMobileOpen(false);
             }}
             sx={{
+              mx: 1,
+              mb: 0.5,
+              borderRadius: 1,
               backgroundColor:
                 location.pathname === item.path
-                  ? "rgba(255, 255, 255, 0.1)"
+                  ? "primary.main"
                   : "transparent",
+              color: location.pathname === item.path ? "white" : "inherit",
+              "&:hover": {
+                backgroundColor:
+                  location.pathname === item.path
+                    ? "primary.dark"
+                    : "action.hover",
+              },
+              transition: "all 0.2s",
             }}
           >
-            <ListItemIcon>{item.icon}</ListItemIcon>
+            <ListItemIcon
+              sx={{
+                color: location.pathname === item.path ? "white" : "inherit",
+                minWidth: 40,
+              }}
+            >
+              {item.icon}
+            </ListItemIcon>
             <ListItemText primary={item.text} />
           </ListItem>
         ))}
@@ -107,11 +147,11 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <AppBar position="static">
-        <Toolbar>
+      <AppBar position="static" elevation={1}>
+        <Toolbar sx={{ px: { xs: 1, sm: 2 }, color: "text.primary" }}>
           {isMobile && (
             <IconButton
-              color="inherit"
+              color="primary"
               aria-label="open drawer"
               edge="start"
               onClick={handleDrawerToggle}
@@ -124,24 +164,36 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           <Typography
             variant="h6"
             component="div"
-            sx={{ flexGrow: 1, cursor: "pointer" }}
+            sx={{
+              flexGrow: 1,
+              cursor: "pointer",
+              fontWeight: "bold",
+              fontSize: { xs: "1.1rem", sm: "1.25rem" },
+            }}
             onClick={() => navigate("/")}
           >
             College Dunia
           </Typography>
 
           {!isMobile && (
-            <Box sx={{ display: "flex", gap: 2 }}>
+            <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
               {menuItems.map((item) => (
                 <Button
                   key={item.text}
-                  color="inherit"
+                  color="primary"
                   onClick={() => navigate(item.path)}
                   sx={{
                     backgroundColor:
                       location.pathname === item.path
-                        ? "rgba(255, 255, 255, 0.1)"
+                        ? "rgba(25, 118, 210, 0.1)"
                         : "transparent",
+                    borderRadius: 1,
+                    px: 2,
+                    py: 1,
+                    color: "text.primary",
+                    "&:hover": {
+                      backgroundColor: "rgba(25, 118, 210, 0.08)",
+                    },
                   }}
                 >
                   {item.text}
@@ -151,10 +203,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           )}
 
           {isAuthenticated ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-              <Typography variant="body2">
-                {user?.firstName} {user?.lastName}
-              </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1, ml: 2 }}>
               <IconButton
                 size="large"
                 edge="end"
@@ -162,26 +211,30 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 aria-controls="primary-search-account-menu"
                 aria-haspopup="true"
                 onClick={handleProfileMenuOpen}
-                color="inherit"
+                color="primary"
               >
-                <Avatar sx={{ width: 32, height: 32 }}>
-                  {user?.profilePicture ? (
-                    <img src={user.profilePicture} alt="Profile" />
-                  ) : (
-                    user?.firstName?.charAt(0)
-                  )}
+                <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main" }}>
+                  {firstName.charAt(0)}
                 </Avatar>
               </IconButton>
             </Box>
           ) : (
-            <Box sx={{ display: "flex", gap: 1 }}>
-              <Button color="inherit" onClick={() => navigate("/login")}>
+            <Box sx={{ display: "flex", gap: 1, ml: 2 }}>
+              <Button
+                color="inherit"
+                onClick={() => navigate("/login")}
+                sx={{
+                  display: { xs: "none", sm: "block" },
+                  borderRadius: 1,
+                }}
+              >
                 Login
               </Button>
               <Button
                 variant="contained"
                 color="secondary"
                 onClick={() => navigate("/register")}
+                sx={{ borderRadius: 1 }}
               >
                 Register
               </Button>
@@ -195,6 +248,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         open={Boolean(anchorEl)}
         onClose={handleMenuClose}
         onClick={handleMenuClose}
+        PaperProps={{
+          sx: {
+            mt: 1,
+            minWidth: 200,
+            borderRadius: 2,
+          },
+        }}
       >
         <MenuItem onClick={() => navigate("/profile")}>
           <ListItemIcon>
@@ -202,6 +262,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           </ListItemIcon>
           Profile
         </MenuItem>
+        <Divider />
         <MenuItem onClick={handleLogout}>
           <ListItemIcon>
             <Logout fontSize="small" />
@@ -221,16 +282,25 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           display: { xs: "block", md: "none" },
           "& .MuiDrawer-paper": {
             boxSizing: "border-box",
-            width: 240,
+            width: 280,
           },
         }}
       >
         {drawer}
       </Drawer>
 
-      <Container component="main" sx={{ flexGrow: 1, py: 3 }}>
-        {children}
-      </Container>
+      <Box
+        sx={{
+          flexGrow: 1,
+          backgroundColor: "background.default",
+          minHeight: "calc(100vh - 64px)",
+        }}
+      >
+        <Container component="main" sx={{ py: 3, px: { xs: 2, sm: 3 } }}>
+          {children}
+        </Container>
+      </Box>
+      <Footer />
     </Box>
   );
 };

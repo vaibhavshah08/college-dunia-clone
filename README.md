@@ -1,48 +1,85 @@
-# College Dunia Clone
+# CollegeDunia Clone - Education Portal
 
-A comprehensive college management platform built with modern technologies, featuring college listings, loan applications, document management, and admin dashboard.
+A production-ready education portal built with React, TypeScript, Material-UI, and NestJS. This project provides a comprehensive platform for college discovery, comparison, and loan applications.
 
 ## 🚀 Features
 
 ### Core Features
 
-- **College Management**: Browse, search, filter, and compare colleges
-- **User Authentication**: JWT-based authentication with Google OAuth
-- **Loan Applications**: Apply for and track educational loans
-- **Document Management**: Upload and manage important documents
-- **Admin Dashboard**: Comprehensive admin panel for management
-- **Responsive Design**: Works seamlessly on all devices
+- **Authentication**: Email/password signup and login with JWT
+- **College Discovery**: Advanced search and filtering with real-time results
+- **College Comparison**: Compare up to 4 colleges side-by-side
+- **Loan Applications**: Multi-step loan application process
+- **User Dashboard**: Track applications, favorites, and comparisons
+- **Admin Panel**: Manage colleges, users, loans, and content
 
-### User Roles
+### Technical Features
 
-- **Students**: Browse colleges, apply for loans, upload documents
-- **Admins**: Manage users, colleges, loans, and documents
+- **TypeScript**: Full type safety across frontend and backend
+- **React Query**: Efficient server state management with caching
+- **Material-UI**: Modern, responsive UI components
+- **Error Boundaries**: Graceful error handling
+- **Code Splitting**: Lazy-loaded routes for optimal performance
+- **URL State Sync**: Filters and pagination synced to URL
+- **Toast Notifications**: User feedback for all actions
 
-## 🛠 Tech Stack
+## 🏗️ Architecture
 
-### Backend
+### Frontend Structure
 
-- **Framework**: NestJS (Node.js)
-- **Database**: MySQL with TypeORM
-- **Authentication**: JWT + Passport.js
-- **File Storage**: AWS S3
-- **Validation**: class-validator, class-transformer
+```
+frontend/src/
+├── app/                    # App-level components
+├── components/             # Shared UI components
+├── features/               # Feature-based modules
+├── services/               # Centralized API layer
+├── lib/                    # Utilities and helpers
+├── types/                  # TypeScript definitions
+├── store/                  # State management
+└── config/                 # Configuration
+```
+
+### Backend Structure
+
+```
+backend/src/
+├── auth/                   # Authentication
+├── colleges/               # College management
+├── loans/                  # Loan applications
+├── reviews/                # Reviews system
+├── user/                   # User management
+├── static-pages/           # Content management
+├── admin/                  # Admin functionality
+├── common/                 # Shared utilities
+└── core/                   # Core services
+```
+
+## 🛠️ Tech Stack
 
 ### Frontend
 
-- **Framework**: React 19 with TypeScript
-- **UI Library**: Material-UI (MUI) v7
-- **State Management**: React Context API
-- **Routing**: React Router v7
-- **HTTP Client**: Axios
-- **Data Fetching**: React Query
+- **React 19** with TypeScript
+- **Material-UI** for UI components
+- **React Query** for server state
+- **React Router** for navigation
+- **Axios** for HTTP requests
+- **React Toastify** for notifications
+
+### Backend
+
+- **NestJS** with TypeScript
+- **TypeORM** for database operations
+- **MySQL** database
+- **JWT** for authentication
+- **Class-validator** for validation
+- **Winston** for logging
 
 ## 📋 Prerequisites
 
-- Node.js 22.x
+- Node.js 18+
+- npm or yarn
 - MySQL 8.0+
-- Yarn package manager
-- AWS S3 bucket (for document storage)
+- Git
 
 ## 🚀 Quick Start
 
@@ -56,258 +93,328 @@ cd college-dunia-clone
 ### 2. Backend Setup
 
 ```bash
-# Navigate to backend directory
 cd backend
 
 # Install dependencies
 npm install
 
-# Copy environment file
-cp env.example .env
+# Create environment file
+cp .env.example .env
 
-# Update .env file with your configuration
-# - Database credentials
-# - JWT secrets
-# - Google OAuth credentials
-# - AWS S3 credentials
+# Update environment variables
+# Edit .env with your database credentials
 
-# Create MySQL database
-mysql -u root -p
-CREATE DATABASE college_dunia;
-exit
+# Run database migrations
+npm run migration:run
 
-# Start the development server
+# Start development server
 npm run start:dev
 ```
-
-The backend will run on `http://localhost:3000`
 
 ### 3. Frontend Setup
 
 ```bash
-# Navigate to frontend directory
 cd frontend
 
 # Install dependencies
-yarn install
+npm install
 
 # Create environment file
-echo "REACT_APP_API_URL=http://localhost:3000/api" > .env
+cp .env.example .env
 
-# Start the development server
-yarn start
+# Update environment variables
+# Set REACT_APP_API_BASE_URL to your backend URL
+
+# Start development server
+npm start
 ```
 
-The frontend will run on `http://localhost:3001`
+### 4. Environment Variables
 
-## 📁 Project Structure
-
-```
-college-dunia-clone/
-├── backend/                 # NestJS backend
-│   ├── src/
-│   │   ├── modules/        # Feature modules
-│   │   ├── common/         # Shared utilities
-│   │   └── config/         # Configuration files
-│   ├── env.example         # Environment variables template
-│   └── README.md           # Backend documentation
-├── frontend/               # React frontend
-│   ├── src/
-│   │   ├── components/     # Reusable components
-│   │   ├── pages/          # Page components
-│   │   ├── services/       # API services
-│   │   └── contexts/       # React contexts
-│   └── README.md           # Frontend documentation
-└── README.md               # This file
-```
-
-## 🔧 Configuration
-
-### Backend Environment Variables
-
-Create a `.env` file in the backend directory:
+#### Backend (.env)
 
 ```env
-# Database Configuration
+# Database
 DB_HOST=localhost
 DB_PORT=3306
-DB_USERNAME=root
+DB_USERNAME=your_username
 DB_PASSWORD=your_password
 DB_NAME=college_dunia
 
-# JWT Configuration
-JWT_SECRET=your-super-secret-jwt-key
-JWT_EXPIRES_IN=7d
-JWT_REFRESH_SECRET=your-super-secret-refresh-key
-JWT_REFRESH_EXPIRES_IN=30d
+# JWT
+JWT_SECRET=your_jwt_secret_key
 
-# Google OAuth Configuration
-GOOGLE_CLIENT_ID=your-google-client-id
-GOOGLE_CLIENT_SECRET=your-google-client-secret
-GOOGLE_CALLBACK_URL=http://localhost:3000/auth/google/callback
-
-# AWS S3 Configuration
-AWS_ACCESS_KEY_ID=your-aws-access-key
-AWS_SECRET_ACCESS_KEY=your-aws-secret-key
-AWS_REGION=us-east-1
-AWS_S3_BUCKET=college-dunia-documents
-
-# Application Configuration
-NODE_ENV=development
+# Server
 PORT=3000
+NODE_ENV=development
 ```
 
-### Frontend Environment Variables
-
-Create a `.env` file in the frontend directory:
+#### Frontend (.env)
 
 ```env
-REACT_APP_API_URL=http://localhost:3000/api
+REACT_APP_API_BASE_URL=http://localhost:3000
+REACT_APP_ENVIRONMENT=development
 ```
 
-## 📚 API Documentation
+## 📁 Project Structure
 
-### Authentication Endpoints
+### Frontend Architecture
 
-- `POST /api/auth/login` - User login
-- `POST /api/auth/register` - User registration
-- `GET /api/auth/google` - Google OAuth initiation
-- `POST /api/auth/refresh` - Refresh JWT token
+#### Services Layer
 
-### College Endpoints
+- `services/apiClient.ts` - Centralized HTTP client with interceptors
+- `services/endpoints.ts` - API route constants
+- `services/modules/*.api.ts` - Feature-specific API modules
 
-- `GET /api/colleges` - Get colleges with filters
-- `GET /api/colleges/:id` - Get college details
-- `GET /api/colleges/compare/:ids` - Compare colleges
+#### State Management
 
-### User Endpoints
+- `store/queryClient.ts` - React Query configuration
+- `lib/hooks/useAuth.ts` - Authentication state
+- `lib/hooks/useColleges.ts` - College data management
+- `lib/hooks/useQueryParams.ts` - URL state management
 
-- `GET /api/users/profile` - Get user profile
-- `PUT /api/users/profile` - Update user profile
+#### Components
 
-### Loan Endpoints
+- `components/ErrorBoundary.tsx` - Error handling
+- `components/Layout/` - Layout components
+- `components/Auth/` - Authentication components
+- `features/*/components/` - Feature-specific components
 
-- `POST /api/loans` - Submit loan application
-- `GET /api/loans/my-applications` - Get user's loan applications
+### Backend Architecture
 
-### Document Endpoints
+#### Modules
 
-- `POST /api/documents` - Upload document
-- `GET /api/documents/my-documents` - Get user's documents
+- `auth/` - JWT authentication and authorization
+- `colleges/` - College CRUD operations
+- `loans/` - Loan application management
+- `reviews/` - Review system
+- `user/` - User management
+- `static-pages/` - Content management
 
-## 🎯 Key Features Implementation
+#### Core Services
 
-### Authentication System
+- `core/logger/` - Centralized logging
+- `core/correlation/` - Request correlation
+- `core/custom-error/` - Error handling
+- `core/interceptors/` - Request/response interceptors
 
-- JWT-based authentication
-- Google OAuth integration
-- Role-based access control
-- Protected routes
+## 🔧 Development
 
-### College Management
+### Available Scripts
 
-- Advanced search and filtering
-- College comparison tool
-- Detailed college information
-- Course management
+#### Backend
 
-### Loan Application System
+```bash
+npm run start:dev      # Start development server
+npm run build          # Build for production
+npm run start:prod     # Start production server
+npm run test           # Run tests
+npm run test:e2e       # Run E2E tests
+npm run migration:run  # Run database migrations
+npm run migration:revert # Revert last migration
+```
 
-- Multi-step application process
-- Status tracking
-- Admin approval workflow
-- Document verification
+#### Frontend
 
-### Document Management
+```bash
+npm start              # Start development server
+npm run build          # Build for production
+npm test               # Run tests
+npm run eject          # Eject from Create React App
+```
 
-- Secure file upload
-- Multiple file types support
-- Document verification system
-- AWS S3 integration
+### Code Quality
 
-### Admin Dashboard
+#### TypeScript
 
-- User management
-- College management
-- Loan application management
-- Document verification
-- Analytics and statistics
+- Strict mode enabled
+- Comprehensive type definitions
+- API response typing
+
+#### ESLint & Prettier
+
+- Consistent code formatting
+- TypeScript-aware linting
+- Import organization
+
+#### Testing
+
+- Unit tests for services and utilities
+- Component tests with React Testing Library
+- E2E tests with Playwright (planned)
 
 ## 🚀 Deployment
 
 ### Backend Deployment
 
-1. Build the application:
-
-   ```bash
-   cd backend
-   npm run build
-   ```
-
+1. Build the application: `npm run build`
 2. Set production environment variables
-
-3. Start the application:
-   ```bash
-   npm run start:prod
-   ```
+3. Run database migrations
+4. Start the server: `npm run start:prod`
 
 ### Frontend Deployment
 
-1. Build the application:
-
-   ```bash
-   cd frontend
-   yarn build
-   ```
-
+1. Build the application: `npm run build`
 2. Deploy the `build` folder to your hosting service
+3. Configure environment variables
 
-## 🤝 Contributing
+## 📊 API Documentation
+
+### Authentication
+
+- `POST /api/users/signup` - User registration
+- `POST /api/users/login` - User login
+- `GET /api/users/me` - Get current user profile
+
+### Colleges
+
+- `GET /api/colleges` - List colleges with filters
+- `GET /api/colleges/:id` - Get college details
+- `GET /api/colleges/compare/list` - Compare colleges
+- `GET /api/colleges/filters` - Get available filters
+
+### Loans
+
+- `POST /api/loans` - Create loan application
+- `GET /api/loans/me` - Get user's loans
+- `GET /api/loans/admin` - Admin: Get all loans
+- `PATCH /api/loans/:id/status` - Admin: Update loan status
+
+### Admin
+
+- `GET /api/admin/stats` - Dashboard statistics
+- `GET /api/admin/users` - List users
+- `PUT /api/admin/users/:id` - Update user
+- `DELETE /api/admin/users/:id` - Delete user
+
+## 🔒 Security
+
+### Authentication
+
+- JWT tokens with expiration
+- Secure password hashing with bcrypt
+- Role-based access control
+
+### API Security
+
+- Request validation with class-validator
+- CORS configuration
+- Rate limiting (planned)
+- Input sanitization
+
+### Frontend Security
+
+- XSS protection
+- CSRF protection (planned)
+- Secure token storage
+- Error boundary protection
+
+## 📈 Performance
+
+### Frontend Optimization
+
+- Code splitting with React.lazy
+- React Query caching
+- Image optimization
+- Bundle size optimization
+
+### Backend Optimization
+
+- Database query optimization
+- Response caching
+- Connection pooling
+- Logging and monitoring
+
+## 🧪 Testing
+
+### Unit Tests
+
+```bash
+# Backend
+npm run test
+
+# Frontend
+npm test
+```
+
+### E2E Tests
+
+```bash
+# Backend
+npm run test:e2e
+
+# Frontend (planned)
+npm run test:e2e
+```
+
+## 📝 Contributing
 
 1. Fork the repository
 2. Create a feature branch
 3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+4. Add tests for new functionality
+5. Ensure all tests pass
+6. Submit a pull request
 
-## 📝 License
+### Code Style
 
-This project is licensed under the MIT License.
+- Follow TypeScript best practices
+- Use meaningful variable and function names
+- Add JSDoc comments for complex functions
+- Follow the existing code structure
 
-## 🆘 Support
+## 🐛 Troubleshooting
+
+### Common Issues
+
+#### Backend
+
+- **Database connection failed**: Check database credentials and connection
+- **JWT errors**: Verify JWT_SECRET is set correctly
+- **Migration errors**: Ensure database schema is up to date
+
+#### Frontend
+
+- **API calls failing**: Check REACT_APP_API_BASE_URL
+- **Build errors**: Clear node_modules and reinstall dependencies
+- **Type errors**: Run `npm run type-check`
+
+### Debug Mode
+
+- Backend: Set `NODE_ENV=development` for detailed logs
+- Frontend: Use React Developer Tools and browser dev tools
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🤝 Support
 
 For support and questions:
 
-- Check the documentation in each directory
-- Review the API endpoints
-- Check the environment configuration
+- Create an issue in the repository
+- Check the documentation
+- Review the troubleshooting section
 
-## 🔄 Development Workflow
+## 🗺️ Roadmap
 
-1. **Backend Development**:
+### Phase 1 (Current)
 
-   - Use `npm run start:dev` for development
-   - Use `npm run test` for testing
-   - Use `npm run build` for production build
+- ✅ Core authentication
+- ✅ College listing and search
+- ✅ Basic comparison functionality
+- ✅ Loan application system
 
-2. **Frontend Development**:
+### Phase 2 (Planned)
 
-   - Use `yarn start` for development
-   - Use `yarn test` for testing
-   - Use `yarn build` for production build
+- 🔄 Advanced filtering and sorting
+- 🔄 User reviews and ratings
+- 🔄 Document upload system
+- 🔄 Email notifications
 
-3. **Database**:
-   - The application will automatically create tables on first run
-   - Use `synchronize: true` in development only
+### Phase 3 (Future)
 
-## 🎉 Getting Started
-
-1. Follow the setup instructions above
-2. Start both backend and frontend servers
-3. Visit `http://localhost:3001` to access the application
-4. Register a new account or use the admin credentials
-5. Explore the features and start building!
-
----
-
-**Happy Coding! 🚀**
+- 📋 Mobile app development
+- 📋 Advanced analytics
+- 📋 Payment integration
+- 📋 Multi-language support

@@ -6,28 +6,26 @@ import {
   TextField,
   Button,
   Box,
-  Link,
   Alert,
   CircularProgress,
-  Grid,
+  Link,
 } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../lib/hooks/useAuth";
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
-    firstName: "",
-    lastName: "",
+    first_name: "",
+    last_name: "",
     email: "",
     password: "",
     confirmPassword: "",
-    phone: "",
+    phone_number: "",
   });
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
-  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const { register } = useAuth();
+  const { signup, isSigningUp } = useAuth();
   const navigate = useNavigate();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -42,12 +40,12 @@ const Register: React.FC = () => {
   const validateForm = () => {
     const newErrors: { [key: string]: string } = {};
 
-    if (!formData.firstName.trim()) {
-      newErrors.firstName = "First name is required";
+    if (!formData.first_name.trim()) {
+      newErrors.first_name = "First name is required";
     }
 
-    if (!formData.lastName.trim()) {
-      newErrors.lastName = "Last name is required";
+    if (!formData.last_name.trim()) {
+      newErrors.last_name = "Last name is required";
     }
 
     if (!formData.email) {
@@ -68,8 +66,11 @@ const Register: React.FC = () => {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
-    if (formData.phone && !/^\+?[\d\s-()]+$/.test(formData.phone)) {
-      newErrors.phone = "Please enter a valid phone number";
+    if (
+      formData.phone_number &&
+      !/^\+?[\d\s-()]+$/.test(formData.phone_number)
+    ) {
+      newErrors.phone_number = "Please enter a valid phone number";
     }
 
     setErrors(newErrors);
@@ -84,17 +85,36 @@ const Register: React.FC = () => {
       return;
     }
 
-    setLoading(true);
     try {
-      const { confirmPassword, ...registerData } = formData;
-      await register(registerData);
-      navigate("/dashboard");
+      const { confirmPassword, ...signupData } = formData;
+      await signup(signupData);
+      // Navigation is handled by the useAuth hook
     } catch (err: any) {
-      setError(
-        err.response?.data?.message || "Registration failed. Please try again."
-      );
-    } finally {
-      setLoading(false);
+      // Error is already handled by the useAuth hook, but we can set local error state
+      // for additional UI feedback if needed
+      if (err?.status === 409) {
+        setError("An account with this email already exists.");
+      } else if (err?.status === 422) {
+        // Handle validation errors
+        if (err?.details?.validationErrors) {
+          const validationMessages = Object.values(
+            err.details.validationErrors
+          ).join(", ");
+          setError(`Validation errors: ${validationMessages}`);
+        } else {
+          setError("Please check your input and try again.");
+        }
+      } else if (err?.status === 500) {
+        setError("Server error. Please try again later.");
+      } else if (err?.code === "NETWORK_ERROR") {
+        setError("Network error. Please check your connection and try again.");
+      } else if (err?.status === 400) {
+        setError("Invalid request. Please check your input.");
+      } else if (err?.status === 403) {
+        setError("Registration is currently disabled.");
+      } else {
+        setError(err?.message || "Registration failed. Please try again.");
+      }
     }
   };
 
@@ -120,41 +140,46 @@ const Register: React.FC = () => {
         )}
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
-          <Grid container spacing={2}>
-            <Grid>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="firstName"
-                label="First Name"
-                name="firstName"
-                autoComplete="given-name"
-                autoFocus
-                value={formData.firstName}
-                onChange={handleChange}
-                error={!!errors.firstName}
-                helperText={errors.firstName}
-                disabled={loading}
-              />
-            </Grid>
-            <Grid>
-              <TextField
-                margin="normal"
-                required
-                fullWidth
-                id="lastName"
-                label="Last Name"
-                name="lastName"
-                autoComplete="family-name"
-                value={formData.lastName}
-                onChange={handleChange}
-                error={!!errors.lastName}
-                helperText={errors.lastName}
-                disabled={loading}
-              />
-            </Grid>
-          </Grid>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+              },
+              gap: 2,
+            }}
+          >
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="first_name"
+              label="First Name"
+              name="first_name"
+              autoComplete="given-name"
+              autoFocus
+              value={formData.first_name}
+              onChange={handleChange}
+              error={!!errors.first_name}
+              helperText={errors.first_name}
+              disabled={isSigningUp}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="last_name"
+              label="Last Name"
+              name="last_name"
+              autoComplete="family-name"
+              value={formData.last_name}
+              onChange={handleChange}
+              error={!!errors.last_name}
+              helperText={errors.last_name}
+              disabled={isSigningUp}
+            />
+          </Box>
 
           <TextField
             margin="normal"
@@ -168,21 +193,21 @@ const Register: React.FC = () => {
             onChange={handleChange}
             error={!!errors.email}
             helperText={errors.email}
-            disabled={loading}
+            disabled={isSigningUp}
           />
 
           <TextField
             margin="normal"
             fullWidth
-            id="phone"
+            id="phone_number"
             label="Phone Number (Optional)"
-            name="phone"
+            name="phone_number"
             autoComplete="tel"
-            value={formData.phone}
+            value={formData.phone_number}
             onChange={handleChange}
-            error={!!errors.phone}
-            helperText={errors.phone}
-            disabled={loading}
+            error={!!errors.phone_number}
+            helperText={errors.phone_number}
+            disabled={isSigningUp}
           />
 
           <TextField
@@ -198,7 +223,7 @@ const Register: React.FC = () => {
             onChange={handleChange}
             error={!!errors.password}
             helperText={errors.password}
-            disabled={loading}
+            disabled={isSigningUp}
           />
 
           <TextField
@@ -214,7 +239,7 @@ const Register: React.FC = () => {
             onChange={handleChange}
             error={!!errors.confirmPassword}
             helperText={errors.confirmPassword}
-            disabled={loading}
+            disabled={isSigningUp}
           />
 
           <Button
@@ -222,9 +247,9 @@ const Register: React.FC = () => {
             fullWidth
             variant="contained"
             sx={{ mt: 3, mb: 2 }}
-            disabled={loading}
+            disabled={isSigningUp}
           >
-            {loading ? <CircularProgress size={24} /> : "Create Account"}
+            {isSigningUp ? <CircularProgress size={24} /> : "Create Account"}
           </Button>
         </Box>
 

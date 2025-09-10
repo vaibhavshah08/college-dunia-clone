@@ -8,42 +8,41 @@ export interface LoginData {
 export interface RegisterData {
   email: string;
   password: string;
-  firstName: string;
-  lastName: string;
-  phone?: string;
+  first_name: string;
+  last_name: string;
+  phone_number?: string;
 }
 
 export interface AuthResponse {
-  access_token: string;
-  refresh_token: string;
+  token: string;
   user: {
-    id: number;
+    user_id: string;
     email: string;
-    firstName: string;
-    lastName: string;
-    role: "student" | "admin";
-    profilePicture?: string;
+    first_name: string;
+    last_name: string;
+    is_admin: boolean;
+    phone_number?: string;
   };
 }
 
 export const authService = {
   async login(data: LoginData): Promise<AuthResponse> {
-    const response = await api.post("/auth/login", data);
+    const response = await api.post("/users/login", data);
     return response.data;
   },
 
   async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await api.post("/auth/register", data);
+    const response = await api.post("/users/signup", data);
     return response.data;
   },
 
   async getProfile() {
-    const response = await api.get("/users/profile");
+    const response = await api.get("/users/me");
     return response.data;
   },
 
   async updateProfile(data: any) {
-    const response = await api.put("/users/profile", data);
+    const response = await api.put("/users/me", data);
     return response.data;
   },
 

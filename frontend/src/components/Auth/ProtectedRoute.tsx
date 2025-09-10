@@ -1,16 +1,16 @@
 import React from "react";
 import { Navigate } from "react-router-dom";
 import { CircularProgress, Box } from "@mui/material";
-import { useAuth } from "../../contexts/AuthContext";
+import { useAuth } from "../../lib/hooks/useAuth";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ children }) => {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, isLoadingUser } = useAuth();
 
-  if (loading) {
+  if (isLoadingUser) {
     return (
       <Box
         display="flex"

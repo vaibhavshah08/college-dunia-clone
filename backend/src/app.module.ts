@@ -4,6 +4,13 @@ import { AppService } from './app.service';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigModule } from '@nestjs/config';
 import { UserModule } from './user/user.module';
+import { AuthModule } from './auth/auth.module';
+import { CollegesModule } from './colleges/colleges.module';
+import { LoansModule } from './loans/loans.module';
+import { ReviewsModule } from './reviews/reviews.module';
+import { AdminModule } from './admin/admin.module';
+import { DocumentsModule } from './documents/documents.module';
+import { LoggerModule } from 'src/core/logger/logger.module';
 
 @Module({
   imports: [
@@ -18,7 +25,14 @@ import { UserModule } from './user/user.module';
       autoLoadEntities: true, // Automatically loads all entities
       synchronize: true, // ❗ For dev only (auto-create tables)
     }),
+    LoggerModule,
     UserModule,
+    AuthModule,
+    CollegesModule,
+    LoansModule,
+    ReviewsModule,
+    AdminModule,
+    DocumentsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
