@@ -29,6 +29,7 @@ export const useAuth = () => {
     data: user,
     isLoading: isLoadingUser,
     error: userError,
+    refetch: refetchUser,
   } = useQuery({
     queryKey: queryKeys.auth.profile,
     queryFn: authApi.getProfile,
@@ -40,7 +41,9 @@ export const useAuth = () => {
       // Retry up to 2 times for other errors
       return failureCount < 2;
     },
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 30 * 1000, // 30 seconds - data becomes stale quickly for real-time updates
+    refetchInterval: 60 * 1000, // Refetch every minute
+    refetchIntervalInBackground: true, // Continue refetching when tab is not active
     enabled: isAuthenticated(), // Use token manager to check authentication
     onError: (error: any) => {
       // Handle profile fetch errors
@@ -174,6 +177,7 @@ export const useAuth = () => {
     login,
     signup,
     logout,
+    refetchUser, // Manual refresh function
 
     // Mutations (for advanced usage)
     loginMutation,

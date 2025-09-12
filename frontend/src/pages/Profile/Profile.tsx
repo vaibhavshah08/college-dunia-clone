@@ -25,6 +25,7 @@ import { useMutation, useQueryClient } from "react-query";
 import userApi from "../../services/modules/user.api";
 import { getErrorMessage } from "../../utils/errorHandler";
 import { useToast } from "../../contexts/ToastContext";
+import { queryKeys } from "../../store/queryClient";
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
@@ -49,10 +50,18 @@ const Profile: React.FC = () => {
   const firstName = user?.first_name || "U";
 
   const updateProfileMutation = useMutation(
-    (data: typeof editForm) => userApi.updateProfile(user?.user_id || "", data),
+    (data: any) => userApi.updateProfile(user?.user_id || "", data),
     {
-      onSuccess: () => {
-        queryClient.invalidateQueries(["user", "profile"]);
+      onSuccess: (updatedUser) => {
+        // Invalidate the auth profile query to trigger a refetch
+        queryClient.invalidateQueries(queryKeys.auth.profile);
+
+        // Also update the cache directly with the new data for immediate UI update
+        queryClient.setQueryData(queryKeys.auth.profile, (oldData: any) => ({
+          ...oldData,
+          ...updatedUser,
+        }));
+
         setEditDialogOpen(false);
         setEditForm({
           first_name: user?.first_name || "",
@@ -61,6 +70,9 @@ const Profile: React.FC = () => {
           phone_number: user?.phone_number || "",
           password: "",
         });
+      },
+      onError: (error: any) => {
+        toast.error(getErrorMessage(error) || "Failed to update profile");
       },
     }
   );
@@ -75,9 +87,10 @@ const Profile: React.FC = () => {
     const dataToUpdate = {
       first_name: editForm.first_name,
       last_name: editForm.last_name,
-      email: editForm.email,
       phone_number: editForm.phone_number,
       ...(editForm.password && { password: editForm.password }),
+      // Only include email if Google account is not connected
+      ...(!user?.google_id && { email: editForm.email }),
     };
     updateProfileMutation.mutate(dataToUpdate);
   };
@@ -193,6 +206,19 @@ const Profile: React.FC = () => {
               <Box>
                 <Typography variant="body2" color="text.secondary">
                   Email
+                  {user?.google_id && (
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      sx={{
+                        ml: 1,
+                        color: "primary.main",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      (Managed by Google)
+                    </Typography>
+                  )}
                 </Typography>
                 <Typography variant="body1">
                   {user?.email || "Not provided"}
@@ -303,7 +329,13 @@ const Profile: React.FC = () => {
                 value={editForm.email}
                 onChange={handleEditFormChange}
                 required
+                disabled={!!user?.google_id} // Disable if Google account is connected
                 sx={{ gridColumn: "span 2" }}
+                helperText={
+                  user?.google_id
+                    ? "Email cannot be changed for Google accounts"
+                    : ""
+                }
               />
               <TextField
                 fullWidth
