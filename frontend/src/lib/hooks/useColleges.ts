@@ -1,5 +1,4 @@
 import { useQuery, useMutation, useQueryClient } from "react-query";
-import { toast } from "react-toastify";
 import collegesApi from "../../services/modules/colleges.api";
 import { queryKeys } from "../../store/queryClient";
 import type {
@@ -53,10 +52,6 @@ export const useCreateCollege = () => {
     mutationFn: collegesApi.createCollege,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.colleges.all });
-      toast.success("College created successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to create college");
     },
   });
 };
@@ -72,10 +67,6 @@ export const useUpdateCollege = () => {
       queryClient.invalidateQueries({
         queryKey: queryKeys.colleges.detail(id),
       });
-      toast.success("College updated successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to update college");
     },
   });
 };
@@ -87,10 +78,6 @@ export const useDeleteCollege = () => {
     mutationFn: collegesApi.deleteCollege,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.colleges.all });
-      toast.success("College deleted successfully");
-    },
-    onError: (error: any) => {
-      toast.error(error.message || "Failed to delete college");
     },
   });
 };

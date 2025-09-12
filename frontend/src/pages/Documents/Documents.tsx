@@ -35,7 +35,7 @@ import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useAuth } from "../../lib/hooks/useAuth";
 import documentsApi from "../../services/modules/documents.api";
 import { getErrorMessage } from "../../utils/errorHandler";
-import { toast } from "react-toastify";
+import { useToast } from "../../contexts/ToastContext";
 import FileUpload from "../../components/FileUpload/FileUpload";
 import { Document } from "../../types/api";
 
@@ -48,6 +48,7 @@ const getFileUrl = (documentPath: string) => {
 
 const Documents: React.FC = () => {
   const { isAuthenticated } = useAuth();
+  const toast = useToast();
   const queryClient = useQueryClient();
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -97,7 +98,6 @@ const Documents: React.FC = () => {
     }) => documentsApi.uploadDocument(file, name, purpose, type, documentType),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
-      toast.success("Document uploaded successfully!");
       setOpenDialog(false);
       setSelectedFile(null);
       setDocumentName("");
@@ -105,10 +105,6 @@ const Documents: React.FC = () => {
       setDocumentType("");
       setDescription("");
       setValidationErrors({});
-    },
-    onError: (error: any) => {
-      console.error("Upload failed:", error);
-      toast.error(getErrorMessage(error));
     },
   });
 
@@ -191,10 +187,6 @@ const Documents: React.FC = () => {
     mutationFn: (documentId: string) => documentsApi.deleteDocument(documentId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents"] });
-      toast.success("Document deleted successfully!");
-    },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error));
     },
   });
 

@@ -1,6 +1,6 @@
-# College Dunia Frontend
+# CampusConnect Frontend
 
-A React frontend application for the College Dunia platform, built with Material-UI and TypeScript.
+A React frontend application for the CampusConnect platform, built with Material-UI and TypeScript.
 
 ## Features
 

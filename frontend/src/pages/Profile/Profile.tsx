@@ -24,11 +24,12 @@ import { useAuth } from "../../lib/hooks/useAuth";
 import { useMutation, useQueryClient } from "react-query";
 import userApi from "../../services/modules/user.api";
 import { getErrorMessage } from "../../utils/errorHandler";
-import { toast } from "react-toastify";
+import { useToast } from "../../contexts/ToastContext";
 
 const Profile: React.FC = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editForm, setEditForm] = useState({
     first_name: user?.first_name || "",
@@ -52,7 +53,6 @@ const Profile: React.FC = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["user", "profile"]);
-        toast.success("Profile updated successfully!");
         setEditDialogOpen(false);
         setEditForm({
           first_name: user?.first_name || "",
@@ -61,9 +61,6 @@ const Profile: React.FC = () => {
           phone_number: user?.phone_number || "",
           password: "",
         });
-      },
-      onError: (error: any) => {
-        toast.error(getErrorMessage(error));
       },
     }
   );

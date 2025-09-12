@@ -35,8 +35,21 @@ export const loansApi = {
   /**
    * Get all loans (Admin only)
    */
-  async getAllLoans(): Promise<Loan[]> {
-    const response = await apiClient.get<Loan[]>(LOAN_ENDPOINTS.ADMIN_LIST);
+  async getAllLoans(statusFilter?: string): Promise<Loan[]> {
+    const params = statusFilter ? { status: statusFilter } : {};
+    const response = await apiClient.get<Loan[]>(LOAN_ENDPOINTS.ADMIN_LIST, {
+      params,
+    });
+    return response.data;
+  },
+
+  /**
+   * Get loans by college ID (Admin only)
+   */
+  async getLoansByCollegeId(collegeId: string): Promise<Loan[]> {
+    const response = await apiClient.get<Loan[]>(
+      `/api/loans/college/${collegeId}`
+    );
     return response.data;
   },
 

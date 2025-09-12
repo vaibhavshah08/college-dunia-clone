@@ -65,6 +65,25 @@ export const collegesApi = {
   },
 
   /**
+   * Create multiple colleges at once (Admin only)
+   */
+  async bulkCreateColleges(colleges: Partial<College>[]): Promise<{
+    message: string;
+    data: {
+      created: any[];
+      errors: any[];
+      total_processed: number;
+      successful: number;
+      failed: number;
+    };
+  }> {
+    const response = await apiClient.post(COLLEGE_ENDPOINTS.BULK_CREATE, {
+      colleges,
+    });
+    return response.data;
+  },
+
+  /**
    * Update college (Admin only)
    */
   async updateCollege(id: string, data: Partial<College>): Promise<College> {

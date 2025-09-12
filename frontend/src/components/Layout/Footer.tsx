@@ -42,7 +42,7 @@ const Footer: React.FC = () => {
           {/* Company Info */}
           <Box>
             <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-              College Dunia
+              CampusConnect
             </Typography>
             <Typography
               variant="body2"
@@ -145,7 +145,7 @@ const Footer: React.FC = () => {
             variant="body2"
             sx={{ color: "rgba(255, 255, 255, 0.9)" }}
           >
-            © {currentYear} College Dunia. All rights reserved.
+            © {currentYear} CampusConnect. All rights reserved.
           </Typography>
           <Box sx={{ display: "flex", gap: 3 }}>
             <Link

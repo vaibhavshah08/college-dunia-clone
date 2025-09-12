@@ -21,6 +21,7 @@ import {
 } from '@nestjs/swagger';
 import { CollegesService } from './colleges.service';
 import { CreateCollegeDto } from './dto/create-college.dto';
+import { BulkCreateCollegeDto } from './dto/bulk-create-college.dto';
 import { CreatePlacementDto } from './dto/create-placement.dto';
 import { JwtAuthGuard } from 'src/auth/jwt-auth.guard';
 import { Roles } from 'src/auth/roles.decorator';
@@ -147,6 +148,44 @@ export class CollegesController {
     @Body() body: CreateCollegeDto,
   ) {
     return await this.service.create(correlation_id, body);
+  }
+
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Post('bulk')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Create multiple colleges at once (Admin only)' })
+  @ApiBody({ type: BulkCreateCollegeDto })
+  @ApiResponse({
+    status: 201,
+    description: 'Colleges created successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            created: { type: 'array' },
+            errors: { type: 'array' },
+            total_processed: { type: 'number' },
+            successful: { type: 'number' },
+            failed: { type: 'number' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async bulkCreate(
+    @Correlation() correlation_id: string,
+    @Body() body: BulkCreateCollegeDto,
+  ) {
+    return await this.service.bulkCreate(correlation_id, body.colleges);
   }
 
   @UseGuards(JwtAuthGuard, RolesGuard)

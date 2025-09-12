@@ -101,7 +101,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     <Box sx={{ width: 280 }}>
       <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
         <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
-          College Dunia
+          CampusConnect
         </Typography>
       </Box>
       <List sx={{ pt: 1 }}>
@@ -172,7 +172,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             }}
             onClick={() => navigate("/")}
           >
-            College Dunia
+            CampusConnect
           </Typography>
 
           {!isMobile && (

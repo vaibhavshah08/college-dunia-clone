@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "react-query";
 import { useNavigate, useLocation } from "react-router-dom";
-import { toast } from "react-toastify";
+import { useToast } from "../../contexts/ToastContext";
 import authApi from "../../services/modules/auth.api";
 import { queryKeys } from "../../store/queryClient";
 import { LoginRequest, SignupRequest } from "../../types/api";
@@ -22,6 +22,7 @@ export const useAuth = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const location = useLocation();
+  const toast = useToast();
 
   // Get current user profile
   const {
@@ -53,10 +54,10 @@ export const useAuth = () => {
         });
       } else if (error?.status === 403) {
         // User doesn't have permission
-        toast.error("Access denied. Please contact support.");
+        console.error("Access denied. Please contact support.");
       } else {
         // Other errors
-        toast.error("Failed to load user profile. Please refresh the page.");
+        console.error("Failed to load user profile. Please refresh the page.");
       }
     },
   });
@@ -85,7 +86,7 @@ export const useAuth = () => {
         updated_at: data.user.updated_at,
       });
 
-      toast.success("Login successful!");
+      // Login success handled by API client
 
       // Redirect based on user type
       const from = location.state?.from?.pathname;
@@ -102,16 +103,8 @@ export const useAuth = () => {
       }
     },
     onError: (error: any) => {
-      // Don't show toast errors for login - let the component handle inline errors
-      // Only show toast for unexpected errors
-      if (error?.status === 500) {
-        toast.error("Server error. Please try again later.");
-      } else if (error?.code === "NETWORK_ERROR") {
-        toast.error(
-          "Network error. Please check your connection and try again."
-        );
-      }
-      // For 401, 422, 429 errors, let the component handle them with inline messages
+      // Error handling is done by the API client
+      console.error("Login error:", error);
     },
   });
 
@@ -120,34 +113,12 @@ export const useAuth = () => {
     mutationFn: authApi.signup,
     onSuccess: (data) => {
       // Don't save token or set user data since signup doesn't return a token
-      // Just show success message and redirect to login
-      toast.success("Registration successful! Please login to continue.");
+      // Success message handled by API client
       navigate("/login", { replace: true });
     },
     onError: (error: any) => {
-      // Enhanced error handling for signup
-      if (error?.status === 409) {
-        toast.error("An account with this email already exists.");
-      } else if (error?.status === 422) {
-        // Handle validation errors
-        if (error?.details?.validationErrors) {
-          Object.values(error.details.validationErrors).forEach(
-            (message: any) => {
-              toast.error(message);
-            }
-          );
-        } else {
-          toast.error("Please check your input and try again.");
-        }
-      } else if (error?.status === 500) {
-        toast.error("Server error. Please try again later.");
-      } else if (error?.code === "NETWORK_ERROR") {
-        toast.error(
-          "Network error. Please check your connection and try again."
-        );
-      } else {
-        toast.error(error?.message || "Registration failed. Please try again.");
-      }
+      // Error handling is done by the API client
+      console.error("Signup error:", error);
     },
   });
 
@@ -176,7 +147,7 @@ export const useAuth = () => {
     // Simply clear token and redirect - no API call needed
     removeToken();
     queryClient.clear();
-    toast.success("Logged out successfully");
+    toast.success("Logged out successfully!");
     navigate("/login", { replace: true });
   };
 

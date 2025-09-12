@@ -127,7 +127,7 @@ const Home: React.FC = () => {
           gutterBottom
           sx={{ mb: 6 }}
         >
-          Why Choose College Dunia?
+          Why Choose CampusConnect?
         </Typography>
         <Box
           sx={{

@@ -2,6 +2,7 @@ import React from "react";
 import { Navigate } from "react-router-dom";
 import { CircularProgress, Box } from "@mui/material";
 import { useAuth } from "../../lib/hooks/useAuth";
+import Unauthorized from "../../pages/Error/Unauthorized";
 
 interface UserRouteProps {
   children: React.ReactNode;
@@ -27,9 +28,9 @@ const UserRoute: React.FC<UserRouteProps> = ({ children }) => {
     return <Navigate to="/login" replace />;
   }
 
-  // If user is admin, redirect to admin dashboard
+  // If user is admin, show unauthorized page
   if (user?.is_admin) {
-    return <Navigate to="/admin" replace />;
+    return <Unauthorized />;
   }
 
   return <>{children}</>;

@@ -25,6 +25,7 @@ import {
   Pending,
   Cancel,
   RateReview,
+  Description,
 } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
@@ -50,7 +51,11 @@ const LoanDetail: React.FC = () => {
   });
 
   // Fetch college details if loan exists
-  const { data: college } = useQuery({
+  const {
+    data: college,
+    error: collegeError,
+    isLoading: collegeLoading,
+  } = useQuery({
     queryKey: ["college", loan?.college_id],
     queryFn: () => collegesApi.getCollege(loan!.college_id),
     enabled: !!loan?.college_id,
@@ -224,91 +229,92 @@ const LoanDetail: React.FC = () => {
                   gap: 3,
                 }}
               >
-                <Box>
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <AttachMoney sx={{ mr: 1, color: "primary.main" }} />
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Principal Amount
-                      </Typography>
-                      <Typography variant="h6">
-                        ₹{loan.principal_amount.toLocaleString()}
-                      </Typography>
-                    </Box>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <AttachMoney sx={{ mr: 1, color: "primary.main" }} />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Principal Amount
+                    </Typography>
+                    <Typography variant="h6">
+                      ₹{loan.principal_amount.toLocaleString()}
+                    </Typography>
                   </Box>
                 </Box>
 
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
-                    gap: 3,
-                  }}
-                >
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <RateReview sx={{ mr: 1, color: "primary.main" }} />
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Interest Rate
-                      </Typography>
-                      <Typography variant="h6">
-                        {loan.interest_rate}% per annum
-                      </Typography>
-                    </Box>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <RateReview sx={{ mr: 1, color: "primary.main" }} />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Interest Rate
+                    </Typography>
+                    <Typography variant="h6">
+                      {loan.interest_rate}% per annum
+                    </Typography>
                   </Box>
                 </Box>
 
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
-                    gap: 3,
-                  }}
-                >
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <Schedule sx={{ mr: 1, color: "primary.main" }} />
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        Loan Term
-                      </Typography>
-                      <Typography variant="h6">
-                        {loan.term_months} months
-                      </Typography>
-                    </Box>
+                <Box display="flex" alignItems="center" mb={2}>
+                  <Schedule sx={{ mr: 1, color: "primary.main" }} />
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Loan Term
+                    </Typography>
+                    <Typography variant="h6">
+                      {loan.term_months} months
+                    </Typography>
                   </Box>
                 </Box>
 
-                <Box
-                  sx={{
-                    display: "grid",
-                    gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
-                    gap: 3,
-                  }}
-                >
-                  <Box display="flex" alignItems="center" mb={2}>
-                    <School sx={{ mr: 1, color: "primary.main" }} />
-                    <Box>
-                      <Typography variant="body2" color="text.secondary">
-                        College
+                <Box display="flex" alignItems="center" mb={2}>
+                  <School sx={{ mr: 1, color: "primary.main" }} />
+                  <Box sx={{ flex: 1 }}>
+                    <Typography variant="body2" color="text.secondary">
+                      College
+                    </Typography>
+                    {collegeError ? (
+                      <Typography
+                        variant="h6"
+                        sx={{
+                          color: "#d32f2f",
+                          fontSize: "1rem",
+                          fontWeight: 500,
+                          display: "flex",
+                          alignItems: "center",
+                          gap: 0.5,
+                        }}
+                      >
+                        <Cancel sx={{ color: "#d32f2f", fontSize: "1rem" }} />
+                        College not found
                       </Typography>
+                    ) : collegeLoading ? (
+                      <Typography variant="h6">Loading...</Typography>
+                    ) : (
                       <Typography variant="h6">
-                        {college?.college_name || "Loading..."}
+                        {college?.college_name || "Unknown College"}
                       </Typography>
-                    </Box>
+                    )}
                   </Box>
                 </Box>
+
+                {loan.description && (
+                  <Box
+                    display="flex"
+                    alignItems="flex-start"
+                    mb={2}
+                    sx={{ gridColumn: { xs: "1", sm: "1 / -1" } }}
+                  >
+                    <Description
+                      sx={{ mr: 1, color: "primary.main", mt: 0.5 }}
+                    />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Description
+                      </Typography>
+                      <Typography variant="h6">{loan.description}</Typography>
+                    </Box>
+                  </Box>
+                )}
               </Box>
-
-              {loan.description && (
-                <Box mt={3}>
-                  <Typography variant="h6" gutterBottom>
-                    Description
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    {loan.description}
-                  </Typography>
-                </Box>
-              )}
             </CardContent>
           </Card>
 

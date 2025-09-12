@@ -48,12 +48,12 @@ export class CreateUserDto {
   readonly password: string;
 
   @ApiProperty({
-    description: "User's phone number (optional)",
+    description: "User's phone number",
     example: '+91-9876543210',
-    required: false,
+    minLength: 10,
   })
   @IsNotEmpty()
   @IsString()
-  @IsOptional()
-  readonly phone_number?: string;
+  @MinLength(10)
+  readonly phone_number: string;
 }

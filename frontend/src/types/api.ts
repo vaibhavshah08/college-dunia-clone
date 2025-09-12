@@ -41,7 +41,7 @@ export interface SignupRequest {
   last_name: string;
   email: string;
   password: string;
-  phone_number?: string;
+  phone_number: string;
 }
 
 export interface AuthResponse {
@@ -69,7 +69,7 @@ export interface SignupResponse {
     first_name: string;
     last_name: string;
     email: string;
-    phone_number?: string;
+    phone_number: string;
     is_admin: boolean;
     is_active: boolean;
     created_at: string;
@@ -285,6 +285,13 @@ export interface Loan {
   college_id: string;
   description?: string;
   created_at: string;
+  // Optional fields for admin view
+  user?: User;
+  college?: College;
+  approved_by?: string;
+  rejected_by?: string;
+  approved_by_user?: User;
+  rejected_by_user?: User;
 }
 
 export interface LoanStatusUpdate {

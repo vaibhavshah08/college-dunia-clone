@@ -53,7 +53,7 @@ export class UserService {
     this.logger.debug(correlation_id, 'Creating new user entity');
     const user = this.user_repo.create({
       ...create_user_dto,
-      user_id: uuidv4(),
+      user_id: uuidv4().replace(/-/g, ''),
       password: hashed_password,
     });
 

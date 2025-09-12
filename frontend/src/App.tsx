@@ -5,18 +5,24 @@ import { CssBaseline } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { setGlobalToast } from "./services/apiClient";
 
 // Layout
 import Layout from "./components/Layout/Layout";
 
 // Contexts
 import { ComparisonProvider } from "./contexts/ComparisonContext";
+import { ToastProvider } from "./contexts/ToastContext";
+
+// Components
+import ToastInitializer from "./components/ToastInitializer";
 
 // Auth Components
 import AdminRoute from "./components/Auth/AdminRoute";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import HomeRoute from "./components/Auth/HomeRoute";
 import UserRoute from "./components/Auth/UserRoute";
+import PublicRoute from "./components/Auth/PublicRoute";
 
 // Pages
 import Home from "./pages/Home/Home";
@@ -30,6 +36,7 @@ import Profile from "./pages/Profile/Profile";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
+import NotFound from "./pages/Error/NotFound";
 
 // Create a modern, high-contrast theme
 const theme = createTheme({
@@ -366,88 +373,106 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
-        <ComparisonProvider>
-          <Router>
-            <Layout>
-              <Routes>
-                <Route
-                  path="/"
-                  element={
-                    <HomeRoute>
-                      <Home />
-                    </HomeRoute>
-                  }
-                />
-                <Route
-                  path="/colleges"
-                  element={
-                    <UserRoute>
-                      <Colleges />
-                    </UserRoute>
-                  }
-                />
-                <Route
-                  path="/colleges/:id"
-                  element={
-                    <UserRoute>
-                      <CollegeDetail />
-                    </UserRoute>
-                  }
-                />
-                <Route
-                  path="/colleges/compare"
-                  element={
-                    <UserRoute>
-                      <CollegeComparison />
-                    </UserRoute>
-                  }
-                />
-                <Route
-                  path="/loans"
-                  element={
-                    <UserRoute>
-                      <Loans />
-                    </UserRoute>
-                  }
-                />
-                <Route
-                  path="/loans/:id"
-                  element={
-                    <UserRoute>
-                      <LoanDetail />
-                    </UserRoute>
-                  }
-                />
-                <Route
-                  path="/documents"
-                  element={
-                    <UserRoute>
-                      <Documents />
-                    </UserRoute>
-                  }
-                />
-                <Route
-                  path="/profile"
-                  element={
-                    <ProtectedRoute>
-                      <Profile />
-                    </ProtectedRoute>
-                  }
-                />
-                <Route
-                  path="/admin"
-                  element={
-                    <AdminRoute>
-                      <AdminDashboard />
-                    </AdminRoute>
-                  }
-                />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-              </Routes>
-            </Layout>
-          </Router>
-        </ComparisonProvider>
+        <ToastProvider>
+          <ToastInitializer />
+          <ComparisonProvider>
+            <Router>
+              <Layout>
+                <Routes>
+                  <Route
+                    path="/"
+                    element={
+                      <HomeRoute>
+                        <Home />
+                      </HomeRoute>
+                    }
+                  />
+                  <Route
+                    path="/colleges"
+                    element={
+                      <UserRoute>
+                        <Colleges />
+                      </UserRoute>
+                    }
+                  />
+                  <Route
+                    path="/colleges/:id"
+                    element={
+                      <UserRoute>
+                        <CollegeDetail />
+                      </UserRoute>
+                    }
+                  />
+                  <Route
+                    path="/colleges/compare"
+                    element={
+                      <UserRoute>
+                        <CollegeComparison />
+                      </UserRoute>
+                    }
+                  />
+                  <Route
+                    path="/loans"
+                    element={
+                      <UserRoute>
+                        <Loans />
+                      </UserRoute>
+                    }
+                  />
+                  <Route
+                    path="/loans/:id"
+                    element={
+                      <UserRoute>
+                        <LoanDetail />
+                      </UserRoute>
+                    }
+                  />
+                  <Route
+                    path="/documents"
+                    element={
+                      <UserRoute>
+                        <Documents />
+                      </UserRoute>
+                    }
+                  />
+                  <Route
+                    path="/profile"
+                    element={
+                      <ProtectedRoute>
+                        <Profile />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/admin"
+                    element={
+                      <AdminRoute>
+                        <AdminDashboard />
+                      </AdminRoute>
+                    }
+                  />
+                  <Route
+                    path="/login"
+                    element={
+                      <PublicRoute>
+                        <Login />
+                      </PublicRoute>
+                    }
+                  />
+                  <Route
+                    path="/register"
+                    element={
+                      <PublicRoute>
+                        <Register />
+                      </PublicRoute>
+                    }
+                  />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </Layout>
+            </Router>
+          </ComparisonProvider>
+        </ToastProvider>
         <ToastContainer
           position="bottom-center"
           autoClose={5000}

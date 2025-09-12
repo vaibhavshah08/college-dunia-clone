@@ -104,6 +104,37 @@ export class LoansController {
     return await this.service.adminList(correlation_id);
   }
 
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('admin')
+  @Get('college/:collegeId')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Get loans by college ID (Admin only)' })
+  @ApiParam({ name: 'collegeId', description: 'College ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'Loans retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        data: {
+          type: 'array',
+          items: { type: 'object' },
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 403,
+    description: 'Forbidden - Admin access required',
+  })
+  async getByCollegeId(
+    @Correlation() correlation_id: string,
+    @Param('collegeId') collegeId: string,
+  ) {
+    return await this.service.getByCollegeId(correlation_id, collegeId);
+  }
+
   @UseGuards(JwtAuthGuard)
   @Get(':id')
   @ApiBearerAuth('JWT-auth')

@@ -55,13 +55,13 @@ import {
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
-import { toast } from "react-toastify";
+import { useToast } from "../../contexts/ToastContext";
 import collegesApi from "../../services/modules/colleges.api";
 import loansApi from "../../services/modules/loans.api";
 import documentsApi from "../../services/modules/documents.api";
 import adminApi from "../../services/modules/admin.api";
 import { College, Loan, Document, User, DocumentStatus } from "../../types/api";
-import { downloadExcelTemplate, parseExcelFile } from "../../utils/excelUtils";
+import { downloadCsvTemplate, parseCsvFile } from "../../utils/excelUtils";
 import { getErrorMessage } from "../../utils/errorHandler";
 
 // Get file URL for preview
@@ -97,6 +97,7 @@ const AdminDashboard: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
+  const toast = useToast();
   const [tabValue, setTabValue] = useState(0);
   const [collegesPage, setCollegesPage] = useState(1);
   const [usersPage, setUsersPage] = useState(1);
@@ -127,6 +128,10 @@ const AdminDashboard: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
+  const [collegeViewDialogOpen, setCollegeViewDialogOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [userViewDialogOpen, setUserViewDialogOpen] = useState(false);
   const [editingCollege, setEditingCollege] = useState<College | null>(null);
   const [collegeDialogOpen, setCollegeDialogOpen] = useState(false);
   const [userDialogOpen, setUserDialogOpen] = useState(false);
@@ -143,6 +148,7 @@ const AdminDashboard: React.FC = () => {
     is_active: true,
   });
   const [documentStatusFilter, setDocumentStatusFilter] = useState<string>("");
+  const [loanStatusFilter, setLoanStatusFilter] = useState<string>("");
   const [userSearchQuery, setUserSearchQuery] = useState("");
 
   // Fetch data from APIs
@@ -157,8 +163,8 @@ const AdminDashboard: React.FC = () => {
     isLoading: loansLoading,
     error: loansError,
   } = useQuery({
-    queryKey: ["loans", "admin"],
-    queryFn: loansApi.getAllLoans,
+    queryKey: ["loans", "admin", loanStatusFilter],
+    queryFn: () => loansApi.getAllLoans(loanStatusFilter),
     enabled: isAuthenticated,
     onError: (error) => {
       console.error("Loans fetch error:", error);
@@ -191,7 +197,6 @@ const AdminDashboard: React.FC = () => {
     mutationFn: collegesApi.createCollege,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
-      toast.success("College created successfully!");
       setCollegeForm({
         college_name: "",
         state: "",
@@ -214,9 +219,6 @@ const AdminDashboard: React.FC = () => {
       });
       setCollegeDialogOpen(false);
     },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error));
-    },
   });
 
   // Update college mutation
@@ -225,12 +227,8 @@ const AdminDashboard: React.FC = () => {
       collegesApi.updateCollege(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
-      toast.success("College updated successfully!");
       setCollegeDialogOpen(false);
       setEditingCollege(null);
-    },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error));
     },
   });
 
@@ -239,10 +237,6 @@ const AdminDashboard: React.FC = () => {
     mutationFn: collegesApi.deleteCollege,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
-      toast.success("College deleted successfully!");
-    },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error));
     },
   });
 
@@ -259,10 +253,6 @@ const AdminDashboard: React.FC = () => {
     }) => documentsApi.updateDocumentStatus(id, status, rejectionReason),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
-      toast.success("Document status updated successfully!");
-    },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error));
     },
   });
 
@@ -270,10 +260,6 @@ const AdminDashboard: React.FC = () => {
     mutationFn: documentsApi.deleteDocument,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
-      toast.success("Document deleted successfully!");
-    },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error));
     },
   });
 
@@ -282,7 +268,6 @@ const AdminDashboard: React.FC = () => {
     mutationFn: adminApi.createUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
-      toast.success("User created successfully!");
       setUserDialogOpen(false);
       setUserForm({
         first_name: "",
@@ -294,9 +279,6 @@ const AdminDashboard: React.FC = () => {
         is_active: true,
       });
     },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error));
-    },
   });
 
   const updateUserMutation = useMutation({
@@ -304,12 +286,8 @@ const AdminDashboard: React.FC = () => {
       adminApi.updateUser(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
-      toast.success("User updated successfully!");
       setUserDialogOpen(false);
       setEditingUser(null);
-    },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error));
     },
   });
 
@@ -317,10 +295,6 @@ const AdminDashboard: React.FC = () => {
     mutationFn: adminApi.deleteUser,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
-      toast.success("User deleted successfully!");
-    },
-    onError: (error: any) => {
-      toast.error(getErrorMessage(error));
     },
   });
 
@@ -437,9 +411,30 @@ const AdminDashboard: React.FC = () => {
     setCollegeDialogOpen(true);
   };
 
-  const handleDeleteCollege = (collegeId: string) => {
-    if (window.confirm("Are you sure you want to delete this college?")) {
-      deleteCollegeMutation.mutate(collegeId);
+  const handleDeleteCollege = async (collegeId: string) => {
+    try {
+      // Check if there are any loans associated with this college
+      const associatedLoans = await loansApi.getLoansByCollegeId(collegeId);
+
+      if (associatedLoans.length > 0) {
+        // Show detailed confirmation with loan IDs
+        const loanIds = associatedLoans.map((loan) => loan.loan_id).join(", ");
+        const confirmMessage = `Cannot delete this college. There are ${associatedLoans.length} loan(s) associated with it.\n\nAssociated Loan IDs: ${loanIds}\n\nPlease handle these loans first before deleting the college.`;
+
+        alert(confirmMessage);
+        return;
+      }
+
+      // If no loans are associated, proceed with normal confirmation
+      if (window.confirm("Are you sure you want to delete this college?")) {
+        deleteCollegeMutation.mutate(collegeId);
+      }
+    } catch (error) {
+      console.error("Error checking for associated loans:", error);
+      // If there's an error checking loans, proceed with normal confirmation
+      if (window.confirm("Are you sure you want to delete this college?")) {
+        deleteCollegeMutation.mutate(collegeId);
+      }
     }
   };
 
@@ -476,48 +471,94 @@ const AdminDashboard: React.FC = () => {
 
     try {
       // Parse the uploaded file
-      const data = await parseExcelFile(file);
+      const data = await parseCsvFile(file);
       console.log("Parsed data:", data);
 
-      // Map CSV data to college schema
-      const collegesData = data.map((row: any) => ({
-        college_name: row["College Name"],
-        state: row["State"],
-        city: row["City"],
-        pincode: row["Pincode"].toString(),
-        landmark: row["Landmark"] || "",
-        fees: row["Fees (₹)"],
-        ranking: row["Ranking"],
-        courses_offered: row["Courses Offered"],
-        placement_ratio: row["Placement Ratio (%)"],
-        year_of_establishment: row["Year of Establishment"],
-        affiliation: row["Affiliation"],
-        accreditation: row["Accreditation"],
-        is_partnered: row["Is Partnered"],
-        avg_package: row["Avg Package (₹)"] || 0,
-        median_package: row["Median Package (₹)"] || 0,
-        highest_package: row["Highest Package (₹)"] || 0,
-        placement_rate: row["Placement Rate (%)"] || 0,
-        top_recruiters: row["Top Recruiters"] || [],
-      }));
+      if (!data || data.length === 0) {
+        throw new Error("No data found in CSV file");
+      }
 
-      // Simulate API call to save colleges
-      await new Promise((resolve) => setTimeout(resolve, 2000));
-      toast.success(
-        `Excel file uploaded successfully! ${collegesData.length} colleges imported.`
-      );
-    } catch (error: any) {
-      // Enhanced error handling for Excel upload
-      if (error?.message === "Failed to parse Excel file") {
-        toast.error(
-          "Invalid Excel file format. Please use the provided template."
+      // Map CSV data to college schema
+      const collegesData = data.map((row: any, index: number) => {
+        // Validate required fields
+        const requiredFields = [
+          "College Name",
+          "State",
+          "City",
+          "Pincode",
+          "Fees (₹)",
+          "Ranking",
+          "Courses Offered",
+          "Placement Ratio",
+          "Year of Establish",
+          "Affiliation",
+          "Accreditation",
+        ];
+        const missingFields = requiredFields.filter(
+          (field) => !row[field] || row[field] === ""
         );
+
+        if (missingFields.length > 0) {
+          throw new Error(
+            `Row ${index + 2}: Missing required fields: ${missingFields.join(
+              ", "
+            )}`
+          );
+        }
+
+        const collegeData = {
+          college_name: row["College Name"],
+          state: row["State"],
+          city: row["City"],
+          pincode: row["Pincode"] ? row["Pincode"].toString() : "",
+          landmark: row["Landmark"] || "",
+          fees: row["Fees (₹)"] || 0,
+          ranking: row["Ranking"] || 0,
+          courses_offered: row["Courses Offered"] || [],
+          placement_ratio:
+            row["Placement Ratio"] || row["Placement Ratio (%)"] || 0,
+          year_of_establishment:
+            row["Year of Establish"] || row["Year of Establishment"] || 0,
+          affiliation: row["Affiliation"],
+          accreditation: row["Accreditation"],
+          is_partnered: row["Is Partnered"] || false,
+          avg_package: row["Avg Package (₹)"] || 0,
+          median_package: row["Median Package (₹)"] || 0,
+          highest_package: row["Highest Package (₹)"] || 0,
+          placement_rate: row["Placement Rate (%)"] || 0,
+          top_recruiters: row["Top Recruiters"] || [],
+        };
+
+        console.log(`Mapped college data for row ${index + 2}:`, collegeData);
+        return collegeData;
+      });
+
+      // Call API to save colleges
+      const result = await collegesApi.bulkCreateColleges(collegesData);
+
+      if (result?.data?.failed > 0) {
+        toast.warning(
+          `CSV file processed with some errors. ${result.data.successful} colleges created successfully, ${result.data.failed} failed.`
+        );
+        console.error("Failed colleges:", result.data.errors);
+      } else {
+        // CSV upload success handled by API client
+      }
+
+      // Refresh the colleges list
+      queryClient.invalidateQueries(["colleges", "admin"]);
+    } catch (error: any) {
+      // Enhanced error handling for CSV upload
+      if (error?.message === "Failed to parse CSV file") {
+        toast.error(
+          "Invalid CSV file format. Please use the provided template."
+        );
+      } else if (error?.message?.includes("Missing required fields")) {
+        toast.error(error.message);
       } else if (error?.status === 413) {
         toast.error("File too large. Please upload a smaller file.");
       } else if (error?.status === 415) {
-        toast.error(
-          "Unsupported file type. Please upload an Excel file (.xlsx or .xls)."
-        );
+        toast.error("Unsupported file type. Please upload a CSV file (.csv).");
       } else if (error?.status === 500) {
         toast.error("Server error. Please try again later.");
       } else if (error?.code === "NETWORK_ERROR") {
@@ -525,7 +566,10 @@ const AdminDashboard: React.FC = () => {
           "Network error. Please check your connection and try again."
         );
       } else {
-        toast.error("Failed to upload file. Please try again.");
+        console.error("Upload error:", error);
+        toast.error(
+          `Failed to upload file: ${error?.message || "Unknown error"}`
+        );
       }
     } finally {
       setIsSubmitting(false);
@@ -533,12 +577,22 @@ const AdminDashboard: React.FC = () => {
   };
 
   const handleDownloadTemplate = () => {
-    downloadExcelTemplate();
+    downloadCsvTemplate();
   };
 
   const handleDocumentView = (document: any) => {
     setSelectedDocument(document);
     setDocumentDialogOpen(true);
+  };
+
+  const handleCollegeView = (college: College) => {
+    setSelectedCollege(college);
+    setCollegeViewDialogOpen(true);
+  };
+
+  const handleUserView = (user: User) => {
+    setSelectedUser(user);
+    setUserViewDialogOpen(true);
   };
 
   const handleDocumentAction = (
@@ -566,10 +620,6 @@ const AdminDashboard: React.FC = () => {
     {
       onSuccess: () => {
         queryClient.invalidateQueries(["loans", "admin"]);
-        toast.success("Loan status updated successfully!");
-      },
-      onError: (error: any) => {
-        toast.error(getErrorMessage(error));
       },
     }
   );
@@ -591,7 +641,7 @@ const AdminDashboard: React.FC = () => {
     queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
     queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
     queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-    toast.success("Data refreshed successfully!");
+    // Data refresh success handled by API client
   };
 
   // Card click handlers to navigate to respective tabs
@@ -958,15 +1008,11 @@ const AdminDashboard: React.FC = () => {
                   startIcon={<Upload />}
                   disabled={isSubmitting}
                 >
-                  {isSubmitting ? (
-                    <CircularProgress size={20} />
-                  ) : (
-                    "Upload Excel"
-                  )}
+                  {isSubmitting ? <CircularProgress size={20} /> : "Upload CSV"}
                   <input
                     type="file"
                     hidden
-                    accept=".xlsx,.xls"
+                    accept=".csv"
                     onChange={handleExcelUpload}
                   />
                 </Button>
@@ -1012,6 +1058,7 @@ const AdminDashboard: React.FC = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
+                      <TableCell>ID</TableCell>
                       <TableCell>Name</TableCell>
                       <TableCell>Location</TableCell>
                       <TableCell>Courses</TableCell>
@@ -1024,13 +1071,13 @@ const AdminDashboard: React.FC = () => {
                   <TableBody>
                     {collegesLoading ? (
                       <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                           <CircularProgress />
                         </TableCell>
                       </TableRow>
                     ) : filteredColleges.length === 0 ? (
                       <TableRow>
-                        <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                        <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                           <Typography variant="body1" color="text.secondary">
                             {searchQuery
                               ? `No colleges found matching "${searchQuery}"`
@@ -1045,6 +1092,17 @@ const AdminDashboard: React.FC = () => {
                         itemsPerPage
                       ).map((college) => (
                         <TableRow key={college.college_id}>
+                          <TableCell>
+                            <Typography
+                              variant="body2"
+                              sx={{
+                                fontFamily: "monospace",
+                                fontSize: "0.75rem",
+                              }}
+                            >
+                              {college.college_id}
+                            </Typography>
+                          </TableCell>
                           <TableCell>{college.college_name}</TableCell>
                           <TableCell>
                             {college.city}, {college.state}
@@ -1082,6 +1140,13 @@ const AdminDashboard: React.FC = () => {
                           <TableCell>#{college.ranking}</TableCell>
                           <TableCell>{college.placement_ratio}%</TableCell>
                           <TableCell>
+                            <IconButton
+                              size="small"
+                              color="info"
+                              onClick={() => handleCollegeView(college)}
+                            >
+                              <Visibility />
+                            </IconButton>
                             <IconButton
                               size="small"
                               color="primary"
@@ -1175,6 +1240,7 @@ const AdminDashboard: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell>ID</TableCell>
                   <TableCell>Name</TableCell>
                   <TableCell>Email</TableCell>
                   <TableCell>Phone</TableCell>
@@ -1187,13 +1253,13 @@ const AdminDashboard: React.FC = () => {
               <TableBody>
                 {usersLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
                 ) : users.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
                         {userSearchQuery
                           ? `No users found matching "${userSearchQuery}"`
@@ -1205,6 +1271,17 @@ const AdminDashboard: React.FC = () => {
                   getPaginatedData(users, usersPage, itemsPerPage).map(
                     (user: User) => (
                       <TableRow key={user.user_id}>
+                        <TableCell>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {user.user_id}
+                          </Typography>
+                        </TableCell>
                         <TableCell>
                           {user.first_name} {user.last_name}
                         </TableCell>
@@ -1228,6 +1305,13 @@ const AdminDashboard: React.FC = () => {
                           {new Date(user.created_at).toLocaleDateString()}
                         </TableCell>
                         <TableCell>
+                          <IconButton
+                            size="small"
+                            color="info"
+                            onClick={() => handleUserView(user)}
+                          >
+                            <Visibility />
+                          </IconButton>
                           <IconButton
                             size="small"
                             color="primary"
@@ -1306,6 +1390,7 @@ const AdminDashboard: React.FC = () => {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell>ID</TableCell>
                   <TableCell>User</TableCell>
                   <TableCell>Document Type</TableCell>
                   <TableCell>File Name</TableCell>
@@ -1318,13 +1403,13 @@ const AdminDashboard: React.FC = () => {
               <TableBody>
                 {documentsLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
                 ) : documents.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
                         {searchQuery
                           ? `No documents found matching "${searchQuery}"`
@@ -1336,6 +1421,17 @@ const AdminDashboard: React.FC = () => {
                   getPaginatedData(documents, documentsPage, itemsPerPage).map(
                     (document: Document) => (
                       <TableRow key={document.document_id}>
+                        <TableCell>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {document.document_id}
+                          </Typography>
+                        </TableCell>
                         <TableCell>
                           {document.user
                             ? `${document.user.first_name} ${document.user.last_name}`
@@ -1481,24 +1577,39 @@ const AdminDashboard: React.FC = () => {
             </Typography>
           </Box>
 
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search loans by user name, loan type, or college..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            sx={{ mb: 3 }}
-            InputProps={{
-              startAdornment: (
-                <Box sx={{ mr: 1, color: "text.secondary" }}>🔍</Box>
-              ),
-            }}
-          />
+          <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+            <TextField
+              fullWidth
+              variant="outlined"
+              placeholder="Search loans by user name, loan type, or college..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              InputProps={{
+                startAdornment: (
+                  <Box sx={{ mr: 1, color: "text.secondary" }}>🔍</Box>
+                ),
+              }}
+            />
+            <FormControl sx={{ minWidth: 200 }}>
+              <InputLabel>Status Filter</InputLabel>
+              <Select
+                value={loanStatusFilter}
+                label="Status Filter"
+                onChange={(e) => setLoanStatusFilter(e.target.value)}
+              >
+                <MenuItem value="">All Loans</MenuItem>
+                <MenuItem value="pending">Pending</MenuItem>
+                <MenuItem value="approved">Approved</MenuItem>
+                <MenuItem value="rejected">Rejected</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
           <TableContainer>
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell>ID</TableCell>
                   <TableCell>User</TableCell>
                   <TableCell>Loan Type</TableCell>
                   <TableCell>Amount</TableCell>
@@ -1511,13 +1622,13 @@ const AdminDashboard: React.FC = () => {
               <TableBody>
                 {loansLoading ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
                 ) : filteredLoans.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={7} align="center" sx={{ py: 4 }}>
+                    <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
                         {searchQuery
                           ? `No loans found matching "${searchQuery}"`
@@ -1529,12 +1640,31 @@ const AdminDashboard: React.FC = () => {
                   getPaginatedData(filteredLoans, loansPage, itemsPerPage).map(
                     (loan) => (
                       <TableRow key={loan.loan_id}>
-                        <TableCell>User {loan.user_id}</TableCell>
+                        <TableCell>
+                          <Typography
+                            variant="body2"
+                            sx={{
+                              fontFamily: "monospace",
+                              fontSize: "0.75rem",
+                            }}
+                          >
+                            {loan.loan_id}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {loan.user
+                            ? `${loan.user.first_name} ${loan.user.last_name}`
+                            : `User ${loan.user_id}`}
+                        </TableCell>
                         <TableCell>{loan.loan_type}</TableCell>
                         <TableCell>
                           ₹{loan.principal_amount.toLocaleString()}
                         </TableCell>
-                        <TableCell>College {loan.college_id}</TableCell>
+                        <TableCell>
+                          {loan.college
+                            ? loan.college.college_name
+                            : `College ${loan.college_id}`}
+                        </TableCell>
                         <TableCell>
                           {new Date(loan.created_at).toLocaleDateString()}
                         </TableCell>
@@ -1778,6 +1908,308 @@ const AdminDashboard: React.FC = () => {
           >
             Download
           </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* College View Dialog */}
+      <Dialog
+        open={collegeViewDialogOpen}
+        onClose={() => setCollegeViewDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>College Details</DialogTitle>
+        <DialogContent>
+          {selectedCollege && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                {selectedCollege.college_name}
+              </Typography>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 2,
+                  mt: 2,
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    College ID
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                  >
+                    {selectedCollege.college_id}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Location
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedCollege.city}, {selectedCollege.state}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Pincode
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedCollege.pincode}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Landmark
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedCollege.landmark || "N/A"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Fees
+                  </Typography>
+                  <Typography variant="body1">
+                    ₹{selectedCollege.fees.toLocaleString()}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Ranking
+                  </Typography>
+                  <Typography variant="body1">
+                    #{selectedCollege.ranking}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Placement Ratio
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedCollege.placement_ratio}%
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Year of Establishment
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedCollege.year_of_establishment}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Affiliation
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedCollege.affiliation}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Accreditation
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedCollege.accreditation}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Partnered
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedCollege.is_partnered ? "Yes" : "No"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Created At
+                  </Typography>
+                  <Typography variant="body1">
+                    {new Date(selectedCollege.created_at).toLocaleDateString()}
+                  </Typography>
+                </Box>
+              </Box>
+
+              <Box sx={{ mt: 3 }}>
+                <Typography
+                  variant="subtitle2"
+                  color="text.secondary"
+                  gutterBottom
+                >
+                  Courses Offered
+                </Typography>
+                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                  {selectedCollege.courses_offered?.map((course, index) => (
+                    <Chip key={index} label={course} size="small" />
+                  ))}
+                </Box>
+              </Box>
+
+              {(selectedCollege.avg_package ||
+                selectedCollege.median_package ||
+                selectedCollege.highest_package) && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography
+                    variant="subtitle2"
+                    color="text.secondary"
+                    gutterBottom
+                  >
+                    Package Details
+                  </Typography>
+                  <Box
+                    sx={{
+                      display: "grid",
+                      gridTemplateColumns: "1fr 1fr 1fr",
+                      gap: 2,
+                    }}
+                  >
+                    {selectedCollege.avg_package && (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Average Package
+                        </Typography>
+                        <Typography variant="body1">
+                          ₹{selectedCollege.avg_package.toLocaleString()}
+                        </Typography>
+                      </Box>
+                    )}
+                    {selectedCollege.median_package && (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Median Package
+                        </Typography>
+                        <Typography variant="body1">
+                          ₹{selectedCollege.median_package.toLocaleString()}
+                        </Typography>
+                      </Box>
+                    )}
+                    {selectedCollege.highest_package && (
+                      <Box>
+                        <Typography variant="body2" color="text.secondary">
+                          Highest Package
+                        </Typography>
+                        <Typography variant="body1">
+                          ₹{selectedCollege.highest_package.toLocaleString()}
+                        </Typography>
+                      </Box>
+                    )}
+                  </Box>
+                </Box>
+              )}
+
+              {selectedCollege.top_recruiters &&
+                selectedCollege.top_recruiters.length > 0 && (
+                  <Box sx={{ mt: 3 }}>
+                    <Typography
+                      variant="subtitle2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      Top Recruiters
+                    </Typography>
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+                      {selectedCollege.top_recruiters.map(
+                        (recruiter, index) => (
+                          <Chip
+                            key={index}
+                            label={recruiter}
+                            size="small"
+                            color="primary"
+                          />
+                        )
+                      )}
+                    </Box>
+                  </Box>
+                )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCollegeViewDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* User View Dialog */}
+      <Dialog
+        open={userViewDialogOpen}
+        onClose={() => setUserViewDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+      >
+        <DialogTitle>User Details</DialogTitle>
+        <DialogContent>
+          {selectedUser && (
+            <Box>
+              <Typography variant="h6" gutterBottom>
+                {selectedUser.first_name} {selectedUser.last_name}
+              </Typography>
+              <Box
+                sx={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 2,
+                  mt: 2,
+                }}
+              >
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    User ID
+                  </Typography>
+                  <Typography
+                    variant="body1"
+                    sx={{ fontFamily: "monospace", fontSize: "0.875rem" }}
+                  >
+                    {selectedUser.user_id}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Email
+                  </Typography>
+                  <Typography variant="body1">{selectedUser.email}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Phone Number
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedUser.phone_number || "N/A"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Role
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedUser.is_admin ? "Admin" : "User"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Status
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedUser.is_active ? "Active" : "Inactive"}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Created At
+                  </Typography>
+                  <Typography variant="body1">
+                    {new Date(selectedUser.created_at).toLocaleDateString()}
+                  </Typography>
+                </Box>
+              </Box>
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setUserViewDialogOpen(false)}>Close</Button>
         </DialogActions>
       </Dialog>
 
@@ -2194,10 +2626,12 @@ const AdminDashboard: React.FC = () => {
                 </Box>
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    User ID
+                    User
                   </Typography>
                   <Typography variant="body1">
-                    {selectedLoan.user_id}
+                    {selectedLoan.user
+                      ? `${selectedLoan.user.first_name} ${selectedLoan.user.last_name}`
+                      : `User ${selectedLoan.user_id}`}
                   </Typography>
                 </Box>
                 <Box>
@@ -2242,12 +2676,38 @@ const AdminDashboard: React.FC = () => {
                     size="small"
                   />
                 </Box>
+                {selectedLoan.approved_by && (
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Approved By
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedLoan.approved_by_user
+                        ? `${selectedLoan.approved_by_user.first_name} ${selectedLoan.approved_by_user.last_name}`
+                        : `User ${selectedLoan.approved_by}`}
+                    </Typography>
+                  </Box>
+                )}
+                {selectedLoan.rejected_by && (
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      Rejected By
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedLoan.rejected_by_user
+                        ? `${selectedLoan.rejected_by_user.first_name} ${selectedLoan.rejected_by_user.last_name}`
+                        : `User ${selectedLoan.rejected_by}`}
+                    </Typography>
+                  </Box>
+                )}
                 <Box>
                   <Typography variant="subtitle2" color="text.secondary">
-                    College ID
+                    College
                   </Typography>
                   <Typography variant="body1">
-                    {selectedLoan.college_id}
+                    {selectedLoan.college
+                      ? selectedLoan.college.college_name
+                      : `College ${selectedLoan.college_id}`}
                   </Typography>
                 </Box>
                 <Box>

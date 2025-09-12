@@ -4,8 +4,32 @@ import axios, {
   AxiosResponse,
   AxiosError,
 } from "axios";
-import { toast } from "react-toastify";
 import { getAuthToken, removeToken } from "../utils/tokenManager";
+
+// Global toast functions - will be set by the app
+let globalToast: {
+  success: (message: string) => void;
+  error: (message: string) => void;
+  info: (message: string) => void;
+  warning: (message: string) => void;
+} | null = null;
+
+// Function to set global toast from the app
+export const setGlobalToast = (toast: typeof globalToast) => {
+  globalToast = toast;
+};
+
+// Fallback toast function
+function showToast(
+  message: string,
+  type: "error" | "success" | "info" | "warning" = "error"
+) {
+  if (globalToast) {
+    globalToast[type](message);
+  } else {
+    console.warn(`Toast (${type}): ${message}`);
+  }
+}
 
 // Environment configuration
 // const API_BASE_URL = "https://66mz5dpp-7001.inc1.devtunnels.ms";
@@ -75,6 +99,65 @@ apiClient.interceptors.response.use(
       }
     }
 
+    // Show success toast for successful operations
+    const method = response.config.method?.toUpperCase();
+    const url = response.config.url || "";
+
+    if (
+      method === "POST" ||
+      method === "PUT" ||
+      method === "PATCH" ||
+      method === "DELETE"
+    ) {
+      let successMessage = "";
+
+      if (method === "POST") {
+        if (url.includes("/users/signup")) {
+          successMessage = "User registered successfully!";
+        } else if (url.includes("/users/login")) {
+          successMessage = "Login successful!";
+        } else if (url.includes("/colleges")) {
+          successMessage = "College added successfully!";
+        } else if (url.includes("/loans")) {
+          successMessage = "Loan application submitted successfully!";
+        } else if (url.includes("/documents")) {
+          successMessage = "Document uploaded successfully!";
+        } else {
+          successMessage = "Created successfully!";
+        }
+      } else if (method === "PUT" || method === "PATCH") {
+        if (url.includes("/users/") && url.includes("/profile")) {
+          successMessage = "Profile updated successfully!";
+        } else if (url.includes("/users/")) {
+          successMessage = "User updated successfully!";
+        } else if (url.includes("/colleges/")) {
+          successMessage = "College updated successfully!";
+        } else if (url.includes("/loans/")) {
+          successMessage = "Loan updated successfully!";
+        } else if (url.includes("/documents/")) {
+          successMessage = "Document updated successfully!";
+        } else {
+          successMessage = "Updated successfully!";
+        }
+      } else if (method === "DELETE") {
+        if (url.includes("/users/")) {
+          successMessage = "User deleted successfully!";
+        } else if (url.includes("/colleges/")) {
+          successMessage = "College deleted successfully!";
+        } else if (url.includes("/loans/")) {
+          successMessage = "Loan deleted successfully!";
+        } else if (url.includes("/documents/")) {
+          successMessage = "Document deleted successfully!";
+        } else {
+          successMessage = "Deleted successfully!";
+        }
+      }
+
+      if (successMessage) {
+        showToast(successMessage, "success");
+      }
+    }
+
     return response;
   },
   (error: AxiosError) => {
@@ -97,12 +180,22 @@ apiClient.interceptors.response.use(
 
         case 403:
           // Forbidden
-          toast.error("You do not have permission to perform this action");
+          showToast("You do not have permission to perform this action");
           break;
 
         case 404:
-          // Not found
-          toast.error("The requested resource was not found");
+          // Not found - only show toast for specific endpoints to avoid duplicates
+          const url = error.config?.url || "";
+          if (url.includes("/loans/") && !url.includes("/colleges/")) {
+            showToast(
+              "Loan not found. Please check the loan ID and try again."
+            );
+          } else if (url.includes("/colleges/")) {
+            // Don't show toast for college 404s as they're handled in the UI
+            return Promise.reject(normalizeError(error));
+          } else {
+            showToast("The requested resource was not found");
+          }
           break;
 
         case 422:
@@ -110,16 +203,16 @@ apiClient.interceptors.response.use(
           const validationErrors = (data as any)?.errors;
           if (validationErrors) {
             Object.values(validationErrors).forEach((message: any) => {
-              toast.error(message);
+              showToast(message as string);
             });
           } else {
-            toast.error("Validation failed");
+            showToast("Validation failed");
           }
           break;
 
         case 500:
           // Server error
-          toast.error(
+          showToast(
             "An internal server error occurred. Please try again later."
           );
           break;
@@ -127,14 +220,14 @@ apiClient.interceptors.response.use(
         default:
           // Other errors
           const errorMessage = (data as any)?.message || "An error occurred";
-          toast.error(errorMessage);
+          showToast(errorMessage);
       }
     } else if (error.request) {
       // Network error
-      toast.error("Network error. Please check your connection and try again.");
+      showToast("Network error. Please check your connection and try again.");
     } else {
       // Other error
-      toast.error("An unexpected error occurred");
+      showToast("An unexpected error occurred");
     }
 
     return Promise.reject(normalizeError(error));

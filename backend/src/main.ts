@@ -32,8 +32,8 @@ async function bootstrap() {
 
   // Swagger documentation setup
   const config = new DocumentBuilder()
-    .setTitle('College Dunia API')
-    .setDescription('API documentation for College Dunia Clone')
+    .setTitle('CampusConnect API')
+    .setDescription('API documentation for CampusConnect')
     .setVersion('1.0')
     .addBearerAuth(
       {

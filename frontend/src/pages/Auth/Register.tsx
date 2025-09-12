@@ -66,11 +66,12 @@ const Register: React.FC = () => {
       newErrors.confirmPassword = "Passwords do not match";
     }
 
-    if (
-      formData.phone_number &&
-      !/^\+?[\d\s-()]+$/.test(formData.phone_number)
-    ) {
+    if (!formData.phone_number.trim()) {
+      newErrors.phone_number = "Phone number is required";
+    } else if (!/^\+?[\d\s-()]+$/.test(formData.phone_number)) {
       newErrors.phone_number = "Please enter a valid phone number";
+    } else if (formData.phone_number.replace(/\D/g, "").length < 10) {
+      newErrors.phone_number = "Phone number must be at least 10 digits";
     }
 
     setErrors(newErrors);
@@ -130,7 +131,7 @@ const Register: React.FC = () => {
           color="text.secondary"
           sx={{ mb: 4 }}
         >
-          Join College Dunia to start your educational journey
+          Join CampusConnect to start your educational journey
         </Typography>
 
         {error && (
@@ -198,9 +199,10 @@ const Register: React.FC = () => {
 
           <TextField
             margin="normal"
+            required
             fullWidth
             id="phone_number"
-            label="Phone Number (Optional)"
+            label="Phone Number"
             name="phone_number"
             autoComplete="tel"
             value={formData.phone_number}

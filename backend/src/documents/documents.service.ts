@@ -74,7 +74,7 @@ export class DocumentsService {
 
       // Generate unique filename
       const fileExtension = path.extname(file.originalname);
-      const fileName = `${uuidv4()}${fileExtension}`;
+      const fileName = `${uuidv4().replace(/-/g, '')}${fileExtension}`;
       const filePath = path.join(this.uploadPath, fileName);
 
       // Save file to disk
@@ -82,7 +82,7 @@ export class DocumentsService {
 
       // Create document record
       const document = this.documentRepo.create({
-        document_id: uuidv4(),
+        document_id: uuidv4().replace(/-/g, ''),
         user_id,
         document_path: `/uploads/documents/${fileName}`,
         original_name: file.originalname,

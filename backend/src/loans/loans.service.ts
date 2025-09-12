@@ -6,12 +6,18 @@ import { customHttpError } from 'src/core/custom-error/error-service';
 import { ENTITY_NOT_FOUND } from 'src/core/custom-error/error-constant';
 import { CustomLogger } from 'src/core/logger/logger.service';
 import { v4 as uuidv4 } from 'uuid';
+import { User } from '../user/entities/user.entity';
+import { College } from '../colleges/colleges.entity';
 
 @Injectable()
 export class LoansService {
   constructor(
     @InjectRepository(LoanApplication)
     private readonly repo: Repository<LoanApplication>,
+    @InjectRepository(User)
+    private readonly userRepo: Repository<User>,
+    @InjectRepository(College)
+    private readonly collegeRepo: Repository<College>,
     private readonly logger: CustomLogger,
   ) {}
 
@@ -31,7 +37,7 @@ export class LoansService {
     );
 
     this.logger.debug(correlation_id, 'Generating loan ID');
-    const loan_id = uuidv4();
+    const loan_id = uuidv4().replace(/-/g, '');
 
     this.logger.debug(correlation_id, 'Creating loan application entity');
     const entity = this.repo.create({
@@ -102,20 +108,62 @@ export class LoansService {
     const results = await this.repo.find();
     this.logger.debug(correlation_id, `Found ${results.length} total loans`);
 
+    // Get unique user and college IDs
+    const userIds = [...new Set(results.map((loan) => loan.user_id))];
+    const collegeIds = [...new Set(results.map((loan) => loan.college_id))];
+
+    // Fetch users and colleges
+    const users = await this.userRepo
+      .createQueryBuilder('user')
+      .where('user.user_id IN (:...userIds)', { userIds })
+      .getMany();
+
+    const colleges = await this.collegeRepo
+      .createQueryBuilder('college')
+      .where('college.college_id IN (:...collegeIds)', { collegeIds })
+      .getMany();
+
+    // Create lookup maps
+    const userMap = new Map(users.map((user) => [user.user_id, user]));
+    const collegeMap = new Map(
+      colleges.map((college) => [college.college_id, college]),
+    );
+
     return {
       message: 'All loans retrieved successfully',
-      data: results.map((loan) => ({
-        loan_id: loan.loan_id,
-        user_id: loan.user_id,
-        loan_type: loan.loan_type,
-        principal_amount: loan.principal_amount,
-        interest_rate: loan.interest_rate,
-        term_months: loan.term_months,
-        status: loan.status,
-        college_id: loan.college_id,
-        description: loan.description,
-        created_at: loan.created_at,
-      })),
+      data: results.map((loan) => {
+        const user = userMap.get(loan.user_id);
+        const college = collegeMap.get(loan.college_id);
+
+        return {
+          loan_id: loan.loan_id,
+          user_id: loan.user_id,
+          loan_type: loan.loan_type,
+          principal_amount: loan.principal_amount,
+          interest_rate: loan.interest_rate,
+          term_months: loan.term_months,
+          status: loan.status,
+          college_id: loan.college_id,
+          description: loan.description,
+          created_at: loan.created_at,
+          user: user
+            ? {
+                user_id: user.user_id,
+                first_name: user.first_name,
+                last_name: user.last_name,
+                email: user.email,
+              }
+            : null,
+          college: college
+            ? {
+                college_id: college.college_id,
+                college_name: college.college_name,
+                city: college.city,
+                state: college.state,
+              }
+            : null,
+        };
+      }),
     };
   }
 
@@ -198,6 +246,47 @@ export class LoansService {
         description: existing.description,
         created_at: existing.created_at,
       },
+    };
+  }
+
+  async getByCollegeId(correlation_id: string, collegeId: string) {
+    this.logger.setContext(this.constructor.name);
+    this.logger.debug(
+      correlation_id,
+      'Starting get loans by college ID process',
+    );
+    this.logger.debug(
+      correlation_id,
+      `Finding loans for college: ${collegeId}`,
+    );
+
+    this.logger.debug(
+      correlation_id,
+      'Querying database for loans by college ID',
+    );
+    const loans = await this.repo.find({
+      where: { college_id: collegeId },
+      order: { created_at: 'DESC' },
+    });
+
+    this.logger.debug(
+      correlation_id,
+      `Found ${loans.length} loans for college ${collegeId}`,
+    );
+    return {
+      message: 'Loans retrieved successfully',
+      data: loans.map((loan) => ({
+        loan_id: loan.loan_id,
+        user_id: loan.user_id,
+        loan_type: loan.loan_type,
+        principal_amount: loan.principal_amount,
+        interest_rate: loan.interest_rate,
+        term_months: loan.term_months,
+        status: loan.status,
+        college_id: loan.college_id,
+        description: loan.description,
+        created_at: loan.created_at,
+      })),
     };
   }
 }

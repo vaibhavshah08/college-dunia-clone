@@ -36,7 +36,7 @@ export class CollegesService {
     );
 
     this.logger.debug(correlation_id, 'Generating college ID');
-    const college_id = uuidv4();
+    const college_id = uuidv4().replace(/-/g, '');
 
     this.logger.debug(correlation_id, 'Creating college entity');
     const entity = this.repo.create({
@@ -133,6 +133,68 @@ export class CollegesService {
         placement_rate: saved_entity.placement_rate,
         top_recruiters: saved_entity.top_recruiters,
         placement_last_updated: saved_entity.placement_last_updated,
+      },
+    };
+  }
+
+  async bulkCreate(correlation_id: string, collegesData: Partial<College>[]) {
+    this.logger.setContext(this.constructor.name);
+    this.logger.debug(correlation_id, 'Starting bulk college creation process');
+    this.logger.debug(
+      correlation_id,
+      `Creating ${collegesData.length} colleges`,
+    );
+
+    const createdColleges: any[] = [];
+    const errors: any[] = [];
+
+    for (let i = 0; i < collegesData.length; i++) {
+      try {
+        const collegeData = collegesData[i];
+        this.logger.debug(
+          correlation_id,
+          `Creating college ${i + 1}/${collegesData.length}: ${collegeData.college_name}`,
+        );
+
+        const college_id = uuidv4().replace(/-/g, '');
+        const entity = this.repo.create({
+          ...collegeData,
+          college_id: college_id,
+        });
+
+        const saved_entity = await this.repo.save(entity);
+        createdColleges.push({
+          college_id: saved_entity.college_id,
+          college_name: saved_entity.college_name,
+          state: saved_entity.state,
+          city: saved_entity.city,
+        });
+      } catch (error) {
+        this.logger.error(
+          correlation_id,
+          `Failed to create college ${i + 1}: ${error.message}`,
+        );
+        errors.push({
+          index: i + 1,
+          college_name: collegesData[i].college_name || 'Unknown',
+          error: error.message,
+        });
+      }
+    }
+
+    this.logger.debug(
+      correlation_id,
+      `Bulk creation completed: ${createdColleges.length} successful, ${errors.length} failed`,
+    );
+
+    return {
+      message: `Bulk college creation completed. ${createdColleges.length} colleges created successfully, ${errors.length} failed.`,
+      data: {
+        created: createdColleges,
+        errors: errors,
+        total_processed: collegesData.length,
+        successful: createdColleges.length,
+        failed: errors.length,
       },
     };
   }

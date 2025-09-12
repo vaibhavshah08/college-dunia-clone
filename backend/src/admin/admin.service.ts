@@ -127,7 +127,7 @@ export class AdminService {
       this.logger.debug(correlation_id, 'Creating new user entity');
       const user = this.userRepo.create({
         ...create_user_dto,
-        user_id: uuidv4(),
+        user_id: uuidv4().replace(/-/g, ''),
         password: hashed_password,
         is_admin: create_user_dto.is_admin || false,
         is_active:

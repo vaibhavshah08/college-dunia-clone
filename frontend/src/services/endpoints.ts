@@ -24,6 +24,7 @@ export const COLLEGE_ENDPOINTS = {
   LIST: `/colleges`,
   DETAIL: (id: string) => `/colleges/${id}`,
   CREATE: `/colleges`,
+  BULK_CREATE: `/colleges/bulk`,
   UPDATE: (id: string) => `/colleges/${id}`,
   DELETE: (id: string) => `/colleges/${id}`,
   COMPARE: `/colleges/compare/list`,
