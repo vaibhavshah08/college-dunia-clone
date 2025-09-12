@@ -36,6 +36,8 @@ import Profile from "./pages/Profile/Profile";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import Login from "./pages/Auth/Login";
 import Register from "./pages/Auth/Register";
+import GoogleSuccess from "./pages/Auth/GoogleSuccess";
+import GoogleError from "./pages/Auth/GoogleError";
 import NotFound from "./pages/Error/NotFound";
 
 // Create a modern, high-contrast theme
@@ -467,6 +469,11 @@ function App() {
                       </PublicRoute>
                     }
                   />
+                  <Route
+                    path="/auth/google/success"
+                    element={<GoogleSuccess />}
+                  />
+                  <Route path="/auth/google/error" element={<GoogleError />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>

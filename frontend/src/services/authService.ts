@@ -50,4 +50,9 @@ export const authService = {
     const response = await api.post("/auth/refresh", { refreshToken });
     return response.data;
   },
+
+  async verifyGoogleToken(idToken: string): Promise<AuthResponse> {
+    const response = await api.post("/auth/google/verify-token", { idToken });
+    return response.data;
+  },
 };

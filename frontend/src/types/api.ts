@@ -56,6 +56,9 @@ export interface AuthResponse {
       phone_number?: string;
       is_admin: boolean;
       is_active: boolean;
+      google_id?: string;
+      avatar_url?: string;
+      email_verified?: boolean;
       created_at: string;
       updated_at: string;
     };
@@ -85,6 +88,9 @@ export interface UserProfile {
   is_admin: boolean;
   is_active: boolean;
   is_deleted: boolean;
+  google_id?: string;
+  avatar_url?: string;
+  email_verified?: boolean;
   created_at: string;
   updated_at: string;
 }
@@ -98,6 +104,9 @@ export interface User {
   is_admin: boolean;
   is_active: boolean;
   is_deleted: boolean;
+  google_id?: string;
+  avatar_url?: string;
+  email_verified?: boolean;
   created_at: string;
   updated_at: string;
 }

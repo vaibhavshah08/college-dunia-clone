@@ -9,9 +9,12 @@ import {
   Alert,
   CircularProgress,
   Link,
+  Divider,
 } from "@mui/material";
 import { useNavigate, Link as RouterLink } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
+import GoogleAuthButton from "../../components/GoogleAuthButton";
+import { GoogleAuthResponse } from "../../services/googleAuthService";
 
 const Register: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -27,6 +30,33 @@ const Register: React.FC = () => {
 
   const { signup, isSigningUp } = useAuth();
   const navigate = useNavigate();
+
+  const handleGoogleSuccess = async (response: GoogleAuthResponse) => {
+    try {
+      // Use the existing login flow but with Google response
+      // The response already contains the token and user data
+      console.log("Google auth successful:", response);
+
+      // Store the token and user data
+      localStorage.setItem("token", response.token);
+      localStorage.setItem("user", JSON.stringify(response.user));
+
+      // Redirect based on user type
+      if (response.user.is_admin) {
+        window.location.href = "/admin";
+      } else {
+        window.location.href = "/";
+      }
+    } catch (error) {
+      console.error("Google auth success handling failed:", error);
+      setError("Google sign-in failed. Please try again.");
+    }
+  };
+
+  const handleGoogleError = (error: Error) => {
+    console.error("Google auth error:", error);
+    setError(`Google sign-in failed: ${error.message}`);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -139,6 +169,24 @@ const Register: React.FC = () => {
             {error}
           </Alert>
         )}
+
+        {/* Google OAuth Button */}
+        <GoogleAuthButton
+          onSuccess={handleGoogleSuccess}
+          onError={handleGoogleError}
+          disabled={isSigningUp}
+          text="Sign up with Google"
+          sx={{ mb: 3 }}
+        />
+
+        {/* Divider */}
+        <Box sx={{ display: "flex", alignItems: "center", my: 3 }}>
+          <Divider sx={{ flexGrow: 1 }} />
+          <Typography variant="body2" color="text.secondary" sx={{ px: 2 }}>
+            or
+          </Typography>
+          <Divider sx={{ flexGrow: 1 }} />
+        </Box>
 
         <Box component="form" onSubmit={handleSubmit} noValidate>
           <Box

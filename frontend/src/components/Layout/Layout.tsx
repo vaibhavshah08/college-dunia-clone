@@ -213,8 +213,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 onClick={handleProfileMenuOpen}
                 color="primary"
               >
-                <Avatar sx={{ width: 32, height: 32, bgcolor: "primary.main" }}>
-                  {firstName.charAt(0)}
+                <Avatar
+                  sx={{ width: 32, height: 32, bgcolor: "primary.main" }}
+                  src={user?.avatar_url || undefined}
+                  alt={fullName}
+                >
+                  {!user?.avatar_url && firstName.charAt(0)}
                 </Avatar>
               </IconButton>
             </Box>

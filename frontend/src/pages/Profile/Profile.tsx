@@ -111,8 +111,13 @@ const Profile: React.FC = () => {
       >
         <Card>
           <CardContent sx={{ textAlign: "center" }}>
-            <Avatar sx={{ width: 100, height: 100, mx: "auto", mb: 2 }}>
-              {firstName.charAt(0) || <Person sx={{ fontSize: 60 }} />}
+            <Avatar
+              sx={{ width: 100, height: 100, mx: "auto", mb: 2 }}
+              src={user?.avatar_url || undefined}
+              alt={fullName}
+            >
+              {!user?.avatar_url &&
+                (firstName.charAt(0) || <Person sx={{ fontSize: 60 }} />)}
             </Avatar>
             <Typography variant="h6" gutterBottom>
               {fullName}
@@ -233,6 +238,22 @@ const Profile: React.FC = () => {
                   {user?.created_at
                     ? new Date(user.created_at).toLocaleDateString()
                     : "Not available"}
+                </Typography>
+              </Box>
+              {user?.google_id && (
+                <Box>
+                  <Typography variant="body2" color="text.secondary">
+                    Google Account
+                  </Typography>
+                  <Typography variant="body1">Connected</Typography>
+                </Box>
+              )}
+              <Box>
+                <Typography variant="body2" color="text.secondary">
+                  Email Verified
+                </Typography>
+                <Typography variant="body1">
+                  {user?.email_verified ? "Yes" : "No"}
                 </Typography>
               </Box>
             </Box>

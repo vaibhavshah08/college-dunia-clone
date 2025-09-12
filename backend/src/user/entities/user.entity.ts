@@ -37,6 +37,15 @@ export class User {
   @Column('boolean', { default: false })
   is_deleted: boolean;
 
+  @Column('varchar', { unique: true, nullable: true })
+  google_id: string;
+
+  @Column('varchar', { nullable: true })
+  avatar_url: string;
+
+  @Column('boolean', { default: false })
+  email_verified: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 
