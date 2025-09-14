@@ -34,10 +34,11 @@ import {
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useAuth } from "../../lib/hooks/useAuth";
 import documentsApi from "../../services/modules/documents.api";
+import loansApi from "../../services/modules/loans.api";
 import { getErrorMessage } from "../../utils/errorHandler";
 import { useToast } from "../../contexts/ToastContext";
 import FileUpload from "../../components/FileUpload/FileUpload";
-import { Document } from "../../types/api";
+import { Document, Loan } from "../../types/api";
 
 // Get file URL for preview
 const getFileUrl = (documentPath: string) => {
@@ -56,6 +57,9 @@ const Documents: React.FC = () => {
   const [documentPurpose, setDocumentPurpose] = useState("");
   const [documentType, setDocumentType] = useState("");
   const [description, setDescription] = useState("");
+  const [isForLoan, setIsForLoan] = useState(false);
+  const [selectedLoanId, setSelectedLoanId] = useState("");
+  const [mutationInProgress, setMutationInProgress] = useState(false);
   const [validationErrors, setValidationErrors] = useState<{
     documentName?: string;
     documentPurpose?: string;
@@ -81,6 +85,13 @@ const Documents: React.FC = () => {
     enabled: isAuthenticated,
   });
 
+  // Fetch user loans for association
+  const { data: loans = [] } = useQuery<Loan[], Error>({
+    queryKey: ["loans", "me"],
+    queryFn: loansApi.getMyLoans,
+    enabled: isAuthenticated,
+  });
+
   // Upload document mutation
   const uploadMutation = useMutation({
     mutationFn: ({
@@ -89,22 +100,44 @@ const Documents: React.FC = () => {
       purpose,
       type,
       documentType,
+      loanId,
     }: {
       file: File;
       name: string;
       purpose: string;
       type: string;
       documentType?: string;
-    }) => documentsApi.uploadDocument(file, name, purpose, type, documentType),
+      loanId?: string;
+    }) =>
+      documentsApi.uploadDocument(
+        file,
+        name,
+        purpose,
+        type,
+        documentType,
+        loanId
+      ),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
-      setOpenDialog(false);
-      setSelectedFile(null);
-      setDocumentName("");
-      setDocumentPurpose("");
-      setDocumentType("");
-      setDescription("");
-      setValidationErrors({});
+      if (!mutationInProgress) {
+        setMutationInProgress(true);
+        queryClient.invalidateQueries({ queryKey: ["documents"] });
+        setOpenDialog(false);
+        setSelectedFile(null);
+        setDocumentName("");
+        setDocumentPurpose("");
+        setDocumentType("");
+        setDescription("");
+        setIsForLoan(false);
+        setSelectedLoanId("");
+        setValidationErrors({});
+        toast.success("Document uploaded successfully");
+        setTimeout(() => setMutationInProgress(false), 1000);
+      }
+    },
+    onError: (error: any) => {
+      console.error("Upload error:", error);
+      toast.error("Failed to upload document");
+      setMutationInProgress(false);
     },
   });
 
@@ -150,6 +183,7 @@ const Documents: React.FC = () => {
         purpose: documentPurpose,
         type: documentType,
         documentType: description || undefined,
+        loanId: isForLoan && selectedLoanId ? selectedLoanId : undefined,
       });
     }
   };
@@ -184,9 +218,22 @@ const Documents: React.FC = () => {
 
   // Delete document mutation
   const deleteDocumentMutation = useMutation({
-    mutationFn: (documentId: string) => documentsApi.deleteDocument(documentId),
+    mutationFn: (documentId: string) =>
+      documentsApi.deleteMyDocument(documentId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["documents"] });
+      if (!mutationInProgress) {
+        setMutationInProgress(true);
+        queryClient.invalidateQueries({ queryKey: ["documents"] });
+        toast.success("Document deleted successfully");
+        setTimeout(() => setMutationInProgress(false), 1000);
+      }
+    },
+    onError: (error: any) => {
+      console.error("Delete document error:", error);
+      toast.error(
+        "Failed to delete document. Only pending documents can be deleted."
+      );
+      setMutationInProgress(false);
     },
   });
 
@@ -421,7 +468,7 @@ const Documents: React.FC = () => {
                             <Download />
                           </IconButton>
                         </Tooltip>
-                        {document.status === "pending" && (
+                        {document.status === "pending" ? (
                           <Tooltip title="Delete Document">
                             <IconButton
                               size="small"
@@ -429,6 +476,12 @@ const Documents: React.FC = () => {
                               onClick={() => handleDocumentDelete(document)}
                               disabled={deleteDocumentMutation.isLoading}
                             >
+                              <Delete />
+                            </IconButton>
+                          </Tooltip>
+                        ) : (
+                          <Tooltip title="Only pending documents can be deleted">
+                            <IconButton size="small" color="error" disabled>
                               <Delete />
                             </IconButton>
                           </Tooltip>
@@ -560,6 +613,66 @@ const Documents: React.FC = () => {
                   )}
                 </FormControl>
 
+                {/* Loan Association Toggle */}
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Is this document for a loan application?
+                  </Typography>
+                  <FormControl component="fieldset">
+                    <Box display="flex" gap={2}>
+                      <Button
+                        variant={isForLoan ? "contained" : "outlined"}
+                        onClick={() => setIsForLoan(true)}
+                        size="small"
+                      >
+                        Yes
+                      </Button>
+                      <Button
+                        variant={!isForLoan ? "contained" : "outlined"}
+                        onClick={() => {
+                          setIsForLoan(false);
+                          setSelectedLoanId("");
+                        }}
+                        size="small"
+                      >
+                        No
+                      </Button>
+                    </Box>
+                  </FormControl>
+                </Box>
+
+                {/* Loan Selection */}
+                {isForLoan && (
+                  <FormControl fullWidth sx={{ mb: 2 }}>
+                    <InputLabel>Select Loan</InputLabel>
+                    <Select
+                      value={selectedLoanId}
+                      onChange={(e) => setSelectedLoanId(e.target.value)}
+                      label="Select Loan"
+                    >
+                      {loans
+                        .filter((loan) => loan.status === "submitted")
+                        .map((loan) => (
+                          <MenuItem key={loan.loan_id} value={loan.loan_id}>
+                            {loan.loan_type} - ₹
+                            {loan.principal_amount.toLocaleString()}(
+                            {loan.college_id})
+                          </MenuItem>
+                        ))}
+                    </Select>
+                    {loans.filter((loan) => loan.status === "submitted")
+                      .length === 0 && (
+                      <Typography
+                        variant="caption"
+                        color="text.secondary"
+                        sx={{ mt: 1 }}
+                      >
+                        No pending loans available for association
+                      </Typography>
+                    )}
+                  </FormControl>
+                )}
+
                 <TextField
                   fullWidth
                   label="Description (Optional)"
@@ -577,6 +690,8 @@ const Documents: React.FC = () => {
             onClick={() => {
               setOpenDialog(false);
               setValidationErrors({});
+              setIsForLoan(false);
+              setSelectedLoanId("");
             }}
           >
             Cancel

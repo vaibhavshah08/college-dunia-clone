@@ -35,11 +35,28 @@ export const loansApi = {
   /**
    * Get all loans (Admin only)
    */
-  async getAllLoans(statusFilter?: string): Promise<Loan[]> {
-    const params = statusFilter ? { status: statusFilter } : {};
-    const response = await apiClient.get<Loan[]>(LOAN_ENDPOINTS.ADMIN_LIST, {
-      params,
+  async getAllLoans(
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
+    userId?: string,
+    collegeId?: string,
+    startDate?: string,
+    endDate?: string
+  ): Promise<{ loans: Loan[]; pagination: any }> {
+    const params = new URLSearchParams({
+      page: page.toString(),
+      limit: limit.toString(),
     });
+    if (status) params.append("status", status);
+    if (userId) params.append("userId", userId);
+    if (collegeId) params.append("collegeId", collegeId);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+
+    const response = await apiClient.get<{ loans: Loan[]; pagination: any }>(
+      `/admin/loans?${params.toString()}`
+    );
     return response.data;
   },
 
@@ -49,6 +66,17 @@ export const loansApi = {
   async getLoansByCollegeId(collegeId: string): Promise<Loan[]> {
     const response = await apiClient.get<Loan[]>(
       `/api/loans/college/${collegeId}`
+    );
+    return response.data;
+  },
+
+  /**
+   * Update loan (User only)
+   */
+  async updateLoan(id: string, data: LoanCreate): Promise<Loan> {
+    const response = await apiClient.patch<Loan>(
+      LOAN_ENDPOINTS.DETAIL(id),
+      data
     );
     return response.data;
   },

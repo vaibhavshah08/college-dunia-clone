@@ -123,6 +123,7 @@ export type DocumentType =
 export interface Document {
   document_id: string;
   user_id: string;
+  loan_id?: string;
   document_path: string;
   original_name: string;
   mime_type: string;

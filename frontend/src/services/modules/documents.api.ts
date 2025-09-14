@@ -10,7 +10,8 @@ export const documentsApi = {
     name: string,
     purpose: string,
     type: string,
-    documentType?: string
+    documentType?: string,
+    loanId?: string
   ): Promise<Document> {
     const formData = new FormData();
     formData.append("file", file);
@@ -19,6 +20,9 @@ export const documentsApi = {
     formData.append("type", type);
     if (documentType) {
       formData.append("document_type", documentType);
+    }
+    if (loanId) {
+      formData.append("loan_id", loanId);
     }
 
     const response = await apiClient.post<Document>(
@@ -47,20 +51,28 @@ export const documentsApi = {
   async getAllDocuments(
     page: number = 1,
     limit: number = 10,
-    status?: string
+    status?: string,
+    userId?: string,
+    loanId?: string,
+    startDate?: string,
+    endDate?: string,
+    search?: string
   ): Promise<{ documents: Document[]; pagination: any }> {
     const params = new URLSearchParams({
       page: page.toString(),
       limit: limit.toString(),
     });
-    if (status) {
-      params.append("status", status);
-    }
+    if (status) params.append("status", status);
+    if (userId) params.append("userId", userId);
+    if (loanId) params.append("loanId", loanId);
+    if (startDate) params.append("startDate", startDate);
+    if (endDate) params.append("endDate", endDate);
+    if (search && search.trim()) params.append("search", search.trim());
 
     const response = await apiClient.get<{
       documents: Document[];
       pagination: any;
-    }>(`/documents?${params.toString()}`);
+    }>(`/admin/documents?${params.toString()}`);
     return response.data;
   },
 
@@ -85,6 +97,13 @@ export const documentsApi = {
       rejection_reason: rejectionReason,
     });
     return response.data;
+  },
+
+  /**
+   * Delete user document (only if pending)
+   */
+  async deleteMyDocument(id: string): Promise<void> {
+    await apiClient.delete(`/documents/my-documents/${id}`);
   },
 
   /**

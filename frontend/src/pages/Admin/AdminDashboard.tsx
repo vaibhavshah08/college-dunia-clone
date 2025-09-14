@@ -31,6 +31,7 @@ import {
   DialogContent,
   DialogActions,
   Pagination,
+  Tooltip,
 } from "@mui/material";
 import {
   People,
@@ -56,6 +57,7 @@ import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
 import { useToast } from "../../contexts/ToastContext";
+import { useDebounce } from "../../hooks/useDebounce";
 import collegesApi from "../../services/modules/colleges.api";
 import loansApi from "../../services/modules/loans.api";
 import documentsApi from "../../services/modules/documents.api";
@@ -125,7 +127,28 @@ const AdminDashboard: React.FC = () => {
     top_recruiters: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [searchQuery, setSearchQuery] = useState("");
+  // Separate search states for each table
+  const [collegeSearchQuery, setCollegeSearchQuery] = useState("");
+
+  // Filter states for tables
+  const [userFilters, setUserFilters] = useState({
+    id: "",
+    name: "",
+    email: "",
+    status: "",
+  });
+  const [loanFilters, setLoanFilters] = useState({
+    id: "",
+    userId: "",
+    collegeId: "",
+    status: "",
+  });
+  const [documentFilters, setDocumentFilters] = useState({
+    id: "",
+    userId: "",
+    status: "",
+  });
+
   const [selectedDocument, setSelectedDocument] = useState<any>(null);
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
   const [selectedCollege, setSelectedCollege] = useState<College | null>(null);
@@ -147,9 +170,16 @@ const AdminDashboard: React.FC = () => {
     is_admin: false,
     is_active: true,
   });
-  const [documentStatusFilter, setDocumentStatusFilter] = useState<string>("");
-  const [loanStatusFilter, setLoanStatusFilter] = useState<string>("");
-  const [userSearchQuery, setUserSearchQuery] = useState("");
+  const [deleteUserDialogOpen, setDeleteUserDialogOpen] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<User | null>(null);
+  const [userDependencies, setUserDependencies] = useState<any>(null);
+  const [deletionInProgress, setDeletionInProgress] = useState(false);
+
+  // Debounced search queries for better UX
+  const debouncedCollegeSearchQuery = useDebounce(collegeSearchQuery, 300);
+  const debouncedUserFilters = useDebounce(userFilters, 300);
+  const debouncedLoanFilters = useDebounce(loanFilters, 300);
+  const debouncedDocumentFilters = useDebounce(documentFilters, 300);
 
   // Fetch data from APIs
   const { data: colleges = [], isLoading: collegesLoading } = useQuery({
@@ -159,27 +189,42 @@ const AdminDashboard: React.FC = () => {
   });
 
   const {
-    data: loans = [],
+    data: loansData,
     isLoading: loansLoading,
     error: loansError,
   } = useQuery({
-    queryKey: ["loans", "admin", loanStatusFilter],
-    queryFn: () => loansApi.getAllLoans(loanStatusFilter),
+    queryKey: ["loans", "admin", debouncedLoanFilters],
+    queryFn: () =>
+      loansApi.getAllLoans(
+        1,
+        100,
+        debouncedLoanFilters.status,
+        debouncedLoanFilters.userId
+      ),
     enabled: isAuthenticated,
     onError: (error) => {
       console.error("Loans fetch error:", error);
     },
   });
 
+  const loans = loansData?.loans || [];
+
   const { data: documentsData, isLoading: documentsLoading } = useQuery({
-    queryKey: ["documents", "admin", documentStatusFilter],
-    queryFn: () => documentsApi.getAllDocuments(1, 100, documentStatusFilter),
+    queryKey: ["documents", "admin", debouncedDocumentFilters],
+    queryFn: () =>
+      documentsApi.getAllDocuments(
+        1,
+        100,
+        debouncedDocumentFilters.status,
+        debouncedDocumentFilters.userId,
+        ""
+      ),
     enabled: isAuthenticated,
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ["users", "admin", userSearchQuery],
-    queryFn: () => adminApi.getAllUsers(1, 100, userSearchQuery),
+    queryKey: ["users", "admin", debouncedUserFilters],
+    queryFn: () => adminApi.getAllUsers(1, 100, ""),
     enabled: isAuthenticated,
   });
 
@@ -292,36 +337,131 @@ const AdminDashboard: React.FC = () => {
   });
 
   const deleteUserMutation = useMutation({
-    mutationFn: adminApi.deleteUser,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
+    mutationFn: ({
+      id,
+      mode,
+    }: {
+      id: string;
+      mode: "USER_ONLY" | "WITH_DEPENDENCIES";
+    }) => adminApi.deleteUser(id, mode),
+    onSuccess: (data) => {
+      if (!deletionInProgress) {
+        setDeletionInProgress(true);
+
+        // Invalidate specific queries to avoid over-invalidation
+        queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
+        queryClient.invalidateQueries({ queryKey: ["loans", "admin"] });
+        queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
+
+        if (data.deletedCounts) {
+          toast.success(
+            `User deleted successfully. Removed ${data.deletedCounts.loans} loans and ${data.deletedCounts.documents} documents.`
+          );
+        } else {
+          toast.success("User deleted successfully");
+        }
+
+        // Reset flag after a short delay
+        setTimeout(() => setDeletionInProgress(false), 1000);
+      }
+    },
+    onError: (error: any) => {
+      console.error("Delete user error:", error);
+      toast.error("Failed to delete user");
+      setDeletionInProgress(false);
     },
   });
 
-  // Filter data based on search query
+  // Filter data based on debounced search query
   const filteredColleges = colleges.filter(
     (college) =>
-      college.college_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      college.city.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      college.state.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      college.college_name
+        .toLowerCase()
+        .includes(debouncedCollegeSearchQuery.toLowerCase()) ||
+      college.city
+        .toLowerCase()
+        .includes(debouncedCollegeSearchQuery.toLowerCase()) ||
+      college.state
+        .toLowerCase()
+        .includes(debouncedCollegeSearchQuery.toLowerCase()) ||
       college.courses_offered.some((course) =>
-        course.toLowerCase().includes(searchQuery.toLowerCase())
+        course.toLowerCase().includes(debouncedCollegeSearchQuery.toLowerCase())
       )
   );
 
-  const filteredDocuments = documents.filter((doc: Document) =>
-    doc.document_path.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  // Filter data based on filter states
+  const filteredDocuments = documents.filter((document) => {
+    const matchesId =
+      !debouncedDocumentFilters.id ||
+      document.document_id
+        .toLowerCase()
+        .includes(debouncedDocumentFilters.id.toLowerCase());
+    const matchesUserId =
+      !debouncedDocumentFilters.userId ||
+      document.user_id
+        .toLowerCase()
+        .includes(debouncedDocumentFilters.userId.toLowerCase());
+    const matchesStatus =
+      !debouncedDocumentFilters.status ||
+      document.status.toLowerCase() ===
+        debouncedDocumentFilters.status.toLowerCase();
 
-  const filteredLoans = loans.filter(
-    (loan) =>
-      loan.loan_type.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      loan.description?.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+    return matchesId && matchesUserId && matchesStatus;
+  });
+
+  const filteredLoans = loans.filter((loan) => {
+    const matchesId =
+      !debouncedLoanFilters.id ||
+      loan.loan_id
+        .toLowerCase()
+        .includes(debouncedLoanFilters.id.toLowerCase());
+    const matchesUserId =
+      !debouncedLoanFilters.userId ||
+      loan.user_id
+        .toLowerCase()
+        .includes(debouncedLoanFilters.userId.toLowerCase());
+    const matchesCollegeId =
+      !debouncedLoanFilters.collegeId ||
+      loan.college_id
+        .toLowerCase()
+        .includes(debouncedLoanFilters.collegeId.toLowerCase());
+    const matchesStatus =
+      !debouncedLoanFilters.status ||
+      loan.status.toLowerCase() === debouncedLoanFilters.status.toLowerCase();
+
+    return matchesId && matchesUserId && matchesCollegeId && matchesStatus;
+  });
+
+  const filteredUsers = users.filter((user) => {
+    const matchesId =
+      !debouncedUserFilters.id ||
+      user.user_id
+        .toLowerCase()
+        .includes(debouncedUserFilters.id.toLowerCase());
+    const matchesName =
+      !debouncedUserFilters.name ||
+      `${user.first_name} ${user.last_name}`
+        .toLowerCase()
+        .includes(debouncedUserFilters.name.toLowerCase());
+    const matchesEmail =
+      !debouncedUserFilters.email ||
+      user.email
+        .toLowerCase()
+        .includes(debouncedUserFilters.email.toLowerCase());
+    const matchesStatus =
+      !debouncedUserFilters.status ||
+      (debouncedUserFilters.status === "active" && user.is_active) ||
+      (debouncedUserFilters.status === "inactive" && !user.is_active);
+
+    return matchesId && matchesName && matchesEmail && matchesStatus;
+  });
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
-    setSearchQuery("");
+    setCollegeSearchQuery("");
+    setUserFilters({ id: "", name: "", email: "", status: "" });
+    setDocumentFilters({ id: "", userId: "", status: "" });
+    setLoanFilters({ id: "", userId: "", collegeId: "", status: "" });
   };
 
   const handleCollegeFormChange = (
@@ -752,9 +892,25 @@ const AdminDashboard: React.FC = () => {
     setUserDialogOpen(true);
   };
 
-  const handleDeleteUser = (userId: string) => {
-    if (window.confirm("Are you sure you want to delete this user?")) {
-      deleteUserMutation.mutate(userId);
+  const handleDeleteUser = async (user: User) => {
+    try {
+      const dependencies = await adminApi.checkUserDependencies(user.user_id);
+      setUserDependencies(dependencies);
+      setUserToDelete(user);
+      setDeleteUserDialogOpen(true);
+    } catch (error) {
+      console.error("Error checking user dependencies:", error);
+      toast.error("Failed to check user dependencies");
+    }
+  };
+
+  const handleConfirmDeleteUser = (mode: "USER_ONLY" | "WITH_DEPENDENCIES") => {
+    if (userToDelete && !deletionInProgress) {
+      setDeletionInProgress(true);
+      deleteUserMutation.mutate({ id: userToDelete.user_id, mode });
+      setDeleteUserDialogOpen(false);
+      setUserToDelete(null);
+      setUserDependencies(null);
     }
   };
 
@@ -1044,12 +1200,14 @@ const AdminDashboard: React.FC = () => {
                 fullWidth
                 variant="outlined"
                 placeholder="Search colleges by name, location, or course type..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                value={collegeSearchQuery}
+                onChange={(e) => setCollegeSearchQuery(e.target.value)}
                 sx={{ mb: 3 }}
                 InputProps={{
                   startAdornment: (
-                    <Box sx={{ mr: 1, color: "text.secondary" }}>🔍</Box>
+                    <Box sx={{ mr: 1, color: "text.secondary" }}>
+                      {collegesLoading ? <CircularProgress size={16} /> : "🔍"}
+                    </Box>
                   ),
                 }}
               />
@@ -1079,8 +1237,8 @@ const AdminDashboard: React.FC = () => {
                       <TableRow>
                         <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                           <Typography variant="body1" color="text.secondary">
-                            {searchQuery
-                              ? `No colleges found matching "${searchQuery}"`
+                            {collegeSearchQuery
+                              ? `No colleges found matching "${collegeSearchQuery}"`
                               : "No colleges available"}
                           </Typography>
                         </TableCell>
@@ -1221,20 +1379,56 @@ const AdminDashboard: React.FC = () => {
             </Button>
           </Box>
 
-          {/* Search Bar */}
-          <TextField
-            fullWidth
-            variant="outlined"
-            placeholder="Search users by name or email..."
-            value={userSearchQuery}
-            onChange={(e) => setUserSearchQuery(e.target.value)}
-            sx={{ mb: 3 }}
-            InputProps={{
-              startAdornment: (
-                <Box sx={{ mr: 1, color: "text.secondary" }}>🔍</Box>
-              ),
-            }}
-          />
+          {/* Filter Controls */}
+          <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+            <TextField
+              label="User ID"
+              variant="outlined"
+              size="small"
+              value={userFilters.id}
+              onChange={(e) =>
+                setUserFilters((prev) => ({ ...prev, id: e.target.value }))
+              }
+              sx={{ minWidth: 120 }}
+            />
+            <TextField
+              label="Name"
+              variant="outlined"
+              size="small"
+              value={userFilters.name}
+              onChange={(e) =>
+                setUserFilters((prev) => ({ ...prev, name: e.target.value }))
+              }
+              sx={{ minWidth: 150 }}
+            />
+            <TextField
+              label="Email"
+              variant="outlined"
+              size="small"
+              value={userFilters.email}
+              onChange={(e) =>
+                setUserFilters((prev) => ({ ...prev, email: e.target.value }))
+              }
+              sx={{ minWidth: 200 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 120 }}>
+              <InputLabel>Status</InputLabel>
+              <Select
+                value={userFilters.status}
+                label="Status"
+                onChange={(e) =>
+                  setUserFilters((prev) => ({
+                    ...prev,
+                    status: e.target.value,
+                  }))
+                }
+              >
+                <MenuItem value="">All</MenuItem>
+                <MenuItem value="active">Active</MenuItem>
+                <MenuItem value="inactive">Inactive</MenuItem>
+              </Select>
+            </FormControl>
+          </Box>
 
           <TableContainer>
             <Table>
@@ -1257,18 +1451,16 @@ const AdminDashboard: React.FC = () => {
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
-                ) : users.length === 0 ? (
+                ) : filteredUsers.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
-                        {userSearchQuery
-                          ? `No users found matching "${userSearchQuery}"`
-                          : "No users available"}
+                        No users found matching the current filters
                       </Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  getPaginatedData(users, usersPage, itemsPerPage).map(
+                  getPaginatedData(filteredUsers, usersPage, itemsPerPage).map(
                     (user: User) => (
                       <TableRow key={user.user_id}>
                         <TableCell>
@@ -1322,7 +1514,7 @@ const AdminDashboard: React.FC = () => {
                           <IconButton
                             size="small"
                             color="error"
-                            onClick={() => handleDeleteUser(user.user_id)}
+                            onClick={() => handleDeleteUser(user)}
                           >
                             <Delete />
                           </IconButton>
@@ -1334,10 +1526,10 @@ const AdminDashboard: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
-          {users.length > itemsPerPage && (
+          {filteredUsers.length > itemsPerPage && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
               <Pagination
-                count={getTotalPages(users, itemsPerPage)}
+                count={getTotalPages(filteredUsers, itemsPerPage)}
                 page={usersPage}
                 onChange={handleUsersPageChange}
                 color="primary"
@@ -1358,25 +1550,41 @@ const AdminDashboard: React.FC = () => {
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
             <TextField
-              fullWidth
+              label="Document ID"
               variant="outlined"
-              placeholder="Search documents by user name or document type..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <Box sx={{ mr: 1, color: "text.secondary" }}>🔍</Box>
-                ),
-              }}
+              size="small"
+              value={documentFilters.id}
+              onChange={(e) =>
+                setDocumentFilters((prev) => ({ ...prev, id: e.target.value }))
+              }
+              sx={{ minWidth: 120 }}
             />
-            <FormControl sx={{ minWidth: 150 }}>
-              <InputLabel>Status Filter</InputLabel>
+            <TextField
+              label="User ID"
+              variant="outlined"
+              size="small"
+              value={documentFilters.userId}
+              onChange={(e) =>
+                setDocumentFilters((prev) => ({
+                  ...prev,
+                  userId: e.target.value,
+                }))
+              }
+              sx={{ minWidth: 120 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Status</InputLabel>
               <Select
-                value={documentStatusFilter}
-                label="Status Filter"
-                onChange={(e) => setDocumentStatusFilter(e.target.value)}
+                value={documentFilters.status}
+                label="Status"
+                onChange={(e) =>
+                  setDocumentFilters((prev) => ({
+                    ...prev,
+                    status: e.target.value,
+                  }))
+                }
               >
                 <MenuItem value="">All Documents</MenuItem>
                 <MenuItem value="pending">Pending</MenuItem>
@@ -1407,156 +1615,160 @@ const AdminDashboard: React.FC = () => {
                       <CircularProgress />
                     </TableCell>
                   </TableRow>
-                ) : documents.length === 0 ? (
+                ) : filteredDocuments.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
-                        {searchQuery
-                          ? `No documents found matching "${searchQuery}"`
-                          : "No documents available"}
+                        No documents found matching the current filters
                       </Typography>
                     </TableCell>
                   </TableRow>
                 ) : (
-                  getPaginatedData(documents, documentsPage, itemsPerPage).map(
-                    (document: Document) => (
-                      <TableRow key={document.document_id}>
-                        <TableCell>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.75rem",
-                            }}
-                          >
-                            {document.document_id}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          {document.user
-                            ? `${document.user.first_name} ${document.user.last_name}`
-                            : `User ${document.user_id}`}
-                        </TableCell>
-                        <TableCell>
-                          {document.document_type || "General"}
-                        </TableCell>
-                        <TableCell>
-                          <Box
-                            sx={{
-                              display: "flex",
-                              alignItems: "center",
-                              gap: 1,
-                            }}
-                          >
-                            <AttachFile fontSize="small" />
-                            {document.original_name}
-                          </Box>
-                        </TableCell>
-                        <TableCell>
-                          {(document.file_size / 1024 / 1024).toFixed(2)} MB
-                        </TableCell>
-                        <TableCell>
-                          {new Date(document.uploaded_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={
-                              document.status.charAt(0).toUpperCase() +
-                              document.status.slice(1)
-                            }
-                            color={getStatusColor(document.status) as any}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleDocumentView(document)}
-                          >
-                            <Visibility />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => {
-                              documentsApi
-                                .downloadDocument(document.document_id)
-                                .then((blob) => {
-                                  const url = window.URL.createObjectURL(blob);
-                                  const a = window.document.createElement("a");
-                                  a.href = url;
-                                  a.download = document.original_name;
-                                  window.document.body.appendChild(a);
-                                  a.click();
-                                  window.URL.revokeObjectURL(url);
-                                  window.document.body.removeChild(a);
-                                })
-                                .catch((error) => {
-                                  console.error("Download failed:", error);
-                                  // Fallback to direct URL
-                                  window.open(
-                                    `/api/documents/${document.document_id}/download`,
-                                    "_blank"
-                                  );
-                                });
-                            }}
-                          >
-                            <Download />
-                          </IconButton>
-                          {document.status === "pending" && (
-                            <>
-                              <IconButton
-                                size="small"
-                                color="success"
-                                onClick={() =>
+                  getPaginatedData(
+                    filteredDocuments,
+                    documentsPage,
+                    itemsPerPage
+                  ).map((document: Document) => (
+                    <TableRow key={document.document_id}>
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {document.document_id}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title={`User ID: ${document.user_id}`} arrow>
+                          <span>
+                            {document.user
+                              ? `${document.user.first_name} ${document.user.last_name}`
+                              : `User ${document.user_id}`}
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>
+                        {document.document_type || "General"}
+                      </TableCell>
+                      <TableCell>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 1,
+                          }}
+                        >
+                          <AttachFile fontSize="small" />
+                          {document.original_name}
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        {(document.file_size / 1024 / 1024).toFixed(2)} MB
+                      </TableCell>
+                      <TableCell>
+                        {new Date(document.uploaded_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={
+                            document.status.charAt(0).toUpperCase() +
+                            document.status.slice(1)
+                          }
+                          color={getStatusColor(document.status) as any}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleDocumentView(document)}
+                        >
+                          <Visibility />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => {
+                            documentsApi
+                              .downloadDocument(document.document_id)
+                              .then((blob) => {
+                                const url = window.URL.createObjectURL(blob);
+                                const a = window.document.createElement("a");
+                                a.href = url;
+                                a.download = document.original_name;
+                                window.document.body.appendChild(a);
+                                a.click();
+                                window.URL.revokeObjectURL(url);
+                                window.document.body.removeChild(a);
+                              })
+                              .catch((error) => {
+                                console.error("Download failed:", error);
+                                // Fallback to direct URL
+                                window.open(
+                                  `/api/documents/${document.document_id}/download`,
+                                  "_blank"
+                                );
+                              });
+                          }}
+                        >
+                          <Download />
+                        </IconButton>
+                        {document.status === "pending" && (
+                          <>
+                            <IconButton
+                              size="small"
+                              color="success"
+                              onClick={() =>
+                                handleDocumentAction(
+                                  document.document_id,
+                                  "approve"
+                                )
+                              }
+                            >
+                              <CheckCircle />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => {
+                                const reason = prompt("Rejection reason:");
+                                if (reason) {
                                   handleDocumentAction(
                                     document.document_id,
-                                    "approve"
-                                  )
+                                    "reject",
+                                    reason
+                                  );
                                 }
-                              >
-                                <CheckCircle />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => {
-                                  const reason = prompt("Rejection reason:");
-                                  if (reason) {
-                                    handleDocumentAction(
-                                      document.document_id,
-                                      "reject",
-                                      reason
-                                    );
-                                  }
-                                }}
-                              >
-                                <Cancel />
-                              </IconButton>
-                            </>
-                          )}
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() =>
-                              handleDeleteDocument(document.document_id)
-                            }
-                          >
-                            <Delete />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  )
+                              }}
+                            >
+                              <Cancel />
+                            </IconButton>
+                          </>
+                        )}
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() =>
+                            handleDeleteDocument(document.document_id)
+                          }
+                        >
+                          <Delete />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
           </TableContainer>
-          {documents.length > itemsPerPage && (
+          {filteredDocuments.length > itemsPerPage && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
               <Pagination
-                count={getTotalPages(documents, itemsPerPage)}
+                count={getTotalPages(filteredDocuments, itemsPerPage)}
                 page={documentsPage}
                 onChange={handleDocumentsPageChange}
                 color="primary"
@@ -1577,25 +1789,51 @@ const AdminDashboard: React.FC = () => {
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2, mb: 3 }}>
+          <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
             <TextField
-              fullWidth
+              label="Loan ID"
               variant="outlined"
-              placeholder="Search loans by user name, loan type, or college..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              InputProps={{
-                startAdornment: (
-                  <Box sx={{ mr: 1, color: "text.secondary" }}>🔍</Box>
-                ),
-              }}
+              size="small"
+              value={loanFilters.id}
+              onChange={(e) =>
+                setLoanFilters((prev) => ({ ...prev, id: e.target.value }))
+              }
+              sx={{ minWidth: 120 }}
             />
-            <FormControl sx={{ minWidth: 200 }}>
-              <InputLabel>Status Filter</InputLabel>
+            <TextField
+              label="User ID"
+              variant="outlined"
+              size="small"
+              value={loanFilters.userId}
+              onChange={(e) =>
+                setLoanFilters((prev) => ({ ...prev, userId: e.target.value }))
+              }
+              sx={{ minWidth: 120 }}
+            />
+            <TextField
+              label="College ID"
+              variant="outlined"
+              size="small"
+              value={loanFilters.collegeId}
+              onChange={(e) =>
+                setLoanFilters((prev) => ({
+                  ...prev,
+                  collegeId: e.target.value,
+                }))
+              }
+              sx={{ minWidth: 120 }}
+            />
+            <FormControl size="small" sx={{ minWidth: 150 }}>
+              <InputLabel>Status</InputLabel>
               <Select
-                value={loanStatusFilter}
-                label="Status Filter"
-                onChange={(e) => setLoanStatusFilter(e.target.value)}
+                value={loanFilters.status}
+                label="Status"
+                onChange={(e) =>
+                  setLoanFilters((prev) => ({
+                    ...prev,
+                    status: e.target.value,
+                  }))
+                }
               >
                 <MenuItem value="">All Loans</MenuItem>
                 <MenuItem value="pending">Pending</MenuItem>
@@ -1630,9 +1868,7 @@ const AdminDashboard: React.FC = () => {
                   <TableRow>
                     <TableCell colSpan={8} align="center" sx={{ py: 4 }}>
                       <Typography variant="body1" color="text.secondary">
-                        {searchQuery
-                          ? `No loans found matching "${searchQuery}"`
-                          : "No loans available"}
+                        No loans found matching the current filters
                       </Typography>
                     </TableCell>
                   </TableRow>
@@ -1652,18 +1888,29 @@ const AdminDashboard: React.FC = () => {
                           </Typography>
                         </TableCell>
                         <TableCell>
-                          {loan.user
-                            ? `${loan.user.first_name} ${loan.user.last_name}`
-                            : `User ${loan.user_id}`}
+                          <Tooltip title={`User ID: ${loan.user_id}`} arrow>
+                            <span>
+                              {loan.user
+                                ? `${loan.user.first_name} ${loan.user.last_name}`
+                                : `User ${loan.user_id}`}
+                            </span>
+                          </Tooltip>
                         </TableCell>
                         <TableCell>{loan.loan_type}</TableCell>
                         <TableCell>
                           ₹{loan.principal_amount.toLocaleString()}
                         </TableCell>
                         <TableCell>
-                          {loan.college
-                            ? loan.college.college_name
-                            : `College ${loan.college_id}`}
+                          <Tooltip
+                            title={`College ID: ${loan.college_id}`}
+                            arrow
+                          >
+                            <span>
+                              {loan.college
+                                ? loan.college.college_name
+                                : `College ${loan.college_id}`}
+                            </span>
+                          </Tooltip>
                         </TableCell>
                         <TableCell>
                           {new Date(loan.created_at).toLocaleDateString()}
@@ -1753,9 +2000,13 @@ const AdminDashboard: React.FC = () => {
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 <strong>Uploaded by:</strong>{" "}
-                {selectedDocument.user
-                  ? `${selectedDocument.user.first_name} ${selectedDocument.user.last_name}`
-                  : `User ${selectedDocument.user_id}`}
+                <Tooltip title={`User ID: ${selectedDocument.user_id}`} arrow>
+                  <span>
+                    {selectedDocument.user
+                      ? `${selectedDocument.user.first_name} ${selectedDocument.user.last_name}`
+                      : `User ${selectedDocument.user_id}`}
+                  </span>
+                </Tooltip>
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 <strong>File:</strong> {selectedDocument.original_name}
@@ -2629,9 +2880,13 @@ const AdminDashboard: React.FC = () => {
                     User
                   </Typography>
                   <Typography variant="body1">
-                    {selectedLoan.user
-                      ? `${selectedLoan.user.first_name} ${selectedLoan.user.last_name}`
-                      : `User ${selectedLoan.user_id}`}
+                    <Tooltip title={`User ID: ${selectedLoan.user_id}`} arrow>
+                      <span>
+                        {selectedLoan.user
+                          ? `${selectedLoan.user.first_name} ${selectedLoan.user.last_name}`
+                          : `User ${selectedLoan.user_id}`}
+                      </span>
+                    </Tooltip>
                   </Typography>
                 </Box>
                 <Box>
@@ -2705,9 +2960,16 @@ const AdminDashboard: React.FC = () => {
                     College
                   </Typography>
                   <Typography variant="body1">
-                    {selectedLoan.college
-                      ? selectedLoan.college.college_name
-                      : `College ${selectedLoan.college_id}`}
+                    <Tooltip
+                      title={`College ID: ${selectedLoan.college_id}`}
+                      arrow
+                    >
+                      <span>
+                        {selectedLoan.college
+                          ? selectedLoan.college.college_name
+                          : `College ${selectedLoan.college_id}`}
+                      </span>
+                    </Tooltip>
                   </Typography>
                 </Box>
                 <Box>
@@ -2734,6 +2996,91 @@ const AdminDashboard: React.FC = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setLoanDialogOpen(false)}>Close</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete User Confirmation Dialog */}
+      <Dialog
+        open={deleteUserDialogOpen}
+        onClose={() => setDeleteUserDialogOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Delete User</DialogTitle>
+        <DialogContent>
+          {userToDelete && (
+            <Box>
+              <Typography variant="body1" gutterBottom>
+                Are you sure you want to delete user{" "}
+                <strong>
+                  {userToDelete.first_name} {userToDelete.last_name}
+                </strong>
+                ?
+              </Typography>
+
+              {userDependencies && userDependencies.hasDependencies && (
+                <Box
+                  sx={{
+                    mt: 2,
+                    p: 2,
+                    bgcolor: "grey.100",
+                    borderRadius: 1,
+                    border: "1px solid",
+                    borderColor: "grey.300",
+                  }}
+                >
+                  <Typography
+                    variant="subtitle2"
+                    color="text.primary"
+                    gutterBottom
+                  >
+                    ⚠️ This user has associated data:
+                  </Typography>
+                  <Typography variant="body2">
+                    • {userDependencies.loans} loan(s)
+                  </Typography>
+                  <Typography variant="body2">
+                    • {userDependencies.documents} document(s)
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    sx={{ mt: 1, fontWeight: "bold" }}
+                  >
+                    Choose how to proceed:
+                  </Typography>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteUserDialogOpen(false)}>Cancel</Button>
+          {userDependencies && userDependencies.hasDependencies ? (
+            <>
+              <Button
+                onClick={() => handleConfirmDeleteUser("USER_ONLY")}
+                color="warning"
+                variant="outlined"
+              >
+                Delete User Only
+              </Button>
+              <Button
+                onClick={() => handleConfirmDeleteUser("WITH_DEPENDENCIES")}
+                color="error"
+                variant="contained"
+              >
+                Delete User & All Data
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={() => handleConfirmDeleteUser("USER_ONLY")}
+              color="error"
+              variant="contained"
+            >
+              Delete User
+            </Button>
+          )}
         </DialogActions>
       </Dialog>
     </Container>

@@ -43,8 +43,8 @@ export const adminApi = {
       page: page.toString(),
       limit: limit.toString(),
     });
-    if (search) {
-      params.append("search", search);
+    if (search && search.trim()) {
+      params.append("search", search.trim());
     }
 
     const response = await apiClient.get<AdminUsersResponse>(
@@ -70,10 +70,44 @@ export const adminApi = {
   },
 
   /**
+   * Check user dependencies (Admin only)
+   */
+  async checkUserDependencies(id: string): Promise<{
+    loans: number;
+    documents: number;
+    hasDependencies: boolean;
+  }> {
+    const response = await apiClient.get<{
+      loans: number;
+      documents: number;
+      hasDependencies: boolean;
+    }>(`/admin/users/${id}/dependencies`);
+    return response.data;
+  },
+
+  /**
    * Delete user (Admin only)
    */
-  async deleteUser(id: string): Promise<void> {
-    await apiClient.delete(`/admin/users/${id}`);
+  async deleteUser(
+    id: string,
+    mode: "USER_ONLY" | "WITH_DEPENDENCIES" = "USER_ONLY"
+  ): Promise<{
+    user_id: string;
+    mode: string;
+    deletedCounts?: {
+      loans: number;
+      documents: number;
+    };
+  }> {
+    const response = await apiClient.delete<{
+      user_id: string;
+      mode: string;
+      deletedCounts?: {
+        loans: number;
+        documents: number;
+      };
+    }>(`/admin/users/${id}?mode=${mode}`);
+    return response.data;
   },
 };
 
