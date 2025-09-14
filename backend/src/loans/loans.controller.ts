@@ -159,6 +159,27 @@ export class LoansController {
     return await this.service.findById(correlation_id, id);
   }
 
+  @UseGuards(JwtAuthGuard)
+  @Patch(':id')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Update loan application (User only)' })
+  @ApiParam({ name: 'id', description: 'Loan ID' })
+  @ApiBody({ type: CreateLoanDto })
+  @ApiResponse({ status: 200, description: 'Loan updated successfully' })
+  @ApiResponse({ status: 404, description: 'Loan not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Loan not editable or duplicate college',
+  })
+  async update(
+    @Correlation() correlation_id: string,
+    @Param('id') id: string,
+    @GetUser() user: any,
+    @Body() body: CreateLoanDto,
+  ) {
+    return await this.service.update(correlation_id, id, user.user_id, body);
+  }
+
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('admin')
   @Patch(':id/status/:status')

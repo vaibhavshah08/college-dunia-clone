@@ -10,6 +10,7 @@ import {
   ENTITY_CREATE_ERROR,
   ENTITY_UPDATE_ERROR,
   ENTITY_NOT_FOUND,
+  DATA_VALIDATION_ERROR,
 } from 'src/core/custom-error/error-constant';
 import { v4 as uuidv4 } from 'uuid';
 import * as fs from 'fs';
@@ -44,6 +45,7 @@ export class DocumentsService {
     purpose: string,
     type: string,
     document_type?: string,
+    loan_id?: string,
   ) {
     this.logger.setContext(this.constructor.name + '/uploadDocument');
     this.logger.debug(correlation_id, 'Starting document upload process');
@@ -80,10 +82,27 @@ export class DocumentsService {
       // Save file to disk
       fs.writeFileSync(filePath, file.buffer);
 
+      // Validate loan_id if provided
+      if (loan_id) {
+        // Check if loan belongs to the user
+        const loanRepo =
+          this.documentRepo.manager.getRepository('LoanApplication');
+        const loan = await loanRepo.findOne({
+          where: { loan_id: loan_id, user_id: user_id },
+        });
+
+        if (!loan) {
+          throw new BadRequestException(
+            'Invalid loan ID or loan does not belong to user',
+          );
+        }
+      }
+
       // Create document record
-      const document = this.documentRepo.create({
+      const documentData = {
         document_id: uuidv4().replace(/-/g, ''),
         user_id,
+        loan_id: loan_id || null,
         document_path: `/uploads/documents/${fileName}`,
         original_name: file.originalname,
         mime_type: file.mimetype,
@@ -93,8 +112,9 @@ export class DocumentsService {
         purpose,
         type: type as any, // Type will be validated by the enum constraint
         status: 'pending' as DocumentStatus,
-      });
+      };
 
+      const document = this.documentRepo.create(documentData);
       const savedDocument = await this.documentRepo.save(document);
 
       this.logger.debug(
@@ -292,13 +312,22 @@ export class DocumentsService {
     }
   }
 
-  async deleteDocument(correlation_id: string, documentId: string) {
+  async deleteDocument(
+    correlation_id: string,
+    documentId: string,
+    userId?: string,
+  ) {
     this.logger.setContext(this.constructor.name + '/deleteDocument');
     this.logger.debug(correlation_id, `Deleting document: ${documentId}`);
 
     try {
+      const whereCondition: any = { document_id: documentId };
+      if (userId) {
+        whereCondition.user_id = userId;
+      }
+
       const document = await this.documentRepo.findOne({
-        where: { document_id: documentId },
+        where: whereCondition,
       });
       if (!document) {
         throw customHttpError(
@@ -306,6 +335,20 @@ export class DocumentsService {
           'Document Not Found',
           'Document not found',
           HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Check if document is in pending status
+      if (document.status !== 'pending') {
+        this.logger.debug(
+          correlation_id,
+          `Cannot delete document ${documentId} - status is ${document.status}`,
+        );
+        throw customHttpError(
+          DATA_VALIDATION_ERROR,
+          'DOCUMENT_NOT_DELETABLE',
+          'Only pending documents can be deleted. This document has already been processed.',
+          HttpStatus.CONFLICT,
         );
       }
 
@@ -328,6 +371,9 @@ export class DocumentsService {
       };
     } catch (error) {
       this.logger.error(correlation_id, 'Error deleting document', error);
+      if (error.status) {
+        throw error; // Re-throw custom HTTP errors
+      }
       throw customHttpError(
         ENTITY_UPDATE_ERROR,
         'Document Delete Error',

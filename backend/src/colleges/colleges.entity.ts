@@ -62,6 +62,9 @@ export class College {
   @Column('timestamp', { nullable: true })
   placement_last_updated: Date;
 
+  @Column('boolean', { default: false })
+  is_deleted: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 }

@@ -25,6 +25,9 @@ export class Document {
   @Column('varchar', { nullable: false })
   user_id: string;
 
+  @Column('varchar', { nullable: true })
+  loan_id: string | null;
+
   @Column('varchar', { nullable: false })
   document_path: string;
 
@@ -66,6 +69,9 @@ export class Document {
 
   @Column('timestamp', { nullable: true })
   reviewed_at: Date;
+
+  @Column('boolean', { default: false })
+  is_deleted: boolean;
 
   @ManyToOne(() => User)
   @JoinColumn({ name: 'user_id' })

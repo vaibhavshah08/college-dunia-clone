@@ -3,7 +3,11 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { LoanApplication, LoanStatus } from './loan.entity';
 import { customHttpError } from 'src/core/custom-error/error-service';
-import { ENTITY_NOT_FOUND } from 'src/core/custom-error/error-constant';
+import {
+  ENTITY_NOT_FOUND,
+  ENTITY_CREATE_ERROR,
+  ENTITY_UPDATE_ERROR,
+} from 'src/core/custom-error/error-constant';
 import { CustomLogger } from 'src/core/logger/logger.service';
 import { v4 as uuidv4 } from 'uuid';
 import { User } from '../user/entities/user.entity';
@@ -35,6 +39,31 @@ export class LoansService {
       correlation_id,
       `Submitting loan application for user ${user_id}`,
     );
+
+    // Check for existing loan for the same user and college
+    this.logger.debug(
+      correlation_id,
+      'Checking for existing loan for user and college',
+    );
+    const existingLoan = await this.repo.findOne({
+      where: {
+        user_id: user_id,
+        college_id: data.college_id,
+      },
+    });
+
+    if (existingLoan) {
+      this.logger.debug(
+        correlation_id,
+        `Duplicate loan found for user ${user_id} and college ${data.college_id}`,
+      );
+      throw customHttpError(
+        ENTITY_CREATE_ERROR,
+        'DUPLICATE_LOAN',
+        'A loan application already exists for this college. You can only have one loan per college.',
+        HttpStatus.CONFLICT,
+      );
+    }
 
     this.logger.debug(correlation_id, 'Generating loan ID');
     const loan_id = uuidv4().replace(/-/g, '');
@@ -287,6 +316,108 @@ export class LoansService {
         description: loan.description,
         created_at: loan.created_at,
       })),
+    };
+  }
+
+  async update(
+    correlation_id: string,
+    loan_id: string,
+    user_id: string,
+    data: Partial<LoanApplication>,
+  ) {
+    this.logger.setContext(this.constructor.name);
+    this.logger.debug(correlation_id, 'Starting loan update process');
+    this.logger.debug(
+      correlation_id,
+      `Updating loan ${loan_id} for user ${user_id}`,
+    );
+
+    // Find the existing loan
+    const existing = await this.repo.findOne({
+      where: {
+        loan_id: loan_id,
+        user_id: user_id,
+      },
+    });
+
+    if (!existing) {
+      this.logger.debug(correlation_id, `Loan not found: ${loan_id}`);
+      throw customHttpError(
+        ENTITY_NOT_FOUND,
+        'LOAN_NOT_FOUND',
+        'Loan not found',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    // Check if loan is in pending status
+    if (existing.status !== 'submitted') {
+      this.logger.debug(
+        correlation_id,
+        `Cannot update loan ${loan_id} - status is ${existing.status}`,
+      );
+      throw customHttpError(
+        ENTITY_UPDATE_ERROR,
+        'LOAN_NOT_EDITABLE',
+        'Only pending loans can be edited. This loan has already been processed.',
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    // Check for duplicate college if college_id is being changed
+    if (data.college_id && data.college_id !== existing.college_id) {
+      const duplicateLoan = await this.repo.findOne({
+        where: {
+          user_id: user_id,
+          college_id: data.college_id,
+          loan_id: { $ne: loan_id } as any,
+        },
+      });
+
+      if (duplicateLoan) {
+        this.logger.debug(
+          correlation_id,
+          `Duplicate loan found for user ${user_id} and college ${data.college_id}`,
+        );
+        throw customHttpError(
+          ENTITY_UPDATE_ERROR,
+          'DUPLICATE_LOAN',
+          'A loan application already exists for this college. You can only have one loan per college.',
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
+
+    this.logger.debug(correlation_id, 'Updating loan in database');
+    await this.repo.update(loan_id, data);
+
+    // Fetch updated loan
+    const updated = await this.repo.findOne({ where: { loan_id: loan_id } });
+    if (!updated) {
+      throw customHttpError(
+        ENTITY_NOT_FOUND,
+        'LOAN_NOT_FOUND',
+        'Loan not found after update',
+        HttpStatus.NOT_FOUND,
+      );
+    }
+
+    this.logger.debug(correlation_id, `Loan ${loan_id} updated successfully`);
+
+    return {
+      message: 'Loan updated successfully',
+      data: {
+        loan_id: updated.loan_id,
+        user_id: updated.user_id,
+        loan_type: updated.loan_type,
+        principal_amount: updated.principal_amount,
+        interest_rate: updated.interest_rate,
+        term_months: updated.term_months,
+        status: updated.status,
+        college_id: updated.college_id,
+        description: updated.description,
+        created_at: updated.created_at,
+      },
     };
   }
 }

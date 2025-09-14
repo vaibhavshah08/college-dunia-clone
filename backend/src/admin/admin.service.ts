@@ -47,11 +47,13 @@ export class AdminService {
         totalDocuments,
         pendingLoans,
       ] = await Promise.all([
-        this.userRepo.count(),
-        this.collegeRepo.count(),
-        this.loanRepo.count(),
-        this.documentRepo.count(),
-        this.loanRepo.count({ where: { status: 'submitted' } }),
+        this.userRepo.count({ where: { is_deleted: false } }),
+        this.collegeRepo.count({ where: { is_deleted: false } }),
+        this.loanRepo.count({ where: { is_deleted: false } }),
+        this.documentRepo.count({ where: { is_deleted: false } }),
+        this.loanRepo.count({
+          where: { status: 'submitted', is_deleted: false },
+        }),
       ]);
 
       const stats = {
@@ -61,7 +63,7 @@ export class AdminService {
         totalDocuments,
         pendingLoans,
         partneredColleges: await this.collegeRepo.count({
-          where: { is_partnered: true },
+          where: { is_partnered: true, is_deleted: false },
         }),
       };
 
@@ -183,10 +185,14 @@ export class AdminService {
     try {
       const queryBuilder = this.userRepo.createQueryBuilder('user');
 
-      if (search) {
-        queryBuilder.where(
-          'user.name LIKE :search OR user.email LIKE :search',
-          { search: `%${search}%` },
+      // Always filter out deleted users
+      queryBuilder.where('user.is_deleted = :isDeleted', { isDeleted: false });
+
+      if (search && search.trim()) {
+        const searchTerm = `%${search.trim()}%`;
+        queryBuilder.andWhere(
+          "(user.first_name ILIKE :search OR user.last_name ILIKE :search OR user.email ILIKE :search OR CONCAT(user.first_name, ' ', user.last_name) ILIKE :search)",
+          { search: searchTerm },
         );
       }
 
@@ -224,17 +230,60 @@ export class AdminService {
     page: number = 1,
     limit: number = 10,
     status?: string,
+    userId?: string,
+    loanId?: string,
+    startDate?: string,
+    endDate?: string,
+    search?: string,
   ) {
     this.logger.setContext(this.constructor.name + '/getAllDocuments');
-    this.logger.debug(correlation_id, 'Fetching all documents with pagination');
+    this.logger.debug(
+      correlation_id,
+      'Fetching all documents with pagination and filters',
+    );
 
     try {
-      const queryBuilder = this.documentRepo
-        .createQueryBuilder('document')
-        .leftJoinAndSelect('document.user', 'user');
+      const queryBuilder = this.documentRepo.createQueryBuilder('document');
 
-      if (status) {
-        queryBuilder.where('document.status = :status', { status });
+      // Apply filters
+      const whereConditions: string[] = ['document.is_deleted = :isDeleted'];
+      const parameters: any = { isDeleted: false };
+
+      if (status && status.trim()) {
+        whereConditions.push('document.status = :status');
+        parameters.status = status.trim();
+      }
+
+      if (userId && userId.trim()) {
+        whereConditions.push('document.user_id = :userId');
+        parameters.userId = userId.trim();
+      }
+
+      if (loanId && loanId.trim()) {
+        whereConditions.push('document.loan_id = :loanId');
+        parameters.loanId = loanId.trim();
+      }
+
+      if (startDate) {
+        whereConditions.push('document.uploaded_at >= :startDate');
+        parameters.startDate = new Date(startDate);
+      }
+
+      if (endDate) {
+        whereConditions.push('document.uploaded_at <= :endDate');
+        parameters.endDate = new Date(endDate);
+      }
+
+      if (search && search.trim()) {
+        const searchTerm = `%${search.trim()}%`;
+        whereConditions.push(
+          '(document.document_path ILIKE :search OR document.original_name ILIKE :search OR document.document_type ILIKE :search OR document.purpose ILIKE :search OR document.status ILIKE :search OR document.document_id ILIKE :search)',
+        );
+        parameters.search = searchTerm;
+      }
+
+      if (whereConditions.length > 0) {
+        queryBuilder.where(whereConditions.join(' AND '), parameters);
       }
 
       const [documents, total] = await queryBuilder
@@ -243,10 +292,24 @@ export class AdminService {
         .take(limit)
         .getManyAndCount();
 
+      // Fetch user data for each document
+      const documentsWithUsers = await Promise.all(
+        documents.map(async (document) => {
+          const user = await this.userRepo.findOne({
+            where: { user_id: document.user_id, is_deleted: false },
+            select: ['user_id', 'first_name', 'last_name', 'email'],
+          });
+          return {
+            ...document,
+            user: user || null,
+          };
+        }),
+      );
+
       return {
         message: 'Documents retrieved successfully',
         data: {
-          documents,
+          documents: documentsWithUsers,
           pagination: {
             page,
             limit,
@@ -403,11 +466,162 @@ export class AdminService {
     };
   }
 
-  async deleteUser(correlation_id: string, user_id: string, current_user: any) {
+  async getAllLoans(
+    correlation_id: string,
+    page: number = 1,
+    limit: number = 10,
+    status?: string,
+    userId?: string,
+    collegeId?: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
+    this.logger.setContext(this.constructor.name + '/getAllLoans');
+    this.logger.debug(
+      correlation_id,
+      'Fetching all loans with pagination and filters',
+    );
+
+    try {
+      const queryBuilder = this.loanRepo.createQueryBuilder('loan');
+
+      // Apply filters
+      const whereConditions: string[] = ['loan.is_deleted = :isDeleted'];
+      const parameters: any = { isDeleted: false };
+
+      if (status && status.trim()) {
+        whereConditions.push('loan.status = :status');
+        parameters.status = status.trim();
+      }
+
+      if (userId && userId.trim()) {
+        whereConditions.push('loan.user_id = :userId');
+        parameters.userId = userId.trim();
+      }
+
+      if (collegeId && collegeId.trim()) {
+        whereConditions.push('loan.college_id = :collegeId');
+        parameters.collegeId = collegeId.trim();
+      }
+
+      if (startDate) {
+        whereConditions.push('loan.created_at >= :startDate');
+        parameters.startDate = new Date(startDate);
+      }
+
+      if (endDate) {
+        whereConditions.push('loan.created_at <= :endDate');
+        parameters.endDate = new Date(endDate);
+      }
+
+      if (whereConditions.length > 0) {
+        queryBuilder.where(whereConditions.join(' AND '), parameters);
+      }
+
+      const [loans, total] = await queryBuilder
+        .orderBy('loan.created_at', 'DESC')
+        .skip((page - 1) * limit)
+        .take(limit)
+        .getManyAndCount();
+
+      // Fetch user and college data for each loan
+      const loansWithUsersAndColleges = await Promise.all(
+        loans.map(async (loan) => {
+          const [user, college] = await Promise.all([
+            this.userRepo.findOne({
+              where: { user_id: loan.user_id, is_deleted: false },
+              select: ['user_id', 'first_name', 'last_name', 'email'],
+            }),
+            this.collegeRepo.findOne({
+              where: { college_id: loan.college_id, is_deleted: false },
+              select: ['college_id', 'college_name', 'state', 'city'],
+            }),
+          ]);
+          return {
+            ...loan,
+            user: user || null,
+            college: college || null,
+          };
+        }),
+      );
+
+      return {
+        message: 'Loans retrieved successfully',
+        data: {
+          loans: loansWithUsersAndColleges,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+          },
+        },
+      };
+    } catch (error) {
+      this.logger.error(correlation_id, 'Error fetching loans', error);
+      throw customHttpError(
+        ENTITY_FETCH_ERROR,
+        'Loans Fetch Error',
+        'Failed to fetch loans',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async checkUserDependencies(correlation_id: string, user_id: string) {
+    this.logger.setContext(this.constructor.name + '/checkUserDependencies');
+    this.logger.debug(
+      correlation_id,
+      `Checking dependencies for user ${user_id}`,
+    );
+
+    try {
+      const [loans, documents] = await Promise.all([
+        this.loanRepo.count({ where: { user_id, is_deleted: false } }),
+        this.documentRepo.count({ where: { user_id, is_deleted: false } }),
+      ]);
+
+      const dependencies = {
+        loans,
+        documents,
+        hasDependencies: loans > 0 || documents > 0,
+      };
+
+      this.logger.debug(
+        correlation_id,
+        `Dependencies found for user ${user_id}:`,
+        dependencies,
+      );
+
+      return {
+        message: 'User dependencies checked successfully',
+        data: dependencies,
+      };
+    } catch (error) {
+      this.logger.error(
+        correlation_id,
+        'Error checking user dependencies',
+        error,
+      );
+      throw customHttpError(
+        ENTITY_FETCH_ERROR,
+        'Dependencies Check Error',
+        'Failed to check user dependencies',
+        HttpStatus.INTERNAL_SERVER_ERROR,
+      );
+    }
+  }
+
+  async deleteUser(
+    correlation_id: string,
+    user_id: string,
+    current_user: any,
+    mode: 'USER_ONLY' | 'WITH_DEPENDENCIES' = 'USER_ONLY',
+  ) {
     this.logger.setContext(this.constructor.name + '/deleteUser');
     this.logger.debug(
       correlation_id,
-      `Admin ${current_user.user_id} deleting user ${user_id}`,
+      `Admin ${current_user.user_id} deleting user ${user_id} with mode: ${mode}`,
     );
 
     // Check if user exists
@@ -422,21 +636,86 @@ export class AdminService {
       );
     }
 
-    // Soft delete the user
-    this.logger.debug(correlation_id, 'Soft deleting user');
-    await this.userRepo.update(user_id, {
-      is_deleted: true,
-      is_active: false,
-    });
+    // Check dependencies if mode is USER_ONLY
+    if (mode === 'USER_ONLY') {
+      const dependencies = await this.checkUserDependencies(
+        correlation_id,
+        user_id,
+      );
+      if (dependencies.data.hasDependencies) {
+        this.logger.debug(
+          correlation_id,
+          `User ${user_id} has dependencies, cannot delete with USER_ONLY mode`,
+        );
+        throw customHttpError(
+          DATA_VALIDATION_ERROR,
+          'USER_HAS_DEPENDENCIES',
+          'User has associated data. Use WITH_DEPENDENCIES mode to delete user and all associated data.',
+          HttpStatus.CONFLICT,
+        );
+      }
+    }
 
-    this.logger.debug(
-      correlation_id,
-      `User ${user_id} deleted successfully by admin`,
-    );
+    // Use transaction for cascading deletes
+    const queryRunner = this.userRepo.manager.connection.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    return {
-      message: 'User deleted successfully',
-      data: { user_id },
-    };
+    try {
+      let deletedCounts = { loans: 0, documents: 0 };
+
+      if (mode === 'WITH_DEPENDENCIES') {
+        // Delete associated data
+        this.logger.debug(correlation_id, 'Deleting user dependencies');
+
+        const [loanResult, documentResult] = await Promise.all([
+          queryRunner.manager.update(
+            'LoanApplication',
+            { user_id },
+            { is_deleted: true },
+          ),
+          queryRunner.manager.update(
+            'Document',
+            { user_id },
+            { is_deleted: true },
+          ),
+        ]);
+
+        deletedCounts = {
+          loans: loanResult.affected || 0,
+          documents: documentResult.affected || 0,
+        };
+      }
+
+      // Soft delete the user
+      this.logger.debug(correlation_id, 'Soft deleting user');
+      await queryRunner.manager.update('User', user_id, {
+        is_deleted: true,
+        is_active: false,
+      });
+
+      await queryRunner.commitTransaction();
+
+      this.logger.debug(
+        correlation_id,
+        `User ${user_id} deleted successfully by admin with mode: ${mode}`,
+      );
+
+      return {
+        message: 'User deleted successfully',
+        data: {
+          user_id,
+          mode,
+          deletedCounts:
+            mode === 'WITH_DEPENDENCIES' ? deletedCounts : undefined,
+        },
+      };
+    } catch (error) {
+      await queryRunner.rollbackTransaction();
+      this.logger.error(correlation_id, 'Error deleting user', error);
+      throw error;
+    } finally {
+      await queryRunner.release();
+    }
   }
 }

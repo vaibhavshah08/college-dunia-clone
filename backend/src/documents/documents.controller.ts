@@ -69,6 +69,10 @@ export class DocumentsController {
           type: 'string',
           description: 'Legacy document type (optional)',
         },
+        loan_id: {
+          type: 'string',
+          description: 'Associated loan ID (optional)',
+        },
       },
     },
   })
@@ -83,6 +87,7 @@ export class DocumentsController {
     @Body('purpose') purpose: string,
     @Body('type') type: string,
     @Body('document_type') document_type?: string,
+    @Body('loan_id') loan_id?: string,
   ) {
     if (!file) {
       throw new BadRequestException('No file uploaded');
@@ -104,6 +109,7 @@ export class DocumentsController {
       purpose,
       type,
       document_type,
+      loan_id,
     );
   }
 
@@ -121,6 +127,29 @@ export class DocumentsController {
   ) {
     return await this.documentsService.getUserDocuments(
       correlation_id,
+      user.user_id,
+    );
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Delete('my-documents/:id')
+  @ApiBearerAuth('JWT-auth')
+  @ApiOperation({ summary: 'Delete user document (only if pending)' })
+  @ApiParam({ name: 'id', description: 'Document ID' })
+  @ApiResponse({ status: 200, description: 'Document deleted successfully' })
+  @ApiResponse({ status: 404, description: 'Document not found' })
+  @ApiResponse({
+    status: 409,
+    description: 'Document not deletable - already processed',
+  })
+  async deleteMyDocument(
+    @Correlation() correlation_id: string,
+    @Param('id') documentId: string,
+    @GetUser() user: any,
+  ) {
+    return await this.documentsService.deleteDocument(
+      correlation_id,
+      documentId,
       user.user_id,
     );
   }

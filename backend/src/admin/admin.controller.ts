@@ -168,7 +168,7 @@ export class AdminController {
 
   @Get('documents')
   @ApiOperation({
-    summary: 'Get all documents with pagination and status filter',
+    summary: 'Get all documents with pagination and filters',
   })
   @ApiQuery({
     name: 'page',
@@ -187,6 +187,36 @@ export class AdminController {
     required: false,
     type: String,
     description: 'Document status filter',
+  })
+  @ApiQuery({
+    name: 'userId',
+    required: false,
+    type: String,
+    description: 'User ID filter',
+  })
+  @ApiQuery({
+    name: 'loanId',
+    required: false,
+    type: String,
+    description: 'Loan ID filter',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date filter (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date filter (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'search',
+    required: false,
+    type: String,
+    description: 'Search term for documents',
   })
   @ApiResponse({
     status: 200,
@@ -218,12 +248,115 @@ export class AdminController {
     @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
     @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
     @Query('status') status?: string,
+    @Query('userId') userId?: string,
+    @Query('loanId') loanId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+    @Query('search') search?: string,
   ) {
     return await this.adminService.getAllDocuments(
       correlation_id,
       page,
       limit,
       status,
+      userId,
+      loanId,
+      startDate,
+      endDate,
+      search,
+    );
+  }
+
+  @Get('loans')
+  @ApiOperation({
+    summary: 'Get all loans with pagination and filters',
+  })
+  @ApiQuery({
+    name: 'page',
+    required: false,
+    type: Number,
+    description: 'Page number',
+  })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Items per page',
+  })
+  @ApiQuery({
+    name: 'status',
+    required: false,
+    type: String,
+    description: 'Loan status filter',
+  })
+  @ApiQuery({
+    name: 'userId',
+    required: false,
+    type: String,
+    description: 'User ID filter',
+  })
+  @ApiQuery({
+    name: 'collegeId',
+    required: false,
+    type: String,
+    description: 'College ID filter',
+  })
+  @ApiQuery({
+    name: 'startDate',
+    required: false,
+    type: String,
+    description: 'Start date filter (YYYY-MM-DD)',
+  })
+  @ApiQuery({
+    name: 'endDate',
+    required: false,
+    type: String,
+    description: 'End date filter (YYYY-MM-DD)',
+  })
+  @ApiResponse({
+    status: 200,
+    description: 'Loans retrieved successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            loans: { type: 'array', items: { type: 'object' } },
+            pagination: {
+              type: 'object',
+              properties: {
+                page: { type: 'number' },
+                limit: { type: 'number' },
+                total: { type: 'number' },
+                totalPages: { type: 'number' },
+              },
+            },
+          },
+        },
+      },
+    },
+  })
+  async getAllLoans(
+    @Correlation() correlation_id: string,
+    @Query('page', new ParseIntPipe({ optional: true })) page: number = 1,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit: number = 10,
+    @Query('status') status?: string,
+    @Query('userId') userId?: string,
+    @Query('collegeId') collegeId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return await this.adminService.getAllLoans(
+      correlation_id,
+      page,
+      limit,
+      status,
+      userId,
+      collegeId,
+      startDate,
+      endDate,
     );
   }
 
@@ -290,9 +423,48 @@ export class AdminController {
     );
   }
 
+  @Get('users/:id/dependencies')
+  @ApiOperation({ summary: 'Check user dependencies (Admin only)' })
+  @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiResponse({
+    status: 200,
+    description: 'User dependencies checked successfully',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string' },
+        data: {
+          type: 'object',
+          properties: {
+            loans: { type: 'number' },
+            documents: { type: 'number' },
+            reviews: { type: 'number' },
+            hasDependencies: { type: 'boolean' },
+          },
+        },
+      },
+    },
+  })
+  @ApiResponse({ status: 404, description: 'User not found' })
+  async checkUserDependencies(
+    @Correlation() correlation_id: string,
+    @Param('id') user_id: string,
+  ) {
+    return await this.adminService.checkUserDependencies(
+      correlation_id,
+      user_id,
+    );
+  }
+
   @Delete('users/:id')
   @ApiOperation({ summary: 'Delete user (Admin only)' })
   @ApiParam({ name: 'id', description: 'User ID' })
+  @ApiQuery({
+    name: 'mode',
+    required: false,
+    enum: ['USER_ONLY', 'WITH_DEPENDENCIES'],
+    description: 'Deletion mode',
+  })
   @ApiResponse({
     status: 200,
     description: 'User deleted successfully',
@@ -304,21 +476,33 @@ export class AdminController {
           type: 'object',
           properties: {
             user_id: { type: 'string' },
+            mode: { type: 'string' },
+            deletedCounts: {
+              type: 'object',
+              properties: {
+                loans: { type: 'number' },
+                documents: { type: 'number' },
+                reviews: { type: 'number' },
+              },
+            },
           },
         },
       },
     },
   })
   @ApiResponse({ status: 404, description: 'User not found' })
+  @ApiResponse({ status: 409, description: 'User has dependencies' })
   async deleteUser(
     @Correlation() correlation_id: string,
     @Param('id') user_id: string,
     @GetUser() current_user: any,
+    @Query('mode') mode: 'USER_ONLY' | 'WITH_DEPENDENCIES' = 'USER_ONLY',
   ) {
     return await this.adminService.deleteUser(
       correlation_id,
       user_id,
       current_user,
+      mode,
     );
   }
 }

@@ -31,6 +31,9 @@ export class LoanApplication {
   @Column('text', { nullable: true, default: null })
   description: string;
 
+  @Column('boolean', { default: false })
+  is_deleted: boolean;
+
   @CreateDateColumn()
   created_at: Date;
 }
