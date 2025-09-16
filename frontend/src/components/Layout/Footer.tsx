@@ -6,7 +6,9 @@ import {
   Link,
   Divider,
   IconButton,
+  Tooltip,
 } from "@mui/material";
+import { Link as RouterLink } from "react-router-dom";
 import {
   Facebook,
   Twitter,
@@ -53,42 +55,50 @@ const Footer: React.FC = () => {
               one place.
             </Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
-              <IconButton
-                size="small"
-                sx={{
-                  color: "white",
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-                }}
-              >
-                <Facebook />
-              </IconButton>
-              <IconButton
-                size="small"
-                sx={{
-                  color: "white",
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-                }}
-              >
-                <Twitter />
-              </IconButton>
-              <IconButton
-                size="small"
-                sx={{
-                  color: "white",
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-                }}
-              >
-                <Instagram />
-              </IconButton>
-              <IconButton
-                size="small"
-                sx={{
-                  color: "white",
-                  "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-                }}
-              >
-                <LinkedIn />
-              </IconButton>
+              <Tooltip title="Follow us on Facebook">
+                <IconButton
+                  size="small"
+                  sx={{
+                    color: "white",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+                  }}
+                >
+                  <Facebook />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Follow us on Twitter">
+                <IconButton
+                  size="small"
+                  sx={{
+                    color: "white",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+                  }}
+                >
+                  <Twitter />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Follow us on Instagram">
+                <IconButton
+                  size="small"
+                  sx={{
+                    color: "white",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+                  }}
+                >
+                  <Instagram />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Connect with us on LinkedIn">
+                <IconButton
+                  size="small"
+                  sx={{
+                    color: "white",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+                  }}
+                >
+                  <LinkedIn />
+                </IconButton>
+              </Tooltip>
             </Box>
           </Box>
 
@@ -149,7 +159,8 @@ const Footer: React.FC = () => {
           </Typography>
           <Box sx={{ display: "flex", gap: 3 }}>
             <Link
-              href="/privacy"
+              component={RouterLink}
+              to="/privacy-policy"
               sx={{
                 textDecoration: "none",
                 color: "white",
@@ -159,7 +170,8 @@ const Footer: React.FC = () => {
               Privacy Policy
             </Link>
             <Link
-              href="/terms"
+              component={RouterLink}
+              to="/terms-of-service"
               sx={{
                 textDecoration: "none",
                 color: "white",
@@ -169,7 +181,8 @@ const Footer: React.FC = () => {
               Terms of Service
             </Link>
             <Link
-              href="/help"
+              component={RouterLink}
+              to="/help-support"
               sx={{
                 textDecoration: "none",
                 color: "white",

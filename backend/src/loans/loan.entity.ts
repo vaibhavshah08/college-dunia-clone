@@ -28,6 +28,9 @@ export class LoanApplication {
   @Column('varchar', { nullable: false })
   college_id: string;
 
+  @Column('varchar', { nullable: false })
+  phone_number: string;
+
   @Column('text', { nullable: true, default: null })
   description: string;
 

@@ -113,12 +113,7 @@ export interface User {
 
 // Document Types
 export type DocumentStatus = "pending" | "approved" | "rejected";
-export type DocumentType =
-  | "ID_PROOF"
-  | "ADDRESS_PROOF"
-  | "MARKSHEET"
-  | "PHOTO"
-  | "OTHER";
+export type DocumentType = string;
 
 export interface Document {
   document_id: string;
@@ -281,6 +276,7 @@ export interface LoanCreate {
   interest_rate: number;
   term_months: number;
   college_id: string;
+  phone_number: string;
   description?: string;
 }
 
@@ -293,6 +289,7 @@ export interface Loan {
   term_months: number;
   status: "submitted" | "under_review" | "approved" | "rejected";
   college_id: string;
+  phone_number: string;
   description?: string;
   created_at: string;
   // Optional fields for admin view

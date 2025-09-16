@@ -32,6 +32,10 @@ import {
   DialogActions,
   Pagination,
   Tooltip,
+  Autocomplete,
+  useMediaQuery,
+  useTheme,
+  Stack,
 } from "@mui/material";
 import {
   People,
@@ -100,6 +104,8 @@ const AdminDashboard: React.FC = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
   const toast = useToast();
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const [tabValue, setTabValue] = useState(0);
   const [collegesPage, setCollegesPage] = useState(1);
   const [usersPage, setUsersPage] = useState(1);
@@ -174,11 +180,95 @@ const AdminDashboard: React.FC = () => {
   const [userToDelete, setUserToDelete] = useState<User | null>(null);
   const [userDependencies, setUserDependencies] = useState<any>(null);
   const [deletionInProgress, setDeletionInProgress] = useState(false);
+  const [adminUploadDialogOpen, setAdminUploadDialogOpen] = useState(false);
+  const [adminUploadForm, setAdminUploadForm] = useState({
+    userId: "",
+    documentName: "",
+    purpose: "",
+    documentType: "General",
+    description: "",
+    file: null as File | null,
+  });
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allUsersLoading, setAllUsersLoading] = useState(false);
+  const [downloadingDocuments, setDownloadingDocuments] = useState<Set<string>>(
+    new Set()
+  );
 
   // Debounced search queries for better UX
   const debouncedCollegeSearchQuery = useDebounce(collegeSearchQuery, 300);
   const debouncedUserFilters = useDebounce(userFilters, 300);
   const debouncedLoanFilters = useDebounce(loanFilters, 300);
+
+  // Fetch all users for autocomplete
+  const fetchAllUsers = async () => {
+    if (allUsers.length > 0) return; // Already fetched
+
+    setAllUsersLoading(true);
+    try {
+      const response = await adminApi.getAllUsers(1, 1000); // Fetch up to 1000 users
+      setAllUsers(response.users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      toast.error("Failed to fetch users");
+    } finally {
+      setAllUsersLoading(false);
+    }
+  };
+
+  // Format user display for autocomplete
+  const formatUserDisplay = (user: User) => {
+    const fullName = `${user.first_name} ${user.last_name}`;
+    const truncatedId =
+      user.user_id.length > 15
+        ? `${user.user_id.substring(0, 13)}...`
+        : user.user_id;
+    return `${fullName} (${truncatedId})`;
+  };
+
+  // Standardized download function
+  const handleDocumentDownload = async (document: Document) => {
+    const documentId = document.document_id;
+
+    // Add to downloading set
+    setDownloadingDocuments((prev) => new Set(prev).add(documentId));
+
+    try {
+      const blob = await documentsApi.downloadDocument(documentId);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement("a");
+      a.href = url;
+      a.download = document.original_name;
+      a.style.display = "none";
+      window.document.body.appendChild(a);
+      a.click();
+      window.document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+
+      toast.success("Document downloaded successfully");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Failed to download document. Please try again.");
+
+      // Fallback: try direct URL
+      try {
+        const fileUrl = getFileUrl(document.document_path);
+        window.open(fileUrl, "_blank");
+      } catch (fallbackError) {
+        console.error("Fallback download also failed:", fallbackError);
+        toast.error("Unable to download document. Please contact support.");
+      }
+    } finally {
+      // Remove from downloading set
+      setDownloadingDocuments((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(documentId);
+        return newSet;
+      });
+    }
+  };
   const debouncedDocumentFilters = useDebounce(documentFilters, 300);
 
   // Fetch data from APIs
@@ -928,6 +1018,41 @@ const AdminDashboard: React.FC = () => {
     setUserDialogOpen(true);
   };
 
+  const handleAdminUpload = async () => {
+    if (!adminUploadForm.file || !adminUploadForm.userId) {
+      toast.error("Please select a file and enter a user ID");
+      return;
+    }
+
+    try {
+      await documentsApi.uploadDocumentForUser(
+        adminUploadForm.file,
+        adminUploadForm.documentName,
+        adminUploadForm.purpose,
+        adminUploadForm.documentType,
+        adminUploadForm.userId,
+        adminUploadForm.description
+      );
+
+      toast.success("Document uploaded successfully for user");
+      setAdminUploadDialogOpen(false);
+      setAdminUploadForm({
+        userId: "",
+        documentName: "",
+        purpose: "",
+        documentType: "General",
+        description: "",
+        file: null,
+      });
+
+      // Refresh documents list
+      queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
+    } catch (error) {
+      console.error("Error uploading document:", error);
+      toast.error("Failed to upload document");
+    }
+  };
+
   const getStatusColor = (status: string) => {
     switch (status.toLowerCase()) {
       case "approved":
@@ -951,19 +1076,36 @@ const AdminDashboard: React.FC = () => {
           justifyContent: "space-between",
           alignItems: "center",
           mb: 4,
+          flexDirection: { xs: "column", sm: "row" },
+          gap: { xs: 2, sm: 0 },
         }}
       >
         <Typography variant="h4" sx={{ fontWeight: "bold" }}>
           Platform Stats
         </Typography>
-        <Button
-          variant="outlined"
-          startIcon={<Refresh />}
-          onClick={handleRefresh}
-          sx={{ minWidth: 120 }}
-        >
-          Refresh
-        </Button>
+        <Box display="flex" gap={2} flexWrap="nowrap">
+          <Button
+            variant="outlined"
+            startIcon={<Refresh />}
+            onClick={handleRefresh}
+            sx={{
+              minWidth: 120,
+              display: { xs: "none", sm: "flex" },
+            }}
+          >
+            Refresh
+          </Button>
+          <IconButton
+            onClick={handleRefresh}
+            size="large"
+            sx={{
+              display: { xs: "flex", sm: "none" },
+            }}
+            aria-label="Refresh"
+          >
+            <Refresh />
+          </IconButton>
+        </Box>
       </Box>
 
       {/* Stats Cards */}
@@ -1212,8 +1354,23 @@ const AdminDashboard: React.FC = () => {
                 }}
               />
 
-              <TableContainer>
-                <Table>
+              <TableContainer
+                sx={{
+                  overflowX: "auto",
+                  "&::-webkit-scrollbar": {
+                    height: 8,
+                  },
+                  "&::-webkit-scrollbar-track": {
+                    backgroundColor: "rgba(0,0,0,0.1)",
+                    borderRadius: 4,
+                  },
+                  "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: "rgba(0,0,0,0.3)",
+                    borderRadius: 4,
+                  },
+                }}
+              >
+                <Table sx={{ minWidth: isMobile ? 600 : "auto" }}>
                   <TableHead>
                     <TableRow>
                       <TableCell>ID</TableCell>
@@ -1298,29 +1455,35 @@ const AdminDashboard: React.FC = () => {
                           <TableCell>#{college.ranking}</TableCell>
                           <TableCell>{college.placement_ratio}%</TableCell>
                           <TableCell>
-                            <IconButton
-                              size="small"
-                              color="info"
-                              onClick={() => handleCollegeView(college)}
-                            >
-                              <Visibility />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handleEditCollege(college)}
-                            >
-                              <Edit />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() =>
-                                handleDeleteCollege(college.college_id)
-                              }
-                            >
-                              <Delete />
-                            </IconButton>
+                            <Tooltip title="View College Details">
+                              <IconButton
+                                size="small"
+                                color="info"
+                                onClick={() => handleCollegeView(college)}
+                              >
+                                <Visibility />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Edit College">
+                              <IconButton
+                                size="small"
+                                color="primary"
+                                onClick={() => handleEditCollege(college)}
+                              >
+                                <Edit />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Delete College">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() =>
+                                  handleDeleteCollege(college.college_id)
+                                }
+                              >
+                                <Delete />
+                              </IconButton>
+                            </Tooltip>
                           </TableCell>
                         </TableRow>
                       ))
@@ -1380,7 +1543,18 @@ const AdminDashboard: React.FC = () => {
           </Box>
 
           {/* Filter Controls */}
-          <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              mb: 3,
+              flexWrap: "wrap",
+              flexDirection: { xs: "column", sm: "row" },
+              "& > *": {
+                minWidth: { xs: "100%", sm: "auto" },
+              },
+            }}
+          >
             <TextField
               label="User ID"
               variant="outlined"
@@ -1430,8 +1604,23 @@ const AdminDashboard: React.FC = () => {
             </FormControl>
           </Box>
 
-          <TableContainer>
-            <Table>
+          <TableContainer
+            sx={{
+              overflowX: "auto",
+              "&::-webkit-scrollbar": {
+                height: 8,
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "rgba(0,0,0,0.1)",
+                borderRadius: 4,
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "rgba(0,0,0,0.3)",
+                borderRadius: 4,
+              },
+            }}
+          >
+            <Table sx={{ minWidth: isMobile ? 700 : "auto" }}>
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
@@ -1550,7 +1739,19 @@ const AdminDashboard: React.FC = () => {
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              mb: 3,
+              flexWrap: "wrap",
+              alignItems: "center",
+              flexDirection: { xs: "column", sm: "row" },
+              "& > *": {
+                minWidth: { xs: "100%", sm: "auto" },
+              },
+            }}
+          >
             <TextField
               label="Document ID"
               variant="outlined"
@@ -1592,10 +1793,33 @@ const AdminDashboard: React.FC = () => {
                 <MenuItem value="rejected">Rejected</MenuItem>
               </Select>
             </FormControl>
+            <Button
+              variant="contained"
+              startIcon={<Upload />}
+              onClick={() => setAdminUploadDialogOpen(true)}
+              sx={{ ml: "auto" }}
+            >
+              Upload for User
+            </Button>
           </Box>
 
-          <TableContainer>
-            <Table>
+          <TableContainer
+            sx={{
+              overflowX: "auto",
+              "&::-webkit-scrollbar": {
+                height: 8,
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "rgba(0,0,0,0.1)",
+                borderRadius: 4,
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "rgba(0,0,0,0.3)",
+                borderRadius: 4,
+              },
+            }}
+          >
+            <Table sx={{ minWidth: isMobile ? 800 : "auto" }}>
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
@@ -1650,9 +1874,7 @@ const AdminDashboard: React.FC = () => {
                           </span>
                         </Tooltip>
                       </TableCell>
-                      <TableCell>
-                        {document.document_type || "General"}
-                      </TableCell>
+                      <TableCell>{document.type || "General"}</TableCell>
                       <TableCell>
                         <Box
                           sx={{
@@ -1682,82 +1904,78 @@ const AdminDashboard: React.FC = () => {
                         />
                       </TableCell>
                       <TableCell>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => handleDocumentView(document)}
-                        >
-                          <Visibility />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => {
-                            documentsApi
-                              .downloadDocument(document.document_id)
-                              .then((blob) => {
-                                const url = window.URL.createObjectURL(blob);
-                                const a = window.document.createElement("a");
-                                a.href = url;
-                                a.download = document.original_name;
-                                window.document.body.appendChild(a);
-                                a.click();
-                                window.URL.revokeObjectURL(url);
-                                window.document.body.removeChild(a);
-                              })
-                              .catch((error) => {
-                                console.error("Download failed:", error);
-                                // Fallback to direct URL
-                                window.open(
-                                  `/api/documents/${document.document_id}/download`,
-                                  "_blank"
-                                );
-                              });
-                          }}
-                        >
-                          <Download />
-                        </IconButton>
+                        <Tooltip title="View Document">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleDocumentView(document)}
+                          >
+                            <Visibility />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Download Document">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleDocumentDownload(document)}
+                            disabled={downloadingDocuments.has(
+                              document.document_id
+                            )}
+                          >
+                            {downloadingDocuments.has(document.document_id) ? (
+                              <CircularProgress size={16} />
+                            ) : (
+                              <Download />
+                            )}
+                          </IconButton>
+                        </Tooltip>
                         {document.status === "pending" && (
                           <>
-                            <IconButton
-                              size="small"
-                              color="success"
-                              onClick={() =>
-                                handleDocumentAction(
-                                  document.document_id,
-                                  "approve"
-                                )
-                              }
-                            >
-                              <CheckCircle />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => {
-                                const reason = prompt("Rejection reason:");
-                                if (reason) {
+                            <Tooltip title="Approve Document">
+                              <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() =>
                                   handleDocumentAction(
                                     document.document_id,
-                                    "reject",
-                                    reason
-                                  );
+                                    "approve"
+                                  )
                                 }
-                              }}
-                            >
-                              <Cancel />
-                            </IconButton>
+                              >
+                                <CheckCircle />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Reject Document">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => {
+                                  const reason = prompt("Rejection reason:");
+                                  if (reason) {
+                                    handleDocumentAction(
+                                      document.document_id,
+                                      "reject",
+                                      reason
+                                    );
+                                  }
+                                }}
+                              >
+                                <Cancel />
+                              </IconButton>
+                            </Tooltip>
                           </>
                         )}
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() =>
-                            handleDeleteDocument(document.document_id)
-                          }
-                        >
-                          <Delete />
-                        </IconButton>
+                        <Tooltip title="Delete Document">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() =>
+                              handleDeleteDocument(document.document_id)
+                            }
+                          >
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
                       </TableCell>
                     </TableRow>
                   ))
@@ -1789,7 +2007,18 @@ const AdminDashboard: React.FC = () => {
             </Typography>
           </Box>
 
-          <Box sx={{ display: "flex", gap: 2, mb: 3, flexWrap: "wrap" }}>
+          <Box
+            sx={{
+              display: "flex",
+              gap: 2,
+              mb: 3,
+              flexWrap: "wrap",
+              flexDirection: { xs: "column", sm: "row" },
+              "& > *": {
+                minWidth: { xs: "100%", sm: "auto" },
+              },
+            }}
+          >
             <TextField
               label="Loan ID"
               variant="outlined"
@@ -1843,8 +2072,23 @@ const AdminDashboard: React.FC = () => {
             </FormControl>
           </Box>
 
-          <TableContainer>
-            <Table>
+          <TableContainer
+            sx={{
+              overflowX: "auto",
+              "&::-webkit-scrollbar": {
+                height: 8,
+              },
+              "&::-webkit-scrollbar-track": {
+                backgroundColor: "rgba(0,0,0,0.1)",
+                borderRadius: 4,
+              },
+              "&::-webkit-scrollbar-thumb": {
+                backgroundColor: "rgba(0,0,0,0.3)",
+                borderRadius: 4,
+              },
+            }}
+          >
+            <Table sx={{ minWidth: isMobile ? 800 : "auto" }}>
               <TableHead>
                 <TableRow>
                   <TableCell>ID</TableCell>
@@ -1986,18 +2230,19 @@ const AdminDashboard: React.FC = () => {
           {selectedDocument && (
             <Box>
               <Typography variant="h6" gutterBottom>
-                {selectedDocument.name ||
-                  selectedDocument.document_type ||
-                  "Document"}
+                {selectedDocument.name || "Document"}
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 <strong>Purpose:</strong> {selectedDocument.purpose}
               </Typography>
               <Typography variant="body2" color="text.secondary" gutterBottom>
-                <strong>Type:</strong>{" "}
-                {selectedDocument.type?.replace("_", " ") ||
-                  selectedDocument.document_type}
+                <strong>Type:</strong> {selectedDocument.type || "General"}
               </Typography>
+              {selectedDocument.document_type && (
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <strong>Description:</strong> {selectedDocument.document_type}
+                </Typography>
+              )}
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 <strong>Uploaded by:</strong>{" "}
                 <Tooltip title={`User ID: ${selectedDocument.user_id}`} arrow>
@@ -2130,34 +2375,29 @@ const AdminDashboard: React.FC = () => {
           <Button onClick={() => setDocumentDialogOpen(false)}>Close</Button>
           <Button
             variant="contained"
-            startIcon={<Download />}
+            startIcon={
+              selectedDocument &&
+              downloadingDocuments.has(selectedDocument.document_id) ? (
+                <CircularProgress size={16} />
+              ) : (
+                <Download />
+              )
+            }
             onClick={() => {
               if (selectedDocument) {
-                // Use the documentsApi for proper authentication
-                documentsApi
-                  .downloadDocument(selectedDocument.document_id)
-                  .then((blob) => {
-                    const url = window.URL.createObjectURL(blob);
-                    const a = window.document.createElement("a");
-                    a.href = url;
-                    a.download = selectedDocument.original_name;
-                    window.document.body.appendChild(a);
-                    a.click();
-                    window.URL.revokeObjectURL(url);
-                    window.document.body.removeChild(a);
-                  })
-                  .catch((error) => {
-                    console.error("Download failed:", error);
-                    // Fallback to direct URL
-                    window.open(
-                      `/api/documents/${selectedDocument.document_id}/download`,
-                      "_blank"
-                    );
-                  });
+                handleDocumentDownload(selectedDocument);
               }
             }}
+            disabled={
+              selectedDocument
+                ? downloadingDocuments.has(selectedDocument.document_id)
+                : false
+            }
           >
-            Download
+            {selectedDocument &&
+            downloadingDocuments.has(selectedDocument.document_id)
+              ? "Downloading..."
+              : "Download"}
           </Button>
         </DialogActions>
       </Dialog>
@@ -3081,6 +3321,179 @@ const AdminDashboard: React.FC = () => {
               Delete User
             </Button>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* Admin Upload Document Dialog */}
+      <Dialog
+        open={adminUploadDialogOpen}
+        onClose={() => setAdminUploadDialogOpen(false)}
+        maxWidth="md"
+        fullWidth
+        fullScreen={isMobile}
+      >
+        <DialogTitle>Upload Document for User</DialogTitle>
+        <DialogContent>
+          <Box sx={{ mt: 2 }}>
+            <Autocomplete
+              fullWidth
+              options={allUsers}
+              getOptionLabel={(user) => formatUserDisplay(user)}
+              value={
+                allUsers.find(
+                  (user) => user.user_id === adminUploadForm.userId
+                ) || null
+              }
+              onChange={(event, newValue) => {
+                setAdminUploadForm((prev) => ({
+                  ...prev,
+                  userId: newValue?.user_id || "",
+                }));
+              }}
+              onOpen={() => fetchAllUsers()}
+              loading={allUsersLoading}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Select User"
+                  placeholder="Search by name or ID..."
+                  required
+                  sx={{ mb: 2 }}
+                  helperText="Search and select the user for whom you want to upload the document"
+                />
+              )}
+              renderOption={(props, user) => (
+                <Box component="li" {...props}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      flexDirection: "column",
+                      width: "100%",
+                    }}
+                  >
+                    <Typography variant="body1" sx={{ fontWeight: 500 }}>
+                      {user.first_name} {user.last_name}
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      {user.email} • {user.user_id}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+              noOptionsText="No users found"
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              fullWidth
+              label="Document Name"
+              value={adminUploadForm.documentName}
+              onChange={(e) =>
+                setAdminUploadForm((prev) => ({
+                  ...prev,
+                  documentName: e.target.value,
+                }))
+              }
+              required
+              sx={{ mb: 2 }}
+            />
+
+            <TextField
+              fullWidth
+              label="Purpose"
+              value={adminUploadForm.purpose}
+              onChange={(e) =>
+                setAdminUploadForm((prev) => ({
+                  ...prev,
+                  purpose: e.target.value,
+                }))
+              }
+              required
+              sx={{ mb: 2 }}
+              helperText="e.g., Loan Application, Identity Verification, etc."
+            />
+
+            <FormControl fullWidth sx={{ mb: 2 }}>
+              <InputLabel>Document Type</InputLabel>
+              <Select
+                value={adminUploadForm.documentType}
+                label="Document Type"
+                onChange={(e) =>
+                  setAdminUploadForm((prev) => ({
+                    ...prev,
+                    documentType: e.target.value,
+                  }))
+                }
+              >
+                <MenuItem value="General">General</MenuItem>
+                <MenuItem value="Identity Proof">Identity Proof</MenuItem>
+                <MenuItem value="Address Proof">Address Proof</MenuItem>
+                <MenuItem value="Academic Document">Academic Document</MenuItem>
+                <MenuItem value="Financial Document">
+                  Financial Document
+                </MenuItem>
+                <MenuItem value="Marksheet">Marksheet</MenuItem>
+                <MenuItem value="Photo">Photo</MenuItem>
+                <MenuItem value="Other">Other</MenuItem>
+              </Select>
+            </FormControl>
+
+            <TextField
+              fullWidth
+              label="Description (Optional)"
+              multiline
+              rows={3}
+              value={adminUploadForm.description}
+              onChange={(e) =>
+                setAdminUploadForm((prev) => ({
+                  ...prev,
+                  description: e.target.value,
+                }))
+              }
+              sx={{ mb: 2 }}
+              helperText="Additional details about the document"
+            />
+
+            <Box sx={{ mb: 2 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Select File
+              </Typography>
+              <input
+                type="file"
+                accept=".pdf,.doc,.docx,.jpg,.jpeg,.png"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) {
+                    setAdminUploadForm((prev) => ({
+                      ...prev,
+                      file: file,
+                    }));
+                  }
+                }}
+                style={{ width: "100%" }}
+              />
+              <Typography variant="caption" color="text.secondary">
+                Supported formats: PDF, DOC, DOCX, JPG, JPEG, PNG (Max 10MB)
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setAdminUploadDialogOpen(false)}>
+            Cancel
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleAdminUpload}
+            disabled={
+              !adminUploadForm.userId ||
+              !adminUploadForm.documentName ||
+              !adminUploadForm.purpose ||
+              !adminUploadForm.file
+            }
+          >
+            Upload Document
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>

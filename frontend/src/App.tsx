@@ -39,6 +39,9 @@ import Register from "./pages/Auth/Register";
 import GoogleSuccess from "./pages/Auth/GoogleSuccess";
 import GoogleError from "./pages/Auth/GoogleError";
 import NotFound from "./pages/Error/NotFound";
+import PrivacyPolicy from "./pages/Static/PrivacyPolicy";
+import TermsOfService from "./pages/Static/TermsOfService";
+import HelpSupport from "./pages/Static/HelpSupport";
 
 // Create a modern, high-contrast theme
 const theme = createTheme({
@@ -128,6 +131,12 @@ const theme = createTheme({
           fontWeight: 600,
           textTransform: "none",
           transition: "all 0.2s ease",
+          // Mobile responsive sizing
+          "@media (max-width: 600px)": {
+            padding: "8px 16px",
+            fontSize: "0.875rem",
+            minHeight: 36,
+          },
         },
         contained: {
           backgroundColor: "#1976D2",
@@ -152,6 +161,18 @@ const theme = createTheme({
           color: "#1976D2",
           "&:hover": {
             backgroundColor: "rgba(25, 118, 210, 0.08)",
+          },
+        },
+      },
+    },
+    MuiIconButton: {
+      styleOverrides: {
+        root: {
+          // Mobile responsive sizing for IconButton
+          "@media (max-width: 600px)": {
+            padding: "8px",
+            minHeight: 36,
+            minWidth: 36,
           },
         },
       },
@@ -474,6 +495,12 @@ function App() {
                     element={<GoogleSuccess />}
                   />
                   <Route path="/auth/google/error" element={<GoogleError />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route
+                    path="/terms-of-service"
+                    element={<TermsOfService />}
+                  />
+                  <Route path="/help-support" element={<HelpSupport />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>

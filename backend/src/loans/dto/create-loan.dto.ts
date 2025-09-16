@@ -44,6 +44,14 @@ export class CreateLoanDto {
   readonly college_id: string;
 
   @ApiProperty({
+    description: 'Phone number for loan application',
+    example: '+1234567890',
+  })
+  @IsString()
+  @IsNotEmpty()
+  readonly phone_number: string;
+
+  @ApiProperty({
     description: 'Additional description (optional)',
     example: 'Loan for Computer Science Engineering course',
     required: false,

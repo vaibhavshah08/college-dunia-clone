@@ -64,7 +64,7 @@ const Home: React.FC = () => {
           backgroundRepeat: "no-repeat",
           backgroundPosition: "center",
           backgroundImage: `linear-gradient(rgba(25, 118, 210, 0.9), rgba(25, 118, 210, 0.9)), url(https://images.unsplash.com/photo-1523050854058-8df90110c9e1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80)`,
-          minHeight: "60vh",
+          minHeight: { xs: "50vh", sm: "60vh" },
           display: "flex",
           alignItems: "center",
         }}
@@ -85,21 +85,44 @@ const Home: React.FC = () => {
             variant="h2"
             color="inherit"
             gutterBottom
-            sx={{ fontWeight: "bold" }}
+            sx={{
+              fontWeight: "bold",
+              fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
+              lineHeight: 1.2,
+            }}
           >
             Find Your Dream College
           </Typography>
-          <Typography variant="h5" color="inherit" paragraph>
+          <Typography
+            variant="h5"
+            color="inherit"
+            paragraph
+            sx={{
+              fontSize: { xs: "1.1rem", sm: "1.25rem", md: "1.5rem" },
+              lineHeight: 1.4,
+            }}
+          >
             Discover thousands of colleges, compare them side by side, and make
             informed decisions about your education. Apply for loans and manage
             your documents all in one place.
           </Typography>
-          <Box sx={{ mt: 4 }}>
+          <Box
+            sx={{
+              mt: 4,
+              display: "flex",
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 2,
+              alignItems: { xs: "stretch", sm: "center" },
+            }}
+          >
             <Button
               variant="contained"
               size="large"
               onClick={() => navigate("/colleges")}
-              sx={{ mr: 2, mb: 2 }}
+              sx={{
+                minWidth: { xs: "100%", sm: "auto" },
+                py: 1.5,
+              }}
             >
               Explore Colleges
             </Button>
@@ -108,7 +131,16 @@ const Home: React.FC = () => {
                 variant="outlined"
                 size="large"
                 onClick={() => navigate("/register")}
-                sx={{ color: "white", borderColor: "white", mb: 2 }}
+                sx={{
+                  color: "white",
+                  borderColor: "white",
+                  minWidth: { xs: "100%", sm: "auto" },
+                  py: 1.5,
+                  "&:hover": {
+                    borderColor: "white",
+                    backgroundColor: "rgba(255, 255, 255, 0.1)",
+                  },
+                }}
               >
                 Get Started
               </Button>

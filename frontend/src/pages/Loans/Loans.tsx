@@ -19,6 +19,7 @@ import {
   Select,
   MenuItem,
   Pagination,
+  IconButton,
 } from "@mui/material";
 import { Add, Visibility, Refresh, Edit } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "react-query";
@@ -43,6 +44,7 @@ const Loans: React.FC = () => {
     interest_rate: 8.5,
     term_months: undefined as any,
     college_id: "",
+    phone_number: "",
     description: "",
   });
 
@@ -82,6 +84,7 @@ const Loans: React.FC = () => {
           interest_rate: 8.5,
           term_months: undefined as any,
           college_id: "",
+          phone_number: "",
           description: "",
         });
         toast.success("Loan application submitted successfully");
@@ -111,6 +114,7 @@ const Loans: React.FC = () => {
           interest_rate: 8.5,
           term_months: undefined as any,
           college_id: "",
+          phone_number: "",
           description: "",
         });
         toast.success("Loan updated successfully");
@@ -168,6 +172,7 @@ const Loans: React.FC = () => {
       interest_rate: loan.interest_rate,
       term_months: loan.term_months,
       college_id: loan.college_id,
+      phone_number: loan.phone_number || "",
       description: loan.description || "",
     });
     setOpenDialog(true);
@@ -181,6 +186,7 @@ const Loans: React.FC = () => {
       interest_rate: 8.5,
       term_months: undefined as any,
       college_id: "",
+      phone_number: "",
       description: "",
     });
     setOpenDialog(true);
@@ -253,24 +259,48 @@ const Loans: React.FC = () => {
           justifyContent="space-between"
           alignItems="center"
           mb={3}
+          sx={{
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 2, sm: 0 },
+          }}
         >
           <Typography variant="h4" component="h1">
             Loan Applications
           </Typography>
-          <Box display="flex" gap={2}>
+          <Box display="flex" gap={2} flexWrap="nowrap">
             <Button
               variant="outlined"
               startIcon={<Refresh />}
               onClick={handleRefresh}
+              sx={{
+                display: { xs: "none", sm: "flex" },
+              }}
             >
               Refresh
             </Button>
+            <IconButton
+              onClick={handleRefresh}
+              size="large"
+              sx={{
+                display: { xs: "flex", sm: "none" },
+              }}
+              aria-label="Refresh"
+            >
+              <Refresh />
+            </IconButton>
             <Button
               variant="contained"
               startIcon={<Add />}
               onClick={() => setOpenDialog(true)}
+              sx={{
+                minWidth: { xs: "auto", sm: "auto" },
+                px: { xs: 2, sm: 3 },
+              }}
             >
-              Apply for Loan
+              <Box sx={{ display: { xs: "none", sm: "inline" } }}>
+                Apply for Loan
+              </Box>
+              <Box sx={{ display: { xs: "inline", sm: "none" } }}>Apply</Box>
             </Button>
           </Box>
         </Box>
@@ -489,6 +519,22 @@ const Loans: React.FC = () => {
                   ))}
                 </Select>
               </FormControl>
+
+              <TextField
+                fullWidth
+                label="Phone Number"
+                type="tel"
+                value={formData.phone_number}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    phone_number: e.target.value,
+                  }))
+                }
+                placeholder="Enter your phone number"
+                required
+                InputLabelProps={{ shrink: true }}
+              />
 
               <TextField
                 fullWidth

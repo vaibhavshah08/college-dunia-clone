@@ -240,52 +240,108 @@ const Colleges: React.FC = () => {
 
   return (
     <Container maxWidth="lg">
-      <Box
-        display="flex"
-        justifyContent="space-between"
-        alignItems="center"
-        sx={{ mb: 4 }}
-      >
-        <Typography variant="h4" component="h1">
-          Find Colleges
-        </Typography>
-        <Box display="flex" alignItems="center" gap={2}>
-          <Button
-            variant="outlined"
-            startIcon={<Refresh />}
-            onClick={handleRefresh}
-            size="small"
-          >
-            Refresh
-          </Button>
-          {selectedColleges.length > 0 && (
-            <Box display="flex" alignItems="center" gap={1}>
-              <Typography variant="body2" color="text.secondary">
-                {selectedColleges.length} selected
-              </Typography>
-              <Box display="flex" gap={0.5}>
-                {selectedColleges.map((college) => (
-                  <Chip
-                    key={college.college_id}
-                    label={college.college_name}
-                    size="small"
-                    onDelete={() => removeFromComparison(college.college_id)}
-                    color="primary"
-                    variant="outlined"
-                  />
-                ))}
+      <Box sx={{ mb: 4 }}>
+        {/* Title and Action Buttons Row */}
+        <Box
+          display="flex"
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{
+            flexDirection: { xs: "column", sm: "row" },
+            gap: { xs: 2, sm: 0 },
+            mb: { xs: selectedColleges.length > 0 ? 2 : 0, sm: 0 },
+          }}
+        >
+          <Typography variant="h4" component="h1">
+            Find Colleges
+          </Typography>
+          <Box display="flex" alignItems="center" gap={2} flexWrap="nowrap">
+            <Button
+              variant="outlined"
+              startIcon={<Refresh />}
+              onClick={handleRefresh}
+              size="small"
+              sx={{
+                display: { xs: "none", sm: "flex" },
+              }}
+            >
+              Refresh
+            </Button>
+            <IconButton
+              onClick={handleRefresh}
+              size="large"
+              sx={{
+                display: { xs: "flex", sm: "none" },
+              }}
+              aria-label="Refresh"
+            >
+              <Refresh />
+            </IconButton>
+            <Button
+              variant="contained"
+              startIcon={<Compare />}
+              onClick={handleCompareColleges}
+              disabled={selectedColleges.length < 2}
+              sx={{
+                minWidth: { xs: "auto", sm: "auto" },
+                px: { xs: 2, sm: 3 },
+              }}
+            >
+              <Box sx={{ display: { xs: "none", sm: "inline" } }}>
+                Compare ({selectedColleges.length})
               </Box>
-            </Box>
-          )}
-          <Button
-            variant="contained"
-            startIcon={<Compare />}
-            onClick={handleCompareColleges}
-            disabled={selectedColleges.length < 2}
-          >
-            Compare ({selectedColleges.length})
-          </Button>
+              <Box sx={{ display: { xs: "inline", sm: "none" } }}>Compare</Box>
+            </Button>
+          </Box>
         </Box>
+
+        {/* Selected Colleges List - Below the controls on mobile */}
+        {selectedColleges.length > 0 && (
+          <Box
+            sx={{
+              mt: { xs: 1.5, sm: 0 },
+              display: "flex",
+              flexDirection: "column",
+              gap: 1,
+            }}
+          >
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{ fontWeight: 500 }}
+            >
+              {selectedColleges.length} selected
+            </Typography>
+            <Box
+              sx={{
+                display: "flex",
+                gap: 0.5,
+                flexWrap: "wrap",
+                maxWidth: "100%",
+                overflow: "hidden",
+              }}
+            >
+              {selectedColleges.map((college) => (
+                <Chip
+                  key={college.college_id}
+                  label={college.college_name}
+                  size="small"
+                  onDelete={() => removeFromComparison(college.college_id)}
+                  color="primary"
+                  variant="outlined"
+                  sx={{
+                    maxWidth: "100%",
+                    "& .MuiChip-label": {
+                      overflow: "hidden",
+                      textOverflow: "ellipsis",
+                      whiteSpace: "nowrap",
+                    },
+                  }}
+                />
+              ))}
+            </Box>
+          </Box>
+        )}
       </Box>
 
       {/* Search and Filters */}
@@ -651,7 +707,18 @@ const Colleges: React.FC = () => {
                           mb: 2,
                         }}
                       >
-                        <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            fontWeight: 600,
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            display: "-webkit-box",
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: "vertical",
+                            lineHeight: 1.3,
+                          }}
+                        >
                           {college.college_name}
                         </Typography>
                         {college.is_partnered && (

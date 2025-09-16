@@ -18,6 +18,7 @@ import {
   useTheme,
   useMediaQuery,
   Divider,
+  Tooltip,
 } from "@mui/material";
 import {
   Menu as MenuIcon,
@@ -150,15 +151,17 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <AppBar position="static" elevation={1}>
         <Toolbar sx={{ px: { xs: 1, sm: 2 }, color: "text.primary" }}>
           {isMobile && (
-            <IconButton
-              color="primary"
-              aria-label="open drawer"
-              edge="start"
-              onClick={handleDrawerToggle}
-              sx={{ mr: 2 }}
-            >
-              <MenuIcon />
-            </IconButton>
+            <Tooltip title="Open Menu">
+              <IconButton
+                color="primary"
+                aria-label="open drawer"
+                edge="start"
+                onClick={handleDrawerToggle}
+                sx={{ mr: 2 }}
+              >
+                <MenuIcon />
+              </IconButton>
+            </Tooltip>
           )}
 
           <Typography

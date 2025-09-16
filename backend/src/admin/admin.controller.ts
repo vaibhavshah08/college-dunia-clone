@@ -9,7 +9,10 @@ import {
   Query,
   UseGuards,
   ParseIntPipe,
+  UploadedFile,
+  UseInterceptors,
 } from '@nestjs/common';
+import { GetUser } from '../auth/get-user.decorator';
 import {
   ApiTags,
   ApiOperation,
@@ -18,13 +21,14 @@ import {
   ApiQuery,
   ApiParam,
   ApiBody,
+  ApiConsumes,
 } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/roles.decorator';
 import { Correlation } from 'src/core/correlation/correlation.decorator';
-import { GetUser } from '../auth/get-user.decorator';
 import { AdminUpdateUserDto } from '../user/dto/admin-update-user.dto';
 import { AdminCreateUserDto } from '../user/dto/admin-create-user.dto';
 
@@ -503,6 +507,61 @@ export class AdminController {
       user_id,
       current_user,
       mode,
+    );
+  }
+
+  @Post('documents/upload')
+  @UseInterceptors(FileInterceptor('file'))
+  @ApiOperation({
+    summary: 'Upload document for a user (Admin only)',
+  })
+  @ApiConsumes('multipart/form-data')
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+        },
+        name: {
+          type: 'string',
+        },
+        purpose: {
+          type: 'string',
+        },
+        document_type: {
+          type: 'string',
+        },
+        user_id: {
+          type: 'string',
+        },
+      },
+    },
+  })
+  @ApiResponse({
+    status: 201,
+    description: 'Document uploaded successfully',
+  })
+  async uploadDocumentForUser(
+    @Correlation() correlation_id: string,
+    @GetUser() current_user: any,
+    @UploadedFile() file: Express.Multer.File,
+    @Body('name') name: string,
+    @Body('purpose') purpose: string,
+    @Body('document_type') document_type: string,
+    @Body('user_id') user_id: string,
+    @Body('description') description?: string,
+  ) {
+    return await this.adminService.uploadDocumentForUser(
+      correlation_id,
+      current_user,
+      file,
+      name,
+      purpose,
+      document_type,
+      user_id,
+      description,
     );
   }
 }

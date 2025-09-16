@@ -323,9 +323,11 @@ const CollegeComparison: React.FC = () => {
           mb={3}
         >
           <Box display="flex" alignItems="center" gap={2}>
-            <IconButton onClick={() => navigate("/colleges")}>
-              <ArrowBack />
-            </IconButton>
+            <Tooltip title="Back to Colleges">
+              <IconButton onClick={() => navigate("/colleges")}>
+                <ArrowBack />
+              </IconButton>
+            </Tooltip>
             <Typography variant="h4" component="h1">
               Compare Colleges
             </Typography>

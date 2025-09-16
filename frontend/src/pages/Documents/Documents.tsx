@@ -69,6 +69,9 @@ const Documents: React.FC = () => {
     null
   );
   const [documentDialogOpen, setDocumentDialogOpen] = useState(false);
+  const [downloadingDocuments, setDownloadingDocuments] = useState<Set<string>>(
+    new Set()
+  );
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -182,7 +185,7 @@ const Documents: React.FC = () => {
         name: documentName,
         purpose: documentPurpose,
         type: documentType,
-        documentType: description || undefined,
+        documentType: description || undefined, // This will be stored in the legacy document_type field
         loanId: isForLoan && selectedLoanId ? selectedLoanId : undefined,
       });
     }
@@ -193,27 +196,46 @@ const Documents: React.FC = () => {
     setDocumentDialogOpen(true);
   };
 
-  const handleDocumentDownload = (document: Document) => {
-    documentsApi
-      .downloadDocument(document.document_id)
-      .then((blob) => {
-        const url = window.URL.createObjectURL(blob);
-        const a = window.document.createElement("a");
-        a.href = url;
-        a.download = document.original_name;
-        window.document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        window.document.body.removeChild(a);
-      })
-      .catch((error) => {
-        console.error("Download failed:", error);
-        // Fallback to direct URL
-        window.open(
-          `/api/documents/${document.document_id}/download`,
-          "_blank"
-        );
+  const handleDocumentDownload = async (document: Document) => {
+    const documentId = document.document_id;
+
+    // Add to downloading set
+    setDownloadingDocuments((prev) => new Set(prev).add(documentId));
+
+    try {
+      const blob = await documentsApi.downloadDocument(documentId);
+
+      // Create download link
+      const url = window.URL.createObjectURL(blob);
+      const a = window.document.createElement("a");
+      a.href = url;
+      a.download = document.original_name;
+      window.document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      window.document.body.removeChild(a);
+
+      toast.success("Document downloaded successfully");
+    } catch (error) {
+      console.error("Download failed:", error);
+      toast.error("Failed to download document. Please try again.");
+
+      // Fallback: try direct URL
+      try {
+        const fileUrl = getFileUrl(document.document_path);
+        window.open(fileUrl, "_blank");
+      } catch (fallbackError) {
+        console.error("Fallback download also failed:", fallbackError);
+        toast.error("Unable to download document. Please contact support.");
+      }
+    } finally {
+      // Remove from downloading set
+      setDownloadingDocuments((prev) => {
+        const newSet = new Set(prev);
+        newSet.delete(documentId);
+        return newSet;
       });
+    }
   };
 
   // Delete document mutation
@@ -329,24 +351,48 @@ const Documents: React.FC = () => {
         justifyContent="space-between"
         alignItems="center"
         mb={3}
+        sx={{
+          flexDirection: { xs: "column", sm: "row" },
+          gap: { xs: 2, sm: 0 },
+        }}
       >
         <Typography variant="h4" component="h1">
           Documents
         </Typography>
-        <Box display="flex" gap={2}>
+        <Box display="flex" gap={2} flexWrap="nowrap">
           <Button
             variant="outlined"
             startIcon={<Refresh />}
             onClick={handleRefresh}
+            sx={{
+              display: { xs: "none", sm: "flex" },
+            }}
           >
             Refresh
           </Button>
+          <IconButton
+            onClick={handleRefresh}
+            size="large"
+            sx={{
+              display: { xs: "flex", sm: "none" },
+            }}
+            aria-label="Refresh"
+          >
+            <Refresh />
+          </IconButton>
           <Button
             variant="contained"
             startIcon={<Add />}
             onClick={() => setOpenDialog(true)}
+            sx={{
+              minWidth: { xs: "auto", sm: "auto" },
+              px: { xs: 2, sm: 3 },
+            }}
           >
-            Upload Document
+            <Box sx={{ display: { xs: "none", sm: "inline" } }}>
+              Upload Document
+            </Box>
+            <Box sx={{ display: { xs: "inline", sm: "none" } }}>Upload</Box>
           </Button>
         </Box>
       </Box>
@@ -464,8 +510,15 @@ const Documents: React.FC = () => {
                             size="small"
                             color="primary"
                             onClick={() => handleDocumentDownload(document)}
+                            disabled={downloadingDocuments.has(
+                              document.document_id
+                            )}
                           >
-                            <Download />
+                            {downloadingDocuments.has(document.document_id) ? (
+                              <CircularProgress size={16} />
+                            ) : (
+                              <Download />
+                            )}
                           </IconButton>
                         </Tooltip>
                         {document.status === "pending" ? (
@@ -596,11 +649,18 @@ const Documents: React.FC = () => {
                     label="Document Type"
                     required
                   >
-                    <MenuItem value="ID_PROOF">ID Proof</MenuItem>
-                    <MenuItem value="ADDRESS_PROOF">Address Proof</MenuItem>
-                    <MenuItem value="MARKSHEET">Marksheet</MenuItem>
-                    <MenuItem value="PHOTO">Photo</MenuItem>
-                    <MenuItem value="OTHER">Other</MenuItem>
+                    <MenuItem value="General">General</MenuItem>
+                    <MenuItem value="Identity Proof">Identity Proof</MenuItem>
+                    <MenuItem value="Address Proof">Address Proof</MenuItem>
+                    <MenuItem value="Academic Document">
+                      Academic Document
+                    </MenuItem>
+                    <MenuItem value="Financial Document">
+                      Financial Document
+                    </MenuItem>
+                    <MenuItem value="Marksheet">Marksheet</MenuItem>
+                    <MenuItem value="Photo">Photo</MenuItem>
+                    <MenuItem value="Other">Other</MenuItem>
                   </Select>
                   {validationErrors.documentType && (
                     <Typography
@@ -735,6 +795,11 @@ const Documents: React.FC = () => {
                 {selectedDocument.type?.replace("_", " ") ||
                   selectedDocument.document_type}
               </Typography>
+              {selectedDocument.document_type && (
+                <Typography variant="body2" color="text.secondary" gutterBottom>
+                  <strong>Description:</strong> {selectedDocument.document_type}
+                </Typography>
+              )}
               <Typography variant="body2" color="text.secondary" gutterBottom>
                 <strong>File:</strong> {selectedDocument.original_name}
               </Typography>
@@ -846,14 +911,29 @@ const Documents: React.FC = () => {
           <Button onClick={() => setDocumentDialogOpen(false)}>Close</Button>
           <Button
             variant="contained"
-            startIcon={<Download />}
+            startIcon={
+              selectedDocument &&
+              downloadingDocuments.has(selectedDocument.document_id) ? (
+                <CircularProgress size={16} />
+              ) : (
+                <Download />
+              )
+            }
             onClick={() => {
               if (selectedDocument) {
                 handleDocumentDownload(selectedDocument);
               }
             }}
+            disabled={
+              selectedDocument
+                ? downloadingDocuments.has(selectedDocument.document_id)
+                : false
+            }
           >
-            Download
+            {selectedDocument &&
+            downloadingDocuments.has(selectedDocument.document_id)
+              ? "Downloading..."
+              : "Download"}
           </Button>
         </DialogActions>
       </Dialog>

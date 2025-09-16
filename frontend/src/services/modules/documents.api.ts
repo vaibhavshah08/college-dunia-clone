@@ -122,6 +122,39 @@ export const documentsApi = {
     });
     return response.data;
   },
+
+  /**
+   * Upload document for user (Admin only)
+   */
+  async uploadDocumentForUser(
+    file: File,
+    name: string,
+    purpose: string,
+    documentType: string,
+    userId: string,
+    description?: string
+  ): Promise<Document> {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("name", name);
+    formData.append("purpose", purpose);
+    formData.append("document_type", documentType);
+    formData.append("user_id", userId);
+    if (description) {
+      formData.append("description", description);
+    }
+
+    const response = await apiClient.post<Document>(
+      "/admin/documents/upload",
+      formData,
+      {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      }
+    );
+    return response.data;
+  },
 };
 
 export default documentsApi;

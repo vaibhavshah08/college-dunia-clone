@@ -1,4 +1,4 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../user/entities/user.entity';
@@ -18,9 +18,17 @@ import {
 import * as bcrypt from 'bcrypt';
 import { AdminCreateUserDto } from '../user/dto/admin-create-user.dto';
 import { v4 as uuidv4 } from 'uuid';
+import * as fs from 'fs';
+import * as path from 'path';
 
 @Injectable()
 export class AdminService {
+  private readonly uploadPath = path.join(
+    process.cwd(),
+    'uploads',
+    'documents',
+  );
+
   constructor(
     @InjectRepository(User)
     private readonly userRepo: Repository<User>,
@@ -33,7 +41,12 @@ export class AdminService {
     @InjectRepository(Document)
     private readonly documentRepo: Repository<Document>,
     private readonly logger: CustomLogger,
-  ) {}
+  ) {
+    // Ensure upload directory exists
+    if (!fs.existsSync(this.uploadPath)) {
+      fs.mkdirSync(this.uploadPath, { recursive: true });
+    }
+  }
 
   async getDashboardStats(correlation_id: string) {
     this.logger.setContext(this.constructor.name + '/getDashboardStats');
@@ -716,6 +729,105 @@ export class AdminService {
       throw error;
     } finally {
       await queryRunner.release();
+    }
+  }
+
+  async uploadDocumentForUser(
+    correlation_id: string,
+    current_user: any,
+    file: Express.Multer.File,
+    name: string,
+    purpose: string,
+    document_type: string,
+    user_id: string,
+    description?: string,
+  ) {
+    this.logger.setContext(this.constructor.name + '/uploadDocumentForUser');
+    this.logger.debug(
+      correlation_id,
+      `Admin ${current_user.user_id} uploading document for user ${user_id}`,
+    );
+
+    try {
+      // Validate file
+      if (!file) {
+        throw new BadRequestException('No file uploaded');
+      }
+
+      const allowedMimeTypes = [
+        'application/pdf',
+        'image/jpeg',
+        'image/png',
+        'image/jpg',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      ];
+
+      if (!allowedMimeTypes.includes(file.mimetype)) {
+        throw new BadRequestException('File type not allowed');
+      }
+
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        throw new BadRequestException('File size too large');
+      }
+
+      // Verify user exists
+      const user = await this.userRepo.findOne({
+        where: { user_id: user_id, is_deleted: false },
+      });
+
+      if (!user) {
+        throw customHttpError(
+          ENTITY_NOT_FOUND,
+          'USER_NOT_FOUND',
+          'User not found',
+          HttpStatus.NOT_FOUND,
+        );
+      }
+
+      // Generate document ID and filename
+      const document_id = uuidv4().replace(/-/g, '');
+      const fileExtension = path.extname(file.originalname);
+      const fileName = `${document_id}${fileExtension}`;
+      const filePath = path.join(this.uploadPath, fileName);
+
+      // Save file to disk
+      fs.writeFileSync(filePath, file.buffer);
+
+      // Create document entity
+      const document = this.documentRepo.create({
+        document_id,
+        user_id,
+        document_path: `/uploads/documents/${fileName}`,
+        original_name: file.originalname,
+        file_size: file.size,
+        mime_type: file.mimetype,
+        type: document_type,
+        name,
+        purpose,
+        document_type: description || undefined, // Store description in legacy document_type field
+        status: 'approved', // Admin uploaded documents are auto-approved
+      });
+
+      const savedDocument = await this.documentRepo.save(document);
+
+      this.logger.debug(
+        correlation_id,
+        `Document uploaded successfully: ${savedDocument.document_id}`,
+      );
+
+      return {
+        message: 'Document uploaded successfully for user',
+        data: savedDocument,
+      };
+    } catch (error) {
+      this.logger.error(
+        correlation_id,
+        'Error uploading document for user',
+        error,
+      );
+      throw error;
     }
   }
 }
