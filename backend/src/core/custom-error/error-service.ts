@@ -1,4 +1,4 @@
-import { HttpException, HttpStatus } from "@nestjs/common";
+import { HttpException, HttpStatus } from '@nestjs/common';
 export interface ErrorCode {
   code: number;
   description: string;
@@ -8,7 +8,7 @@ export const customHttpError = (
   error_name: string,
   error_message: string,
   https_status_code: HttpStatus,
-  status_text?: string
+  status_text?: string,
 ): HttpException => {
   return new HttpException(
     {
@@ -18,6 +18,6 @@ export const customHttpError = (
       message: error_message,
       status_text,
     },
-    https_status_code
+    https_status_code,
   );
 };

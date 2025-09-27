@@ -99,7 +99,14 @@ const Login: React.FC = () => {
     } catch (err: any) {
       // Set local error state for UI feedback
       if (err?.status === 401) {
-        setError("Invalid email or password. Please try again.");
+        const errorMessage = err?.message;
+        if (errorMessage === "User is Inactive") {
+          setError("Your account is inactive. Please contact support.");
+        } else if (errorMessage === "User doesnot exist") {
+          setError("User does not exist. Please check your credentials.");
+        } else {
+          setError("Invalid email or password. Please try again.");
+        }
       } else if (err?.status === 422) {
         setError("Please check your input and try again.");
       } else if (err?.status === 429) {

@@ -4,10 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  ManyToOne,
-  JoinColumn,
 } from 'typeorm';
-import { User } from './entities/user.entity';
 
 export type DocumentStatus = 'pending' | 'approved' | 'rejected';
 
@@ -63,10 +60,6 @@ export class Document {
 
   @Column('boolean', { default: false })
   is_deleted: boolean;
-
-  @ManyToOne(() => User)
-  @JoinColumn({ name: 'user_id' })
-  user: User;
 
   @CreateDateColumn()
   uploaded_at: Date;

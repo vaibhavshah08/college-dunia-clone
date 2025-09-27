@@ -11,7 +11,7 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 const config = new ConfigService();
 
-let log_config = {
+const log_config = {
   LOG_LEVEL: config.get('LOG_LEVEL') || `debug`,
   SERVICE_NAME: config.get('SERVICE_NAME') || 'campus_connect',
   LOG_DIRECTORY_LOCATION: config.get('LOG_DIRECTORY_LOCATION') || `./logs/`,
@@ -272,7 +272,7 @@ const options = {
   // stream: { stream: s3stream }
 };
 
-let winstonOutputPlugins = [
+const winstonOutputPlugins = [
   // - Write all logs with level `error` and below to `error.log`
   new DailyRotateFile(options.errorFile),
 

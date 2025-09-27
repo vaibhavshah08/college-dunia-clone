@@ -6,6 +6,7 @@ import { JwtStrategy } from './jwt.strategy';
 import { GoogleStrategy } from './google.strategy';
 import { GoogleAuthService } from './google-auth.service';
 import { GoogleAuthController } from './google-auth.controller';
+import { UserStateService } from './user-state.service';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { UserModule } from 'src/user/user.module';
 import { User } from 'src/user/entities/user.entity';
@@ -28,7 +29,7 @@ import { LoggerModule } from 'src/core/logger/logger.module';
     UserModule,
   ],
   controllers: [GoogleAuthController],
-  providers: [JwtStrategy, GoogleStrategy, GoogleAuthService],
-  exports: [JwtModule, PassportModule, GoogleAuthService],
+  providers: [JwtStrategy, GoogleStrategy, GoogleAuthService, UserStateService],
+  exports: [JwtModule, PassportModule, GoogleAuthService, UserStateService],
 })
 export class AuthModule {}

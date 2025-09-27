@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -20,6 +20,10 @@ import {
   MenuItem,
   Pagination,
   IconButton,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  FormLabel,
 } from "@mui/material";
 import { Add, Visibility, Refresh, Edit } from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "react-query";
@@ -45,8 +49,31 @@ const Loans: React.FC = () => {
     term_months: undefined as any,
     college_id: "",
     phone_number: "",
+    first_name: "",
+    last_name: "",
+    gender: "",
+    whatsapp_number: "",
     description: "",
   });
+
+  // Reset form when component unmounts
+  useEffect(() => {
+    return () => {
+      setFormData({
+        loan_type: "Education Loan",
+        principal_amount: undefined as any,
+        interest_rate: 8.5,
+        term_months: undefined as any,
+        college_id: "",
+        phone_number: "",
+        first_name: "",
+        last_name: "",
+        gender: "",
+        whatsapp_number: "",
+        description: "",
+      });
+    };
+  }, []);
 
   // Pagination state
   const [page, setPage] = useState(1);
@@ -85,6 +112,10 @@ const Loans: React.FC = () => {
           term_months: undefined as any,
           college_id: "",
           phone_number: "",
+          first_name: "",
+          last_name: "",
+          gender: "",
+          whatsapp_number: "",
           description: "",
         });
         toast.success("Loan application submitted successfully");
@@ -115,6 +146,10 @@ const Loans: React.FC = () => {
           term_months: undefined as any,
           college_id: "",
           phone_number: "",
+          first_name: "",
+          last_name: "",
+          gender: "",
+          whatsapp_number: "",
           description: "",
         });
         toast.success("Loan updated successfully");
@@ -173,6 +208,10 @@ const Loans: React.FC = () => {
       term_months: loan.term_months,
       college_id: loan.college_id,
       phone_number: loan.phone_number || "",
+      first_name: loan.first_name || "",
+      last_name: loan.last_name || "",
+      gender: loan.gender || "",
+      whatsapp_number: loan.whatsapp_number || "",
       description: loan.description || "",
     });
     setOpenDialog(true);
@@ -187,6 +226,10 @@ const Loans: React.FC = () => {
       term_months: undefined as any,
       college_id: "",
       phone_number: "",
+      first_name: "",
+      last_name: "",
+      gender: "",
+      whatsapp_number: "",
       description: "",
     });
     setOpenDialog(true);
@@ -473,30 +516,73 @@ const Loans: React.FC = () => {
           fullWidth
         >
           <DialogTitle>
-            {editingLoan ? "Edit Loan Application" : "Apply for Education Loan"}
+            {editingLoan
+              ? "Edit Education Loan Application"
+              : "Apply for Education Loan"}
           </DialogTitle>
           <DialogContent>
             <Box
               sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
             >
-              <FormControl fullWidth>
-                <InputLabel>Loan Type</InputLabel>
-                <Select
-                  value={formData.loan_type}
+              {/* Name Fields */}
+              <Box sx={{ display: "flex", gap: 2 }}>
+                <TextField
+                  fullWidth
+                  label="First Name"
+                  value={formData.first_name}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      loan_type: e.target.value,
+                      first_name: e.target.value,
                     }))
                   }
-                  label="Loan Type"
+                  placeholder="Enter your first name"
+                  required
+                  InputLabelProps={{ shrink: true }}
+                />
+                <TextField
+                  fullWidth
+                  label="Last Name"
+                  value={formData.last_name}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      last_name: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter your last name"
+                  required
+                  InputLabelProps={{ shrink: true }}
+                />
+              </Box>
+
+              {/* Gender Radio Buttons */}
+              <FormControl fullWidth>
+                <FormLabel>Gender</FormLabel>
+                <RadioGroup
+                  row
+                  value={formData.gender}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      gender: e.target.value,
+                    }))
+                  }
                 >
-                  <MenuItem value="Education Loan">Education Loan</MenuItem>
-                  <MenuItem value="Personal Loan">Personal Loan</MenuItem>
-                  <MenuItem value="Home Loan">Home Loan</MenuItem>
-                </Select>
+                  <FormControlLabel
+                    value="Male"
+                    control={<Radio />}
+                    label="Male"
+                  />
+                  <FormControlLabel
+                    value="Female"
+                    control={<Radio />}
+                    label="Female"
+                  />
+                </RadioGroup>
               </FormControl>
 
+              {/* College Selection */}
               <FormControl fullWidth>
                 <InputLabel>College</InputLabel>
                 <Select
@@ -520,6 +606,7 @@ const Loans: React.FC = () => {
                 </Select>
               </FormControl>
 
+              {/* Phone Number */}
               <TextField
                 fullWidth
                 label="Phone Number"
@@ -535,6 +622,57 @@ const Loans: React.FC = () => {
                 required
                 InputLabelProps={{ shrink: true }}
               />
+
+              <FormControl fullWidth>
+                <FormLabel>
+                  Is the phone number above your WhatsApp number?
+                </FormLabel>
+                <RadioGroup
+                  row
+                  value={
+                    formData.phone_number === formData.whatsapp_number
+                      ? "yes"
+                      : "no"
+                  }
+                  onChange={(e) => {
+                    if (e.target.value === "yes") {
+                      setFormData((prev) => ({
+                        ...prev,
+                        whatsapp_number: prev.phone_number,
+                      }));
+                    } else {
+                      setFormData((prev) => ({
+                        ...prev,
+                        whatsapp_number: "",
+                      }));
+                    }
+                  }}
+                >
+                  <FormControlLabel
+                    value="yes"
+                    control={<Radio />}
+                    label="Yes"
+                  />
+                  <FormControlLabel value="no" control={<Radio />} label="No" />
+                </RadioGroup>
+              </FormControl>
+
+              {formData.phone_number !== formData.whatsapp_number && (
+                <TextField
+                  fullWidth
+                  label="WhatsApp Number"
+                  type="tel"
+                  value={formData.whatsapp_number}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      whatsapp_number: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter your WhatsApp number"
+                  InputLabelProps={{ shrink: true }}
+                />
+              )}
 
               <TextField
                 fullWidth
@@ -612,6 +750,19 @@ const Loans: React.FC = () => {
               onClick={() => {
                 setOpenDialog(false);
                 setEditingLoan(null);
+                setFormData({
+                  loan_type: "Education Loan",
+                  principal_amount: undefined as any,
+                  interest_rate: 8.5,
+                  term_months: undefined as any,
+                  college_id: "",
+                  phone_number: "",
+                  first_name: "",
+                  last_name: "",
+                  gender: "",
+                  whatsapp_number: "",
+                  description: "",
+                });
               }}
             >
               Cancel

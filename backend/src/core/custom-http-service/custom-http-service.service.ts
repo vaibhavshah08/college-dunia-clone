@@ -23,14 +23,14 @@ export class CustomHttpService {
     method: string,
     url: string,
     config: AxiosRequestConfig = {},
-    req_body?: Object,
+    req_body?: object,
   ) {
     this.logger.verbose(correlation_id, 'Start');
 
     const x_finmo_ref =
       this.async_storage_service.get('x-finmo-ref') ||
       this.config.get('X_FINMO_REF');
-    if (!!x_finmo_ref) {
+    if (x_finmo_ref) {
       config = lodash.merge(
         { headers: { 'x-finmo-ref': x_finmo_ref } },
         config,
@@ -48,7 +48,7 @@ export class CustomHttpService {
 
     const request = {
       url: url,
-      headers: !!config['headers'] ? config['headers'] : {},
+      headers: config['headers'] ? config['headers'] : {},
       body: req_body,
     };
     this.logger.verbose(correlation_id, `Request: ${JSON.stringify(request)}`);
@@ -123,7 +123,7 @@ export class CustomHttpService {
   async post(
     correlation_id: string,
     url: string,
-    req_body: Object,
+    req_body: object,
     config?: AxiosRequestConfig,
   ) {
     const response = await this.handleApiCall(
@@ -139,7 +139,7 @@ export class CustomHttpService {
   async put(
     correlation_id: string,
     url: string,
-    req_body: Object,
+    req_body: object,
     config?: AxiosRequestConfig,
   ) {
     const response = await this.handleApiCall(
@@ -155,7 +155,7 @@ export class CustomHttpService {
   async patch(
     correlation_id: string,
     url: string,
-    req_body: Object,
+    req_body: object,
     config?: AxiosRequestConfig,
   ) {
     const response = await this.handleApiCall(

@@ -124,7 +124,14 @@ const Register: React.FC = () => {
       // Error is already handled by the useAuth hook, but we can set local error state
       // for additional UI feedback if needed
       if (err?.status === 409) {
-        setError("An account with this email already exists.");
+        const errorMessage = err?.message;
+        if (errorMessage === "User email already exists") {
+          setError(
+            "An account with this email already exists. Please use a different email or try logging in."
+          );
+        } else {
+          setError("An account with this email already exists.");
+        }
       } else if (err?.status === 422) {
         // Handle validation errors
         if (err?.details?.validationErrors) {

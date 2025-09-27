@@ -3220,6 +3220,38 @@ const AdminDashboard: React.FC = () => {
                     {new Date(selectedLoan.created_at).toLocaleDateString()}
                   </Typography>
                 </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Applicant Name
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedLoan.first_name} {selectedLoan.last_name}
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Gender
+                  </Typography>
+                  <Typography variant="body1">{selectedLoan.gender}</Typography>
+                </Box>
+                <Box>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Phone Number
+                  </Typography>
+                  <Typography variant="body1">
+                    {selectedLoan.phone_number}
+                  </Typography>
+                </Box>
+                {selectedLoan.whatsapp_number && (
+                  <Box>
+                    <Typography variant="subtitle2" color="text.secondary">
+                      WhatsApp Number
+                    </Typography>
+                    <Typography variant="body1">
+                      {selectedLoan.whatsapp_number}
+                    </Typography>
+                  </Box>
+                )}
               </Box>
               {selectedLoan.description && (
                 <Box>

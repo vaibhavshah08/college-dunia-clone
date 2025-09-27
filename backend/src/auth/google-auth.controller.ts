@@ -100,7 +100,16 @@ export class GoogleAuthController {
     } catch (error) {
       this.logger.error(correlation_id, 'Google OAuth callback failed', error);
       const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-      const redirectUrl = `${frontendUrl}/auth/google/error?error=oauth_failed`;
+
+      // Handle specific user state errors
+      let errorType = 'oauth_failed';
+      if (error.message === 'User doesnot exist') {
+        errorType = 'user_not_found';
+      } else if (error.message === 'User is Inactive') {
+        errorType = 'user_inactive';
+      }
+
+      const redirectUrl = `${frontendUrl}/auth/google/error?error=${errorType}`;
       res.redirect(redirectUrl);
     }
   }
@@ -136,7 +145,26 @@ export class GoogleAuthController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Invalid Google token' })
+  @ApiResponse({
+    status: 401,
+    description:
+      'Unauthorized - Invalid Google token, user inactive, or user does not exist',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          enum: [
+            'Invalid Google token',
+            'User is Inactive',
+            'User doesnot exist',
+          ],
+          example: 'User is Inactive',
+        },
+        statusCode: { type: 'number', example: 401 },
+      },
+    },
+  })
   async verifyGoogleToken(
     @Correlation() correlation_id: string,
     @Body() body: GoogleTokenDto,

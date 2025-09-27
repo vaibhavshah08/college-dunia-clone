@@ -410,6 +410,29 @@ const LoanDetail: React.FC = () => {
                     }
                   />
                 </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="Applicant Name"
+                    secondary={`${loan.first_name} ${loan.last_name}`}
+                  />
+                </ListItem>
+                <ListItem>
+                  <ListItemText primary="Gender" secondary={loan.gender} />
+                </ListItem>
+                <ListItem>
+                  <ListItemText
+                    primary="Phone Number"
+                    secondary={loan.phone_number}
+                  />
+                </ListItem>
+                {loan.whatsapp_number && (
+                  <ListItem>
+                    <ListItemText
+                      primary="WhatsApp Number"
+                      secondary={loan.whatsapp_number}
+                    />
+                  </ListItem>
+                )}
               </List>
 
               <Divider sx={{ my: 2 }} />

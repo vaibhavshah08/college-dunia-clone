@@ -176,11 +176,37 @@ apiClient.interceptors.response.use(
           // Unauthorized - clear token but don't redirect automatically
           // Let the component handle the redirect
           removeToken();
+
+          // Handle specific auth error messages
+          const errorMessage = (data as any)?.message;
+          if (errorMessage === "User is Inactive") {
+            showToast("Your account is inactive. Please contact support.");
+          } else if (errorMessage === "User doesnot exist") {
+            showToast("User does not exist. Please check your credentials.");
+          } else if (errorMessage === "Invalid credentials") {
+            showToast("Invalid email or password. Please try again.");
+          } else if (errorMessage === "Invalid Google token") {
+            showToast("Google authentication failed. Please try again.");
+          } else {
+            showToast("Authentication failed. Please try again.");
+          }
           break;
 
         case 403:
           // Forbidden
           showToast("You do not have permission to perform this action");
+          break;
+
+        case 409:
+          // Conflict - handle specific signup error
+          const conflictMessage = (data as any)?.message;
+          if (conflictMessage === "User email already exists") {
+            showToast(
+              "An account with this email already exists. Please use a different email or try logging in."
+            );
+          } else {
+            showToast("A conflict occurred. Please try again.");
+          }
           break;
 
         case 404:
@@ -219,8 +245,9 @@ apiClient.interceptors.response.use(
 
         default:
           // Other errors
-          const errorMessage = (data as any)?.message || "An error occurred";
-          showToast(errorMessage);
+          const defaultErrorMessage =
+            (data as any)?.message || "An error occurred";
+          showToast(defaultErrorMessage);
       }
     } else if (error.request) {
       // Network error

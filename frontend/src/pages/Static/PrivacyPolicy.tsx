@@ -170,26 +170,6 @@ const PrivacyPolicy: React.FC = () => {
         </Box>
 
         <Typography
-          variant="h5"
-          component="h2"
-          gutterBottom
-          sx={{ mt: 4, mb: 2, fontWeight: "bold" }}
-        >
-          6. Contact Us
-        </Typography>
-        <Typography variant="body1" paragraph>
-          If you have any questions about this Privacy Policy, please contact us
-          at:
-        </Typography>
-        <Typography variant="body1" paragraph>
-          Email: privacy@collegedunia.com
-          <br />
-          Phone: +1 (555) 123-4567
-          <br />
-          Address: 123 Education Street, Learning City, LC 12345
-        </Typography>
-
-        <Typography
           variant="body1"
           paragraph
           sx={{ mt: 4, fontStyle: "italic" }}

@@ -259,26 +259,6 @@ const TermsOfService: React.FC = () => {
           a revision is material, we will try to provide at least 30 days notice
           prior to any new terms taking effect.
         </Typography>
-
-        <Typography
-          variant="h5"
-          component="h2"
-          gutterBottom
-          sx={{ mt: 4, mb: 2, fontWeight: "bold" }}
-        >
-          11. Contact Information
-        </Typography>
-        <Typography variant="body1" paragraph>
-          If you have any questions about these Terms of Service, please contact
-          us at:
-        </Typography>
-        <Typography variant="body1" paragraph>
-          Email: legal@collegedunia.com
-          <br />
-          Phone: +1 (555) 123-4567
-          <br />
-          Address: 123 Education Street, Learning City, LC 12345
-        </Typography>
       </Paper>
     </Container>
   );

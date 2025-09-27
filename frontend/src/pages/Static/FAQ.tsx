@@ -18,7 +18,7 @@ import {
   Description,
 } from "@mui/icons-material";
 
-const HelpSupport: React.FC = () => {
+const FAQ: React.FC = () => {
   const faqs = [
     {
       question: "How do I apply for a loan?",
@@ -166,4 +166,4 @@ const HelpSupport: React.FC = () => {
   );
 };
 
-export default HelpSupport;
+export default FAQ;

@@ -1,4 +1,4 @@
-import { Injectable, HttpStatus } from '@nestjs/common';
+import { Injectable, HttpStatus, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -14,6 +14,7 @@ import {
   ENTITY_NOT_FOUND,
 } from 'src/core/custom-error/error-constant';
 import { v4 as uuidv4 } from 'uuid';
+import { UserStateService } from 'src/auth/user-state.service';
 
 @Injectable()
 export class UserService {
@@ -23,6 +24,7 @@ export class UserService {
     private readonly document_repo: Repository<Document>,
     private readonly jwtService: JwtService,
     private readonly logger: CustomLogger,
+    private readonly userStateService: UserStateService,
   ) {}
 
   async signup(correlation_id: string, create_user_dto: CreateUserDto) {
@@ -37,28 +39,51 @@ export class UserService {
       where: { email: create_user_dto.email },
     });
 
-    if (existing_user) {
-      this.logger.debug(correlation_id, 'User already exists with this email');
-      throw customHttpError(
-        DATA_VALIDATION_ERROR,
-        'EMAIL_EXISTS',
-        'Email already registered',
-        HttpStatus.BAD_REQUEST,
+    // Check if signup is allowed based on user state
+    const signupCheck = this.userStateService.checkSignupAllowed(
+      existing_user,
+      correlation_id,
+    );
+
+    if (!signupCheck.allowed) {
+      this.logger.debug(
+        correlation_id,
+        'Signup blocked - user email already exists',
       );
+      throw new ConflictException('User email already exists');
     }
 
     this.logger.debug(correlation_id, 'Hashing user password');
     const hashed_password = await bcrypt.hash(create_user_dto.password, 10);
 
-    this.logger.debug(correlation_id, 'Creating new user entity');
-    const user = this.user_repo.create({
-      ...create_user_dto,
-      user_id: uuidv4().replace(/-/g, ''),
-      password: hashed_password,
-    });
+    let saved_user: User;
 
-    this.logger.debug(correlation_id, 'Saving user to database');
-    const saved_user = await this.user_repo.save(user);
+    if (signupCheck.action === 'restore' && signupCheck.user) {
+      // Restore deleted user
+      this.logger.debug(
+        correlation_id,
+        'Restoring deleted user for fresh signup',
+      );
+      const restoredUser = this.userStateService.restoreDeletedUser(
+        signupCheck.user,
+        {
+          ...create_user_dto,
+          password: hashed_password,
+          user_id: uuidv4().replace(/-/g, ''), // Generate new user ID
+        },
+      );
+      saved_user = await this.user_repo.save(restoredUser);
+    } else {
+      // Create new user
+      this.logger.debug(correlation_id, 'Creating new user entity');
+      const user = this.user_repo.create({
+        ...create_user_dto,
+        user_id: uuidv4().replace(/-/g, ''),
+        password: hashed_password,
+      });
+      saved_user = await this.user_repo.save(user);
+    }
+
     this.logger.debug(
       correlation_id,
       `User saved successfully with ID: ${saved_user.user_id}`,
@@ -114,15 +139,8 @@ export class UserService {
       );
     }
 
-    if (!user.is_active || user.is_deleted) {
-      this.logger.debug(correlation_id, 'User account is inactive or deleted');
-      throw customHttpError(
-        DATA_VALIDATION_ERROR,
-        'ACCOUNT_INACTIVE',
-        'Account is not active',
-        HttpStatus.UNAUTHORIZED,
-      );
-    }
+    // Use centralized user state check
+    this.userStateService.assertUserLoginAllowed(user, correlation_id);
 
     this.logger.debug(correlation_id, 'Generating JWT token');
     const payload = {

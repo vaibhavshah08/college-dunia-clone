@@ -277,6 +277,10 @@ export interface LoanCreate {
   term_months: number;
   college_id: string;
   phone_number: string;
+  first_name: string;
+  last_name: string;
+  gender: string;
+  whatsapp_number?: string;
   description?: string;
 }
 
@@ -290,6 +294,10 @@ export interface Loan {
   status: "submitted" | "under_review" | "approved" | "rejected";
   college_id: string;
   phone_number: string;
+  first_name: string;
+  last_name: string;
+  gender: string;
+  whatsapp_number?: string;
   description?: string;
   created_at: string;
   // Optional fields for admin view

@@ -56,7 +56,17 @@ export class UserController {
     },
   })
   @ApiResponse({ status: 400, description: 'Bad request' })
-  @ApiResponse({ status: 409, description: 'User already exists' })
+  @ApiResponse({
+    status: 409,
+    description: 'User email already exists',
+    schema: {
+      type: 'object',
+      properties: {
+        message: { type: 'string', example: 'User email already exists' },
+        statusCode: { type: 'number', example: 409 },
+      },
+    },
+  })
   async signup(
     @Correlation() correlation_id: string,
     @Body() create_user_dto: CreateUserDto,
@@ -93,7 +103,26 @@ export class UserController {
       },
     },
   })
-  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  @ApiResponse({
+    status: 401,
+    description:
+      'Unauthorized - Invalid credentials, user inactive, or user does not exist',
+    schema: {
+      type: 'object',
+      properties: {
+        message: {
+          type: 'string',
+          enum: [
+            'Invalid credentials',
+            'User is Inactive',
+            'User doesnot exist',
+          ],
+          example: 'User is Inactive',
+        },
+        statusCode: { type: 'number', example: 401 },
+      },
+    },
+  })
   async login(
     @Correlation() correlation_id: string,
     @Body() login_user_dto: LoginUserDto,

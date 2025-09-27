@@ -52,6 +52,40 @@ export class CreateLoanDto {
   readonly phone_number: string;
 
   @ApiProperty({
+    description: 'First name of the applicant',
+    example: 'John',
+  })
+  @IsString()
+  @IsNotEmpty()
+  readonly first_name: string;
+
+  @ApiProperty({
+    description: 'Last name of the applicant',
+    example: 'Doe',
+  })
+  @IsString()
+  @IsNotEmpty()
+  readonly last_name: string;
+
+  @ApiProperty({
+    description: 'Gender of the applicant',
+    example: 'Male',
+    enum: ['Male', 'Female', 'Other'],
+  })
+  @IsString()
+  @IsNotEmpty()
+  readonly gender: string;
+
+  @ApiProperty({
+    description: 'WhatsApp number (optional if same as phone number)',
+    example: '+1234567890',
+    required: false,
+  })
+  @IsString()
+  @IsOptional()
+  readonly whatsapp_number?: string;
+
+  @ApiProperty({
     description: 'Additional description (optional)',
     example: 'Loan for Computer Science Engineering course',
     required: false,

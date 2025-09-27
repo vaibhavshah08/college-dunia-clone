@@ -34,6 +34,7 @@ import {
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
 import Footer from "./Footer";
+import Logo from "../Logo/Logo";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -101,9 +102,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
   const drawer = (
     <Box sx={{ width: 280 }}>
       <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
-        <Typography variant="h6" component="div" sx={{ fontWeight: "bold" }}>
-          CampusConnect
-        </Typography>
+        <Logo variant="header" />
       </Box>
       <List sx={{ pt: 1 }}>
         {menuItems.map((item, index) => (
@@ -164,19 +163,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
             </Tooltip>
           )}
 
-          <Typography
-            variant="h6"
-            component="div"
-            sx={{
-              flexGrow: 1,
-              cursor: "pointer",
-              fontWeight: "bold",
-              fontSize: { xs: "1.1rem", sm: "1.25rem" },
-            }}
+          <Box
+            sx={{ flexGrow: 1, cursor: "pointer" }}
             onClick={() => navigate("/")}
           >
-            CampusConnect
-          </Typography>
+            <Logo variant="header" />
+          </Box>
 
           {!isMobile && (
             <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>

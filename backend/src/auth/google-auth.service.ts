@@ -11,6 +11,7 @@ import {
 } from 'src/core/custom-error/error-constant';
 import { v4 as uuidv4 } from 'uuid';
 import { OAuth2Client } from 'google-auth-library';
+import { UserStateService } from './user-state.service';
 
 @Injectable()
 export class GoogleAuthService {
@@ -20,6 +21,7 @@ export class GoogleAuthService {
     @InjectRepository(User) private readonly user_repo: Repository<User>,
     private readonly jwtService: JwtService,
     private readonly logger: CustomLogger,
+    private readonly userStateService: UserStateService,
   ) {
     this.client = new OAuth2Client();
   }
@@ -97,6 +99,8 @@ export class GoogleAuthService {
 
     if (user) {
       this.logger.debug(correlation_id, 'User found by Google ID');
+      // Check if user can log in
+      this.userStateService.assertUserLoginAllowed(user, correlation_id);
       return user;
     }
 
@@ -106,16 +110,53 @@ export class GoogleAuthService {
     });
 
     if (user) {
-      // Link Google account to existing user
-      this.logger.debug(
+      // Check if user can sign up/login with this email
+      const signupCheck = this.userStateService.checkSignupAllowed(
+        user,
         correlation_id,
-        'Linking Google account to existing user',
       );
-      user.google_id = googleProfile.googleId;
-      user.avatar_url = googleProfile.picture || '';
-      user.email_verified = googleProfile.emailVerified;
-      user = await this.user_repo.save(user);
-      return user;
+
+      if (!signupCheck.allowed) {
+        // User exists and is not deleted - treat as login
+        this.logger.debug(
+          correlation_id,
+          'User exists and is not deleted, checking login permissions',
+        );
+        this.userStateService.assertUserLoginAllowed(user, correlation_id);
+
+        // Link Google account to existing user
+        this.logger.debug(
+          correlation_id,
+          'Linking Google account to existing user',
+        );
+        user.google_id = googleProfile.googleId;
+        user.avatar_url = googleProfile.picture || '';
+        user.email_verified = googleProfile.emailVerified;
+        user = await this.user_repo.save(user);
+        return user;
+      } else if (signupCheck.action === 'restore' && signupCheck.user) {
+        // User is deleted - restore and link Google account
+        this.logger.debug(
+          correlation_id,
+          'Restoring deleted user and linking Google account',
+        );
+        const restoredUser = this.userStateService.restoreDeletedUser(
+          signupCheck.user,
+          {
+            first_name: googleProfile.firstName,
+            last_name: googleProfile.lastName,
+            phone_number: '', // Google doesn't provide phone number
+            password: '', // No password for Google users
+            google_id: googleProfile.googleId,
+            avatar_url: googleProfile.picture,
+            email_verified: googleProfile.emailVerified,
+            is_admin: false,
+            user_id: uuidv4().replace(/-/g, ''), // Generate new user ID
+          },
+        );
+        user = await this.user_repo.save(restoredUser);
+        return user;
+      }
     }
 
     // Create new user

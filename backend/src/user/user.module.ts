@@ -7,6 +7,7 @@ import { UserController } from './user.controller';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { LoggerModule } from 'src/core/logger/logger.module';
+import { UserStateService } from 'src/auth/user-state.service';
 
 @Module({
   imports: [
@@ -22,7 +23,7 @@ import { LoggerModule } from 'src/core/logger/logger.module';
     }),
     LoggerModule,
   ],
-  providers: [UserService],
+  providers: [UserService, UserStateService],
   controllers: [UserController],
   exports: [UserService],
 })

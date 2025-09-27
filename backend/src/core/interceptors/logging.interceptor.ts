@@ -3,10 +3,10 @@ import {
   ExecutionContext,
   Injectable,
   NestInterceptor,
-} from "@nestjs/common";
-import { Observable } from "rxjs";
-import { tap } from "rxjs/operators";
-import { CustomLogger } from "../logger/logger.service";
+} from '@nestjs/common';
+import { Observable } from 'rxjs';
+import { tap } from 'rxjs/operators';
+import { CustomLogger } from '../logger/logger.service';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -36,7 +36,7 @@ export class LoggingInterceptor implements NestInterceptor {
     };
 
     const correlation_id =
-      headers["x-correlation-id"] || "MISSING_CORRELATION_ID_HEADER";
+      headers['x-correlation-id'] || 'MISSING_CORRELATION_ID_HEADER';
     logger.log(correlation_id, req);
 
     const now = Date.now();

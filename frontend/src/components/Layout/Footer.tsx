@@ -10,14 +10,13 @@ import {
 } from "@mui/material";
 import { Link as RouterLink } from "react-router-dom";
 import {
-  Facebook,
-  Twitter,
   Instagram,
   LinkedIn,
   Email,
   Phone,
   LocationOn,
 } from "@mui/icons-material";
+import Logo from "../Logo/Logo";
 
 const Footer: React.FC = () => {
   const currentYear = new Date().getFullYear();
@@ -43,40 +42,15 @@ const Footer: React.FC = () => {
         >
           {/* Company Info */}
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
-              CampusConnect
-            </Typography>
+            <Logo color="white" variant="footer" />
             <Typography
               variant="body2"
               sx={{ mb: 2, color: "rgba(255, 255, 255, 0.9)" }}
             >
-              Your trusted partner in educational journey. Find the best
-              colleges, secure loans, and manage your academic documents all in
-              one place.
+              Through a combination of lectures, readings, discussions, students
+              will gain solid foundation in educational.
             </Typography>
             <Box sx={{ display: "flex", gap: 1 }}>
-              <Tooltip title="Follow us on Facebook">
-                <IconButton
-                  size="small"
-                  sx={{
-                    color: "white",
-                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-                  }}
-                >
-                  <Facebook />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Follow us on Twitter">
-                <IconButton
-                  size="small"
-                  sx={{
-                    color: "white",
-                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
-                  }}
-                >
-                  <Twitter />
-                </IconButton>
-              </Tooltip>
               <Tooltip title="Follow us on Instagram">
                 <IconButton
                   size="small"
@@ -84,17 +58,29 @@ const Footer: React.FC = () => {
                     color: "white",
                     "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
                   }}
+                  onClick={() =>
+                    window.open(
+                      "https://www.instagram.com/merakiedu_official/",
+                      "_blank"
+                    )
+                  }
                 >
                   <Instagram />
                 </IconButton>
               </Tooltip>
-              <Tooltip title="Connect with us on LinkedIn">
+              <Tooltip title="Subscribe to our YouTube channel">
                 <IconButton
                   size="small"
                   sx={{
                     color: "white",
                     "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
                   }}
+                  onClick={() =>
+                    window.open(
+                      "https://www.youtube.com/channel/UC76u8xQVChUo4NtPTyRmdwA",
+                      "_blank"
+                    )
+                  }
                 >
                   <LinkedIn />
                 </IconButton>
@@ -114,7 +100,7 @@ const Footer: React.FC = () => {
                   variant="body2"
                   sx={{ color: "rgba(255, 255, 255, 0.9)" }}
                 >
-                  support@collegedunia.com
+                  merakiofficial0369@gmail.com
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -123,7 +109,7 @@ const Footer: React.FC = () => {
                   variant="body2"
                   sx={{ color: "rgba(255, 255, 255, 0.9)" }}
                 >
-                  +1 (555) 123-4567
+                  +91 6909300369
                 </Typography>
               </Box>
               <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -132,7 +118,8 @@ const Footer: React.FC = () => {
                   variant="body2"
                   sx={{ color: "rgba(255, 255, 255, 0.9)" }}
                 >
-                  123 Education St, Learning City, LC 12345
+                  KJP Assembly Conference Centre, Opp. State Central Library,
+                  I.G.P. Road, Shillong-793001, Meghalaya
                 </Typography>
               </Box>
             </Box>
@@ -155,9 +142,31 @@ const Footer: React.FC = () => {
             variant="body2"
             sx={{ color: "rgba(255, 255, 255, 0.9)" }}
           >
-            © {currentYear} CampusConnect. All rights reserved.
+            © {currentYear} Merraki Connect. All rights reserved.
           </Typography>
-          <Box sx={{ display: "flex", gap: 3 }}>
+          <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
+            <Link
+              component={RouterLink}
+              to="/about-us"
+              sx={{
+                textDecoration: "none",
+                color: "white",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              About Us
+            </Link>
+            <Link
+              component={RouterLink}
+              to="/contact-us"
+              sx={{
+                textDecoration: "none",
+                color: "white",
+                "&:hover": { textDecoration: "underline" },
+              }}
+            >
+              Contact Us
+            </Link>
             <Link
               component={RouterLink}
               to="/privacy-policy"
@@ -189,7 +198,7 @@ const Footer: React.FC = () => {
                 "&:hover": { textDecoration: "underline" },
               }}
             >
-              Help & Support
+              FAQ's
             </Link>
           </Box>
         </Box>

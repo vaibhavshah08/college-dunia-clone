@@ -41,7 +41,9 @@ import GoogleError from "./pages/Auth/GoogleError";
 import NotFound from "./pages/Error/NotFound";
 import PrivacyPolicy from "./pages/Static/PrivacyPolicy";
 import TermsOfService from "./pages/Static/TermsOfService";
-import HelpSupport from "./pages/Static/HelpSupport";
+import FAQ from "./pages/Static/FAQ";
+import ContactUs from "./pages/Static/ContactUs";
+import AboutUs from "./pages/Static/AboutUs";
 
 // Create a modern, high-contrast theme
 const theme = createTheme({
@@ -500,7 +502,9 @@ function App() {
                     path="/terms-of-service"
                     element={<TermsOfService />}
                   />
-                  <Route path="/help-support" element={<HelpSupport />} />
+                  <Route path="/help-support" element={<FAQ />} />
+                  <Route path="/contact-us" element={<ContactUs />} />
+                  <Route path="/about-us" element={<AboutUs />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>

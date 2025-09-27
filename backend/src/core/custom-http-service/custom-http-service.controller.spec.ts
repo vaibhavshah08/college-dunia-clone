@@ -1,8 +1,8 @@
-import { Test, TestingModule } from "@nestjs/testing";
-import { CustomHttpController } from "./custom-http-service.controller";
-import { CustomHttpService } from "./custom-http-service.service";
+import { Test, TestingModule } from '@nestjs/testing';
+import { CustomHttpController } from './custom-http-service.controller';
+import { CustomHttpService } from './custom-http-service.service';
 
-describe("CustomHttpController", () => {
+describe('CustomHttpController', () => {
   let controller: CustomHttpController;
 
   beforeEach(async () => {
@@ -14,7 +14,7 @@ describe("CustomHttpController", () => {
     controller = module.get<CustomHttpController>(CustomHttpController);
   });
 
-  it("should be defined", () => {
+  it('should be defined', () => {
     expect(controller).toBeDefined();
   });
 });
