@@ -2134,8 +2134,8 @@ const AdminDashboard: React.FC = () => {
                         <TableCell>
                           <Tooltip title={`User ID: ${loan.user_id}`} arrow>
                             <span>
-                              {loan.user
-                                ? `${loan.user.first_name} ${loan.user.last_name}`
+                              {loan.first_name && loan.last_name
+                                ? `${loan.first_name} ${loan.last_name}`
                                 : `User ${loan.user_id}`}
                             </span>
                           </Tooltip>

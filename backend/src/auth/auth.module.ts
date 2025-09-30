@@ -22,7 +22,7 @@ import { LoggerModule } from 'src/core/logger/logger.module';
       imports: [ConfigModule],
       useFactory: async (config: ConfigService) => ({
         secret: config.get<string>('JWT_SECRET') || 'CHANGE_ME_DEV',
-        signOptions: { expiresIn: '5d' },
+        signOptions: { expiresIn: '7d' },
       }),
       inject: [ConfigService],
     }),

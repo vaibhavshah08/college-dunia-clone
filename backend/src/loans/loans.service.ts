@@ -123,6 +123,11 @@ export class LoansService {
         term_months: loan.term_months,
         status: loan.status,
         college_id: loan.college_id,
+        phone_number: loan.phone_number,
+        first_name: loan.first_name,
+        last_name: loan.last_name,
+        gender: loan.gender,
+        whatsapp_number: loan.whatsapp_number,
         description: loan.description,
         created_at: loan.created_at,
       })),
@@ -175,6 +180,11 @@ export class LoansService {
           college_id: loan.college_id,
           description: loan.description,
           created_at: loan.created_at,
+          phone_number: loan.phone_number,
+          first_name: loan.first_name,
+          last_name: loan.last_name,
+          gender: loan.gender,
+          whatsapp_number: loan.whatsapp_number,
           user: user
             ? {
                 user_id: user.user_id,
@@ -239,6 +249,11 @@ export class LoansService {
         college_id: saved_entity.college_id,
         description: saved_entity.description,
         created_at: saved_entity.created_at,
+        phone_number: saved_entity.phone_number,
+        first_name: saved_entity.first_name,
+        last_name: saved_entity.last_name,
+        gender: saved_entity.gender,
+        whatsapp_number: saved_entity.whatsapp_number,
       },
     };
   }
@@ -274,6 +289,11 @@ export class LoansService {
         college_id: existing.college_id,
         description: existing.description,
         created_at: existing.created_at,
+        phone_number: existing.phone_number,
+        first_name: existing.first_name,
+        last_name: existing.last_name,
+        gender: existing.gender,
+        whatsapp_number: existing.whatsapp_number,
       },
     };
   }
@@ -315,6 +335,11 @@ export class LoansService {
         college_id: loan.college_id,
         description: loan.description,
         created_at: loan.created_at,
+        phone_number: loan.phone_number,
+        first_name: loan.first_name,
+        last_name: loan.last_name,
+        gender: loan.gender,
+        whatsapp_number: loan.whatsapp_number,
       })),
     };
   }
@@ -417,6 +442,11 @@ export class LoansService {
         college_id: updated.college_id,
         description: updated.description,
         created_at: updated.created_at,
+        phone_number: updated.phone_number,
+        first_name: updated.first_name,
+        last_name: updated.last_name,
+        gender: updated.gender,
+        whatsapp_number: updated.whatsapp_number,
       },
     };
   }
