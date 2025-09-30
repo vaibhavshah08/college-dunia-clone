@@ -34,7 +34,7 @@ const Logo: React.FC<LogoProps> = ({
     >
       <img
         src={getLogoImage()}
-        alt="Merraki Logo"
+        alt="Meraki Logo"
         style={variant === "header" ? { height: "35px" } : { height: "60px" }}
       ></img>
       <Typography
@@ -52,7 +52,7 @@ const Logo: React.FC<LogoProps> = ({
           WebkitTextFillColor: "transparent",
         }}
       >
-        Merraki Connect
+        Meraki Connect
       </Typography>
     </Box>
   );

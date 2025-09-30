@@ -1,7 +1,7 @@
 {
-  "name": "campus-connect-backend",
+  "name": "meraki-connect-backend",
   "version": "0.0.1",
-  "description": "CampusConnect API - Educational platform backend",
+  "description": "Meraki API - Educational platform backend",
   "author": "",
   "private": true,
   "license": "UNLICENSED",

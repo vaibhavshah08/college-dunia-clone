@@ -13,7 +13,7 @@ const config = new ConfigService();
 
 const log_config = {
   LOG_LEVEL: config.get('LOG_LEVEL') || `debug`,
-  SERVICE_NAME: config.get('SERVICE_NAME') || 'campus_connect',
+  SERVICE_NAME: config.get('SERVICE_NAME') || 'meraki_connect',
   LOG_DIRECTORY_LOCATION: config.get('LOG_DIRECTORY_LOCATION') || `./logs/`,
   LOG_IN_GMT_TIMESTAMP: config.get('LOG_IN_GMT_TIMESTAMP') || `TRUE`,
 };

@@ -15,6 +15,8 @@ import {
   Email,
   Phone,
   LocationOn,
+  YouTube,
+  WhatsApp,
 } from "@mui/icons-material";
 import Logo from "../Logo/Logo";
 
@@ -68,6 +70,34 @@ const Footer: React.FC = () => {
                   <Instagram />
                 </IconButton>
               </Tooltip>
+              <Tooltip title="Connect with us on LinkedIn">
+                <IconButton
+                  size="small"
+                  sx={{
+                    color: "white",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+                  }}
+                  onClick={() =>
+                    window.open("https://www.linkedin.com/", "_blank")
+                  }
+                >
+                  <LinkedIn />
+                </IconButton>
+              </Tooltip>
+              <Tooltip title="Chat with us on WhatsApp">
+                <IconButton
+                  size="small"
+                  sx={{
+                    color: "white",
+                    "&:hover": { bgcolor: "rgba(255,255,255,0.1)" },
+                  }}
+                  onClick={() =>
+                    window.open("https://wa.me/916909300369", "_blank")
+                  }
+                >
+                  <WhatsApp />
+                </IconButton>
+              </Tooltip>
               <Tooltip title="Subscribe to our YouTube channel">
                 <IconButton
                   size="small"
@@ -82,7 +112,7 @@ const Footer: React.FC = () => {
                     )
                   }
                 >
-                  <LinkedIn />
+                  <YouTube />
                 </IconButton>
               </Tooltip>
             </Box>
@@ -142,7 +172,7 @@ const Footer: React.FC = () => {
             variant="body2"
             sx={{ color: "rgba(255, 255, 255, 0.9)" }}
           >
-            © {currentYear} Merraki Connect. All rights reserved.
+            © {currentYear} Meraki Connect. All rights reserved.
           </Typography>
           <Box sx={{ display: "flex", gap: 3, flexWrap: "wrap" }}>
             <Link

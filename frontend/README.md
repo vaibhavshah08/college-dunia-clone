@@ -1,6 +1,6 @@
-# CampusConnect Frontend
+# Meraki Frontend
 
-A React frontend application for the CampusConnect platform, built with Material-UI and TypeScript.
+A React frontend application for the Meraki platform, built with Material-UI and TypeScript.
 
 ## Features
 

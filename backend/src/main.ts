@@ -32,8 +32,8 @@ async function bootstrap() {
 
   // Swagger documentation setup
   const config = new DocumentBuilder()
-    .setTitle('CampusConnect API')
-    .setDescription('API documentation for CampusConnect')
+    .setTitle('Meraki API')
+    .setDescription('API documentation for Meraki')
     .setVersion('1.0')
     .addBearerAuth(
       {

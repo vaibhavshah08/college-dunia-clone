@@ -74,7 +74,7 @@ const AboutUs: React.FC = () => {
           gutterBottom
           sx={{ fontWeight: "bold" }}
         >
-          About Merraki Connect
+          About Meraki Connect
         </Typography>
         <Typography
           variant="h5"
@@ -118,7 +118,7 @@ const AboutUs: React.FC = () => {
                 color="text.secondary"
                 sx={{ mb: 3, fontSize: "1.1rem" }}
               >
-                At Merraki Connect, we believe that education is the foundation
+                At Meraki Connect, we believe that education is the foundation
                 of success. Our mission is to provide comprehensive educational
                 support that empowers students to achieve their academic and
                 career goals.

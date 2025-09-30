@@ -18,6 +18,7 @@ import {
   LocationOn,
   Instagram,
   YouTube,
+  LinkedIn,
   Send,
 } from "@mui/icons-material";
 
@@ -170,55 +171,72 @@ const ContactUs: React.FC = () => {
 
                 <Divider sx={{ my: 2 }} />
 
-                <Box>
-                  <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-                    Follow Us
-                  </Typography>
-                  <Box sx={{ display: "flex", gap: 2 }}>
-                    <Tooltip title="Follow us on Instagram">
-                      <IconButton
-                        size="large"
-                        sx={{
-                          bgcolor: "primary.main",
-                          color: "white",
-                          "&:hover": { bgcolor: "primary.dark" },
-                        }}
-                        onClick={() =>
-                          window.open(
-                            "https://www.instagram.com/merakiedu_official/",
-                            "_blank"
-                          )
-                        }
-                      >
-                        <Instagram />
-                      </IconButton>
-                    </Tooltip>
-                    <Tooltip title="Subscribe to our YouTube channel">
-                      <IconButton
-                        size="large"
-                        sx={{
-                          bgcolor: "primary.main",
-                          color: "white",
-                          "&:hover": { bgcolor: "primary.dark" },
-                        }}
-                        onClick={() =>
-                          window.open(
-                            "https://www.youtube.com/channel/UC76u8xQVChUo4NtPTyRmdwA",
-                            "_blank"
-                          )
-                        }
-                      >
-                        <YouTube />
-                      </IconButton>
-                    </Tooltip>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                      Follow Us
+                    </Typography>
+                    <Box sx={{ display: "flex", gap: 2 }}>
+                      <Tooltip title="Follow us on Instagram">
+                        <IconButton
+                          size="large"
+                          sx={{
+                            bgcolor: "primary.main",
+                            color: "white",
+                            "&:hover": { bgcolor: "primary.dark" },
+                          }}
+                          onClick={() =>
+                            window.open(
+                              "https://www.instagram.com/merakiedu_official/",
+                              "_blank"
+                            )
+                          }
+                        >
+                          <Instagram />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Connect with us on LinkedIn">
+                        <IconButton
+                          size="large"
+                          sx={{
+                            bgcolor: "primary.main",
+                            color: "white",
+                            "&:hover": { bgcolor: "primary.dark" },
+                          }}
+                          onClick={() =>
+                            window.open(
+                              "https://www.linkedin.com/",
+                              "_blank"
+                            )
+                          }
+                        >
+                          <LinkedIn />
+                        </IconButton>
+                      </Tooltip>
+                      <Tooltip title="Subscribe to our YouTube channel">
+                        <IconButton
+                          size="large"
+                          sx={{
+                            bgcolor: "primary.main",
+                            color: "white",
+                            "&:hover": { bgcolor: "primary.dark" },
+                          }}
+                          onClick={() =>
+                            window.open(
+                              "https://www.youtube.com/channel/UC76u8xQVChUo4NtPTyRmdwA",
+                              "_blank"
+                            )
+                          }
+                        >
+                          <YouTube />
+                        </IconButton>
+                      </Tooltip>
+                    </Box>
                   </Box>
-                </Box>
               </Box>
             </CardContent>
           </Card>
         </Box>
 
-        {/* Contact Form */}
         <Box sx={{ flex: 1 }}>
           <Card sx={{ height: "100%" }}>
             <CardContent sx={{ p: 4 }}>

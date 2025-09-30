@@ -159,7 +159,7 @@ const Home: React.FC = () => {
           gutterBottom
           sx={{ mb: 6 }}
         >
-          Why Choose CampusConnect?
+          Why Choose Meraki?
         </Typography>
         <Box
           sx={{

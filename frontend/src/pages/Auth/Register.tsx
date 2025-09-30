@@ -168,7 +168,7 @@ const Register: React.FC = () => {
           color="text.secondary"
           sx={{ mb: 4 }}
         >
-          Join CampusConnect to start your educational journey
+          Join Meraki to start your educational journey
         </Typography>
 
         {error && (
