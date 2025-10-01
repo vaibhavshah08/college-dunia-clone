@@ -10,6 +10,7 @@ import { LoansModule } from './loans/loans.module';
 import { ReviewsModule } from './reviews/reviews.module';
 import { AdminModule } from './admin/admin.module';
 import { DocumentsModule } from './documents/documents.module';
+import { CoursesModule } from './courses/courses.module';
 import { LoggerModule } from 'src/core/logger/logger.module';
 
 @Module({
@@ -33,6 +34,7 @@ import { LoggerModule } from 'src/core/logger/logger.module';
     ReviewsModule,
     AdminModule,
     DocumentsModule,
+    CoursesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

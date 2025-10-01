@@ -66,20 +66,6 @@ export class CreateCollegeDto {
   readonly ranking: number;
 
   @ApiProperty({
-    description: 'Courses offered by the college',
-    example: [
-      'Computer Science',
-      'Mechanical Engineering',
-      'Electrical Engineering',
-    ],
-    type: [String],
-  })
-  @IsArray()
-  @IsString({ each: true })
-  @IsNotEmpty()
-  readonly courses_offered: string[];
-
-  @ApiProperty({
     description: 'Placement ratio (percentage)',
     example: 85.5,
   })
@@ -165,4 +151,15 @@ export class CreateCollegeDto {
   @IsString({ each: true })
   @IsOptional()
   readonly top_recruiters?: string[];
+
+  @ApiProperty({
+    description: 'Linked course IDs',
+    example: ['course-id-1', 'course-id-2'],
+    type: [String],
+    required: false,
+  })
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  readonly courseIds?: string[];
 }

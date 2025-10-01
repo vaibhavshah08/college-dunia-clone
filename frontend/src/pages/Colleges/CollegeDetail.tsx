@@ -36,7 +36,10 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
 import collegesApi from "../../services/modules/colleges.api";
+import coursesApi from "../../services/modules/courses.api";
 import { College } from "../../types/api";
+import SafeHtml from "../../components/SafeHtml/SafeHtml";
+import { Course } from "../../services/modules/courses.api";
 
 const CollegeDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -51,6 +54,14 @@ const CollegeDetail: React.FC = () => {
     queryKey: ["colleges", id],
     queryFn: () => collegesApi.getCollege(id!),
     enabled: !!id,
+  });
+
+  // Fetch linked courses if college has course IDs
+  const { data: linkedCoursesData, isLoading: coursesLoading } = useQuery({
+    queryKey: ["courses", "by-ids", collegeData?.course_ids_json],
+    queryFn: () =>
+      coursesApi.getCoursesByIds(collegeData?.course_ids_json || []),
+    enabled: !!collegeData?.course_ids_json?.length,
   });
 
   // Show loading state
@@ -193,15 +204,97 @@ const CollegeDetail: React.FC = () => {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold" }}>
-                Courses Offered
+                Linked Courses
               </Typography>
               <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {collegeData.courses_offered.map((course, index) => (
-                  <Chip key={index} label={course} variant="outlined" />
-                ))}
+                {collegeData.course_ids_json &&
+                collegeData.course_ids_json.length > 0 ? (
+                  <Chip
+                    label={`${collegeData.course_ids_json.length} courses linked`}
+                    variant="outlined"
+                    color="primary"
+                  />
+                ) : (
+                  <Chip
+                    label="No courses linked"
+                    variant="outlined"
+                    color="default"
+                  />
+                )}
               </Box>
             </CardContent>
           </Card>
+
+          {/* Linked Courses Section */}
+          {linkedCoursesData && linkedCoursesData.length > 0 && (
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Typography
+                  variant="h5"
+                  gutterBottom
+                  sx={{ fontWeight: "bold" }}
+                >
+                  Detailed Course Information
+                </Typography>
+                {coursesLoading ? (
+                  <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
+                    <CircularProgress />
+                  </Box>
+                ) : (
+                  <Box
+                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+                  >
+                    {linkedCoursesData?.map((course) => (
+                      <Box
+                        key={course.id}
+                        sx={{
+                          p: 2,
+                          border: 1,
+                          borderColor: "divider",
+                          borderRadius: 1,
+                          backgroundColor: "background.paper",
+                        }}
+                      >
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "flex-start",
+                            mb: 1,
+                          }}
+                        >
+                          <Typography variant="h6" sx={{ fontWeight: "bold" }}>
+                            {course.name}
+                          </Typography>
+                          <Chip
+                            label={`${course.duration_years} years`}
+                            size="small"
+                            color="primary"
+                          />
+                        </Box>
+                        {course.stream && (
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ mb: 1 }}
+                          >
+                            Stream: {course.stream}
+                          </Typography>
+                        )}
+                        {course.description && (
+                          <SafeHtml
+                            html={course.description}
+                            variant="body2"
+                            sx={{ mt: 1 }}
+                          />
+                        )}
+                      </Box>
+                    ))}
+                  </Box>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Additional Info Section */}
           <Card sx={{ mb: 3 }}>
@@ -320,10 +413,12 @@ const CollegeDetail: React.FC = () => {
                 <Divider />
                 <Box>
                   <Typography variant="body2" color="text.secondary">
-                    Courses Offered
+                    Linked Courses
                   </Typography>
                   <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                    {collegeData.courses_offered.length}
+                    {collegeData.course_ids_json
+                      ? collegeData.course_ids_json.length
+                      : 0}
                   </Typography>
                 </Box>
               </Box>

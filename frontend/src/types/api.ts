@@ -149,7 +149,6 @@ export interface CollegeListQuery {
   minFees?: number;
   maxFees?: number;
   ranking?: number;
-  coursesOffered?: string;
 }
 
 export interface College {
@@ -161,7 +160,6 @@ export interface College {
   landmark?: string;
   fees: number;
   ranking: number;
-  courses_offered: string[];
   placement_ratio: number;
   year_of_establishment: number;
   affiliation: string;
@@ -173,6 +171,7 @@ export interface College {
   placement_rate?: number;
   top_recruiters?: string[];
   placement_last_updated?: string;
+  course_ids_json?: string[];
   created_at: string;
 }
 
