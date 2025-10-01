@@ -73,7 +73,7 @@ const coursesApi = {
   },
 
   // Get single course by ID
-  getCourse: async (id: string): Promise<CourseResponse> => {
+  getCourse: async (id: string): Promise<Course> => {
     const response = await apiClient.get(`/courses/${id}`);
     return response.data;
   },

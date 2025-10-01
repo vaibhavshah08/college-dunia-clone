@@ -16,6 +16,9 @@ import {
   Avatar,
   CircularProgress,
   Alert,
+  Collapse,
+  IconButton,
+  ListItemButton,
 } from "@mui/material";
 import {
   LocationOn,
@@ -32,9 +35,13 @@ import {
   Science,
   Handshake,
   Verified,
+  ExpandMore,
+  ExpandLess,
+  Visibility,
 } from "@mui/icons-material";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "react-query";
+import { useState } from "react";
 import collegesApi from "../../services/modules/colleges.api";
 import coursesApi from "../../services/modules/courses.api";
 import { College } from "../../types/api";
@@ -62,7 +69,29 @@ const CollegeDetail: React.FC = () => {
     queryFn: () =>
       coursesApi.getCoursesByIds(collegeData?.course_ids_json || []),
     enabled: !!collegeData?.course_ids_json?.length,
+    select: (courses) => {
+      // Group courses by name
+      const grouped: { [key: string]: Course[] } = {};
+      courses.forEach((course) => {
+        if (!grouped[course.name]) {
+          grouped[course.name] = [];
+        }
+        grouped[course.name].push(course);
+      });
+      return grouped;
+    },
   });
+
+  const [expandedCourse, setExpandedCourse] = useState<string | null>(null);
+
+  const handleCourseToggle = (courseName: string) => {
+    setExpandedCourse(expandedCourse === courseName ? null : courseName);
+  };
+
+  const handleViewDetails = (courseId: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    navigate(`/courses/${courseId}`);
+  };
 
   // Show loading state
   if (isLoading) {
@@ -200,33 +229,8 @@ const CollegeDetail: React.FC = () => {
             </CardContent>
           </Card>
 
-          {/* Courses Section */}
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Typography variant="h5" gutterBottom sx={{ fontWeight: "bold" }}>
-                Linked Courses
-              </Typography>
-              <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                {collegeData.course_ids_json &&
-                collegeData.course_ids_json.length > 0 ? (
-                  <Chip
-                    label={`${collegeData.course_ids_json.length} courses linked`}
-                    variant="outlined"
-                    color="primary"
-                  />
-                ) : (
-                  <Chip
-                    label="No courses linked"
-                    variant="outlined"
-                    color="default"
-                  />
-                )}
-              </Box>
-            </CardContent>
-          </Card>
-
           {/* Linked Courses Section */}
-          {linkedCoursesData && linkedCoursesData.length > 0 && (
+          {linkedCoursesData && Object.keys(linkedCoursesData).length > 0 && (
             <Card sx={{ mb: 3 }}>
               <CardContent>
                 <Typography
@@ -234,63 +238,111 @@ const CollegeDetail: React.FC = () => {
                   gutterBottom
                   sx={{ fontWeight: "bold" }}
                 >
-                  Detailed Course Information
+                  Courses Offered
                 </Typography>
                 {coursesLoading ? (
                   <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
                     <CircularProgress />
                   </Box>
                 ) : (
-                  <Box
-                    sx={{ display: "flex", flexDirection: "column", gap: 2 }}
-                  >
-                    {linkedCoursesData?.map((course) => (
-                      <Box
-                        key={course.id}
-                        sx={{
-                          p: 2,
-                          border: 1,
-                          borderColor: "divider",
-                          borderRadius: 1,
-                          backgroundColor: "background.paper",
-                        }}
-                      >
-                        <Box
-                          sx={{
-                            display: "flex",
-                            justifyContent: "space-between",
-                            alignItems: "flex-start",
-                            mb: 1,
-                          }}
-                        >
-                          <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-                            {course.name}
-                          </Typography>
-                          <Chip
-                            label={`${course.duration_years} years`}
-                            size="small"
-                            color="primary"
-                          />
-                        </Box>
-                        {course.stream && (
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ mb: 1 }}
+                  <List sx={{ width: "100%", bgcolor: "background.paper" }}>
+                    {Object.entries(linkedCoursesData).map(
+                      ([courseName, courses]) => (
+                        <React.Fragment key={courseName}>
+                          <ListItemButton
+                            onClick={() => handleCourseToggle(courseName)}
+                            sx={{
+                              border: "1px solid",
+                              borderColor: "divider",
+                              borderRadius: 1,
+                              mb: 1,
+                              bgcolor:
+                                expandedCourse === courseName
+                                  ? "action.hover"
+                                  : "background.paper",
+                              "&:hover": {
+                                bgcolor: "action.hover",
+                              },
+                            }}
                           >
-                            Stream: {course.stream}
-                          </Typography>
-                        )}
-                        {course.description && (
-                          <SafeHtml
-                            html={course.description}
-                            variant="body2"
-                            sx={{ mt: 1 }}
-                          />
-                        )}
-                      </Box>
-                    ))}
-                  </Box>
+                            <ListItemText
+                              primary={
+                                <Typography
+                                  variant="subtitle1"
+                                  fontWeight="medium"
+                                >
+                                  {courseName}
+                                </Typography>
+                              }
+                              secondary={`${courses.length} stream${
+                                courses.length > 1 ? "s" : ""
+                              } available`}
+                            />
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              {expandedCourse === courseName ? (
+                                <ExpandLess />
+                              ) : (
+                                <ExpandMore />
+                              )}
+                            </Box>
+                          </ListItemButton>
+                          <Collapse
+                            in={expandedCourse === courseName}
+                            timeout="auto"
+                            unmountOnExit
+                          >
+                            <List component="div" disablePadding>
+                              {courses.map((course) => (
+                                <ListItem
+                                  key={course.id}
+                                  sx={{
+                                    pl: 4,
+                                    py: 1.5,
+                                    display: "flex",
+                                    justifyContent: "space-between",
+                                    alignItems: "center",
+                                    borderBottom: "1px solid",
+                                    borderColor: "divider",
+                                    "&:last-child": {
+                                      borderBottom: "none",
+                                    },
+                                  }}
+                                >
+                                  <Box>
+                                    <Typography
+                                      variant="body2"
+                                      fontWeight="medium"
+                                    >
+                                      {course.stream || "General"}
+                                    </Typography>
+                                    {course.duration_years > 0 && (
+                                      <Typography
+                                        variant="caption"
+                                        color="text.secondary"
+                                      >
+                                        {course.duration_years} year
+                                        {course.duration_years > 1 ? "s" : ""}
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                  <Button
+                                    size="small"
+                                    variant="outlined"
+                                    onClick={(e) =>
+                                      handleViewDetails(course.id, e)
+                                    }
+                                    startIcon={<Visibility fontSize="small" />}
+                                  >
+                                    View Details
+                                  </Button>
+                                </ListItem>
+                              ))}
+                            </List>
+                          </Collapse>
+                        </React.Fragment>
+                      )
+                    )}
+                  </List>
                 )}
               </CardContent>
             </Card>
