@@ -772,7 +772,11 @@ const Colleges: React.FC = () => {
                         color="text.secondary"
                         sx={{ mb: 2 }}
                       >
-                        Courses: {college.courses_offered.join(", ")}
+                        Linked Courses:{" "}
+                        {college.course_ids_json
+                          ? college.course_ids_json.length
+                          : 0}{" "}
+                        courses
                       </Typography>
                       <Typography variant="body2" color="text.secondary">
                         Established: {college.year_of_establishment}

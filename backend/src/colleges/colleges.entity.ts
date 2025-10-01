@@ -26,9 +26,6 @@ export class College {
   @Column('int', { nullable: false })
   ranking: number;
 
-  @Column('simple-array', { nullable: false })
-  courses_offered: string[]; // [CSE, ME, ECE]
-
   @Column('float', { nullable: false })
   placement_ratio: number;
 
@@ -64,6 +61,9 @@ export class College {
 
   @Column('boolean', { default: false })
   is_deleted: boolean;
+
+  @Column('json', { nullable: true })
+  course_ids_json: string[];
 
   @CreateDateColumn()
   created_at: Date;

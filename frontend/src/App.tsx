@@ -29,6 +29,8 @@ import Home from "./pages/Home/Home";
 import Colleges from "./pages/Colleges/Colleges";
 import CollegeDetail from "./pages/Colleges/CollegeDetail";
 import CollegeComparison from "./pages/Colleges/CollegeComparison";
+import Courses from "./pages/Courses/Courses";
+import CourseDetail from "./pages/Courses/CourseDetail";
 import Loans from "./pages/Loans/Loans";
 import LoanDetail from "./pages/Loans/LoanDetail";
 import Documents from "./pages/Documents/Documents";
@@ -433,6 +435,22 @@ function App() {
                     element={
                       <UserRoute>
                         <CollegeComparison />
+                      </UserRoute>
+                    }
+                  />
+                  <Route
+                    path="/courses"
+                    element={
+                      <UserRoute>
+                        <Courses />
+                      </UserRoute>
+                    }
+                  />
+                  <Route
+                    path="/courses/:id"
+                    element={
+                      <UserRoute>
+                        <CourseDetail />
                       </UserRoute>
                     }
                   />

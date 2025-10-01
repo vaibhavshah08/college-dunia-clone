@@ -30,6 +30,7 @@ import {
   AdminPanelSettings,
   Logout,
   Home,
+  Book,
 } from "@mui/icons-material";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
@@ -92,6 +93,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     return [
       { text: "Home", path: "/", icon: <Home /> },
       { text: "Colleges", path: "/colleges", icon: <School /> },
+      { text: "Courses", path: "/courses", icon: <Book /> },
       { text: "Loans", path: "/loans", icon: <AccountBalance /> },
       { text: "Documents", path: "/documents", icon: <Description /> },
     ];
