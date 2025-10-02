@@ -120,7 +120,11 @@ const Footer: React.FC = () => {
 
           {/* Contact Info */}
           <Box>
-            <Typography variant="h6" gutterBottom sx={{ fontWeight: "bold" }}>
+            <Typography
+              variant="h6"
+              gutterBottom
+              sx={{ fontWeight: "bold", color: "white" }}
+            >
               Contact Us
             </Typography>
             <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>

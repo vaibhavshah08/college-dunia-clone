@@ -362,6 +362,26 @@ export interface PageUpdate {
   metaDescription?: string;
 }
 
+// Message Types
+export interface Message {
+  message_id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  is_read: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateMessageDto {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+}
+
 // Admin Types
 export interface AdminStats {
   totalUsers: number;

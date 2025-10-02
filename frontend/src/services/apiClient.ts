@@ -122,6 +122,12 @@ apiClient.interceptors.response.use(
           successMessage = "Loan application submitted successfully!";
         } else if (url.includes("/documents")) {
           successMessage = "Document uploaded successfully!";
+        } else if (url.includes("/courses")) {
+          // Don't show automatic toast for courses - handled by component
+          successMessage = "";
+        } else if (url.includes("/messages")) {
+          // Don't show automatic toast for messages - handled by component
+          successMessage = "";
         } else {
           successMessage = "Created successfully!";
         }
@@ -136,6 +142,9 @@ apiClient.interceptors.response.use(
           successMessage = "Loan updated successfully!";
         } else if (url.includes("/documents/")) {
           successMessage = "Document updated successfully!";
+        } else if (url.includes("/courses/")) {
+          // Don't show automatic toast for courses - handled by component
+          successMessage = "";
         } else {
           successMessage = "Updated successfully!";
         }
@@ -148,6 +157,9 @@ apiClient.interceptors.response.use(
           successMessage = "Loan deleted successfully!";
         } else if (url.includes("/documents/")) {
           successMessage = "Document deleted successfully!";
+        } else if (url.includes("/courses/")) {
+          // Don't show automatic toast for courses - handled by component
+          successMessage = "";
         } else {
           successMessage = "Deleted successfully!";
         }

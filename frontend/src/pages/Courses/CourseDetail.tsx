@@ -25,6 +25,12 @@ import {
 import { useQuery } from "react-query";
 import coursesApi, { Course } from "../../services/modules/courses.api";
 import SafeHtml from "../../components/SafeHtml/SafeHtml";
+import {
+  AnimatedPage,
+  AnimatedList,
+  AnimatedCard,
+  AnimatedButton,
+} from "../../components/Motion";
 
 const CourseDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -114,70 +120,72 @@ const CourseDetail: React.FC = () => {
   const course = courseData;
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Button
-        variant="outlined"
-        onClick={handleBack}
-        startIcon={<ArrowBack />}
-        sx={{ mb: 3 }}
-      >
-        Back
-      </Button>
+    <AnimatedPage>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
+        <Button
+          variant="outlined"
+          onClick={handleBack}
+          startIcon={<ArrowBack />}
+          sx={{ mb: 3 }}
+        >
+          Back
+        </Button>
 
-      <Card>
-        <CardContent>
-          {/* Course Name */}
-          <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
-            {course?.name || "Course Name Not Available"}
-          </Typography>
+        <Card>
+          <CardContent>
+            {/* Course Name */}
+            <Typography variant="h4" component="h1" gutterBottom sx={{ mb: 3 }}>
+              {course?.name || "Course Name Not Available"}
+            </Typography>
 
-          {/* Stream Name */}
-          {course?.stream && (
+            {/* Stream Name */}
+            {course?.stream && (
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="h6" gutterBottom>
+                  Stream Name
+                </Typography>
+                <Chip
+                  label={course.stream}
+                  color="primary"
+                  variant="outlined"
+                  sx={{ fontSize: "1rem", padding: "8px 16px" }}
+                />
+              </Box>
+            )}
+
+            {/* Duration */}
             <Box sx={{ mb: 2 }}>
               <Typography variant="h6" gutterBottom>
-                Stream Name
+                Duration
               </Typography>
               <Chip
-                label={course.stream}
-                color="primary"
+                icon={<AccessTime />}
+                label={`${course?.duration_years || 0} Year${
+                  (course?.duration_years || 0) > 1 ? "s" : ""
+                }`}
+                color="secondary"
                 variant="outlined"
                 sx={{ fontSize: "1rem", padding: "8px 16px" }}
               />
             </Box>
-          )}
 
-          {/* Duration */}
-          <Box sx={{ mb: 2 }}>
-            <Typography variant="h6" gutterBottom>
-              Duration
-            </Typography>
-            <Chip
-              icon={<AccessTime />}
-              label={`${course?.duration_years || 0} Year${
-                (course?.duration_years || 0) > 1 ? "s" : ""
-              }`}
-              color="secondary"
-              variant="outlined"
-              sx={{ fontSize: "1rem", padding: "8px 16px" }}
-            />
-          </Box>
-
-          {/* Course Details */}
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="h6" gutterBottom>
-              Course Details
-            </Typography>
-            {course?.description ? (
-              <SafeHtml html={course.description} variant="body1" />
-            ) : (
-              <Typography variant="body1" color="text.secondary">
-                No course details available.
+            {/* Course Details */}
+            <Box sx={{ mb: 4 }}>
+              <Typography variant="h6" gutterBottom>
+                Course Details
               </Typography>
-            )}
-          </Box>
-        </CardContent>
-      </Card>
-    </Container>
+              {course?.description ? (
+                <SafeHtml html={course.description} variant="body1" />
+              ) : (
+                <Typography variant="body1" color="text.secondary">
+                  No course details available.
+                </Typography>
+              )}
+            </Box>
+          </CardContent>
+        </Card>
+      </Container>
+    </AnimatedPage>
   );
 };
 

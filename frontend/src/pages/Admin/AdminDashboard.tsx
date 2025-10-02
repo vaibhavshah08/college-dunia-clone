@@ -67,10 +67,18 @@ import loansApi from "../../services/modules/loans.api";
 import documentsApi from "../../services/modules/documents.api";
 import adminApi from "../../services/modules/admin.api";
 import coursesApi from "../../services/modules/courses.api";
-import { College, Loan, Document, User, DocumentStatus } from "../../types/api";
+import {
+  College,
+  Loan,
+  Document,
+  User,
+  DocumentStatus,
+  Message,
+} from "../../types/api";
 import { downloadCsvTemplate, parseCsvFile } from "../../utils/excelUtils";
 import { getErrorMessage } from "../../utils/errorHandler";
 import CoursesManagement from "../../components/Admin/CoursesManagement";
+import MessagesManagement from "../../components/Admin/MessagesManagement";
 
 // Get file URL for preview
 const getFileUrl = (documentPath: string) => {
@@ -104,6 +112,7 @@ function TabPanel(props: TabPanelProps) {
 const AdminDashboard: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
   const theme = useTheme();
@@ -871,13 +880,25 @@ const AdminDashboard: React.FC = () => {
   };
 
   // Refresh all data
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
-    queryClient.invalidateQueries({ queryKey: ["loans", "admin"] });
-    queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
-    queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
-    queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-    // Data refresh success handled by API client
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["loans", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["documents", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["users", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] }),
+      ]);
+      // Data refresh success handled by API client
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      // Add a small delay to show the loading state
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 500);
+    }
   };
 
   // Card click handlers to navigate to respective tabs
@@ -1092,24 +1113,28 @@ const AdminDashboard: React.FC = () => {
         <Box display="flex" gap={2} flexWrap="nowrap">
           <Button
             variant="outlined"
-            startIcon={<Refresh />}
+            startIcon={
+              isRefreshing ? <CircularProgress size={16} /> : <Refresh />
+            }
             onClick={handleRefresh}
+            disabled={isRefreshing}
             sx={{
               minWidth: 120,
               display: { xs: "none", sm: "flex" },
             }}
           >
-            Refresh
+            {isRefreshing ? "Refreshing..." : "Refresh"}
           </Button>
           <IconButton
             onClick={handleRefresh}
+            disabled={isRefreshing}
             size="large"
             sx={{
               display: { xs: "flex", sm: "none" },
             }}
             aria-label="Refresh"
           >
-            <Refresh />
+            {isRefreshing ? <CircularProgress size={20} /> : <Refresh />}
           </IconButton>
         </Box>
       </Box>
@@ -1253,6 +1278,7 @@ const AdminDashboard: React.FC = () => {
           <Tab label="Users" />
           <Tab label="Documents" />
           <Tab label="Loans" />
+          <Tab label="Messages" />
         </Tabs>
 
         {/* Colleges Tab */}
@@ -2244,6 +2270,11 @@ const AdminDashboard: React.FC = () => {
               />
             </Box>
           )}
+        </TabPanel>
+
+        {/* Messages Tab */}
+        <TabPanel value={tabValue} index={5}>
+          <MessagesManagement />
         </TabPanel>
       </Paper>
 

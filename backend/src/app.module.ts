@@ -11,6 +11,7 @@ import { ReviewsModule } from './reviews/reviews.module';
 import { AdminModule } from './admin/admin.module';
 import { DocumentsModule } from './documents/documents.module';
 import { CoursesModule } from './courses/courses.module';
+import { MessagesModule } from './messages/messages.module';
 import { LoggerModule } from 'src/core/logger/logger.module';
 
 @Module({
@@ -35,6 +36,7 @@ import { LoggerModule } from 'src/core/logger/logger.module';
     AdminModule,
     DocumentsModule,
     CoursesModule,
+    MessagesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

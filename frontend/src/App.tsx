@@ -13,6 +13,7 @@ import Layout from "./components/Layout/Layout";
 // Contexts
 import { ComparisonProvider } from "./contexts/ComparisonContext";
 import { ToastProvider } from "./contexts/ToastContext";
+import { MotionProvider } from "./contexts/MotionContext";
 
 // Components
 import ToastInitializer from "./components/ToastInitializer";
@@ -402,132 +403,137 @@ function App() {
         <CssBaseline />
         <ToastProvider>
           <ToastInitializer />
-          <ComparisonProvider>
-            <Router>
-              <Layout>
-                <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <HomeRoute>
-                        <Home />
-                      </HomeRoute>
-                    }
-                  />
-                  <Route
-                    path="/colleges"
-                    element={
-                      <UserRoute>
-                        <Colleges />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/colleges/:id"
-                    element={
-                      <UserRoute>
-                        <CollegeDetail />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/colleges/compare"
-                    element={
-                      <UserRoute>
-                        <CollegeComparison />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/courses"
-                    element={
-                      <UserRoute>
-                        <Courses />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/courses/:id"
-                    element={
-                      <UserRoute>
-                        <CourseDetail />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/loans"
-                    element={
-                      <UserRoute>
-                        <Loans />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/loans/:id"
-                    element={
-                      <UserRoute>
-                        <LoanDetail />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/documents"
-                    element={
-                      <UserRoute>
-                        <Documents />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>
-                        <AdminDashboard />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/login"
-                    element={
-                      <PublicRoute>
-                        <Login />
-                      </PublicRoute>
-                    }
-                  />
-                  <Route
-                    path="/register"
-                    element={
-                      <PublicRoute>
-                        <Register />
-                      </PublicRoute>
-                    }
-                  />
-                  <Route
-                    path="/auth/google/success"
-                    element={<GoogleSuccess />}
-                  />
-                  <Route path="/auth/google/error" element={<GoogleError />} />
-                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                  <Route
-                    path="/terms-of-service"
-                    element={<TermsOfService />}
-                  />
-                  <Route path="/help-support" element={<FAQ />} />
-                  <Route path="/contact-us" element={<ContactUs />} />
-                  <Route path="/about-us" element={<AboutUs />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
-            </Router>
-          </ComparisonProvider>
+          <MotionProvider>
+            <ComparisonProvider>
+              <Router>
+                <Layout>
+                  <Routes>
+                    <Route
+                      path="/"
+                      element={
+                        <HomeRoute>
+                          <Home />
+                        </HomeRoute>
+                      }
+                    />
+                    <Route
+                      path="/colleges"
+                      element={
+                        <UserRoute>
+                          <Colleges />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/colleges/:id"
+                      element={
+                        <UserRoute>
+                          <CollegeDetail />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/colleges/compare"
+                      element={
+                        <UserRoute>
+                          <CollegeComparison />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/courses"
+                      element={
+                        <UserRoute>
+                          <Courses />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/courses/:id"
+                      element={
+                        <UserRoute>
+                          <CourseDetail />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/loans"
+                      element={
+                        <UserRoute>
+                          <Loans />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/loans/:id"
+                      element={
+                        <UserRoute>
+                          <LoanDetail />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/documents"
+                      element={
+                        <UserRoute>
+                          <Documents />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin"
+                      element={
+                        <AdminRoute>
+                          <AdminDashboard />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/login"
+                      element={
+                        <PublicRoute>
+                          <Login />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route
+                      path="/register"
+                      element={
+                        <PublicRoute>
+                          <Register />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route
+                      path="/auth/google/success"
+                      element={<GoogleSuccess />}
+                    />
+                    <Route
+                      path="/auth/google/error"
+                      element={<GoogleError />}
+                    />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route
+                      path="/terms-of-service"
+                      element={<TermsOfService />}
+                    />
+                    <Route path="/help-support" element={<FAQ />} />
+                    <Route path="/contact-us" element={<ContactUs />} />
+                    <Route path="/about-us" element={<AboutUs />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              </Router>
+            </ComparisonProvider>
+          </MotionProvider>
         </ToastProvider>
         <ToastContainer
           position="bottom-center"

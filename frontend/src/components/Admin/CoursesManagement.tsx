@@ -36,7 +36,6 @@ import {
   Edit,
   Delete,
   Upload,
-  Download,
   Search,
   Refresh,
   School,
@@ -212,40 +211,6 @@ const CoursesManagement: React.FC<CoursesManagementProps> = ({ onClose }) => {
     }
   };
 
-  const handleExportCSV = async () => {
-    try {
-      const blob = await coursesApi.exportCoursesCSV();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "courses.csv";
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      success("Courses exported to CSV successfully");
-    } catch (error) {
-      showError(getErrorMessage(error));
-    }
-  };
-
-  const handleExportExcel = async () => {
-    try {
-      const blob = await coursesApi.exportCoursesExcel();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = "courses.xlsx";
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-      document.body.removeChild(a);
-      success("Courses exported to Excel successfully");
-    } catch (error) {
-      showError(getErrorMessage(error));
-    }
-  };
-
   const resetForm = () => {
     setFormData({
       name: "",
@@ -305,22 +270,6 @@ const CoursesManagement: React.FC<CoursesManagementProps> = ({ onClose }) => {
             size={isMobile ? "small" : "medium"}
           >
             Import
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Download />}
-            onClick={handleExportCSV}
-            size={isMobile ? "small" : "medium"}
-          >
-            Export CSV
-          </Button>
-          <Button
-            variant="outlined"
-            startIcon={<Download />}
-            onClick={handleExportExcel}
-            size={isMobile ? "small" : "medium"}
-          >
-            Export Excel
           </Button>
         </Stack>
       </Box>

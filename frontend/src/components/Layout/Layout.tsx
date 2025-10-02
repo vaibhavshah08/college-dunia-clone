@@ -36,6 +36,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
 import Footer from "./Footer";
 import Logo from "../Logo/Logo";
+import FloatingWhatsApp from "../FloatingWhatsApp/FloatingWhatsApp";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -302,6 +303,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         </Container>
       </Box>
       <Footer />
+      <FloatingWhatsApp />
     </Box>
   );
 };

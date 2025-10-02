@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Container,
   Typography,
@@ -19,6 +19,15 @@ import {
 } from "@mui/icons-material";
 
 const HelpSupport: React.FC = () => {
+  // Smooth scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, []);
+
   const faqs = [
     {
       question: "How do I apply for a loan?",
