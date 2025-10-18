@@ -10,14 +10,6 @@ import {
   isAuthenticated,
 } from "../../utils/tokenManager";
 
-// Custom error types
-interface ApiError {
-  status: number;
-  code: string;
-  message: string;
-  details?: any;
-}
-
 export const useAuth = () => {
   const queryClient = useQueryClient();
   const navigate = useNavigate();
@@ -41,9 +33,9 @@ export const useAuth = () => {
       // Retry up to 2 times for other errors
       return failureCount < 2;
     },
-    staleTime: 30 * 1000, // 30 seconds - data becomes stale quickly for real-time updates
-    refetchInterval: 60 * 1000, // Refetch every minute
-    refetchIntervalInBackground: true, // Continue refetching when tab is not active
+    staleTime: 5 * 60 * 1000, // 5 minutes - increased for better performance
+    refetchInterval: 10 * 60 * 1000, // Refetch every 10 minutes (reduced frequency)
+    refetchIntervalInBackground: false, // Don't refetch when tab is not active
     enabled: isAuthenticated(), // Use token manager to check authentication
     onError: (error: any) => {
       // Handle profile fetch errors

@@ -1,6 +1,21 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
 
 @Entity('colleges')
+@Index(['state'])
+@Index(['city'])
+@Index(['state', 'city'])
+@Index(['fees'])
+@Index(['ranking'])
+@Index(['is_partnered'])
+@Index(['college_name'])
+@Index(['is_deleted'])
+@Index(['created_at'])
 export class College {
   @PrimaryColumn('varchar')
   college_id: string;

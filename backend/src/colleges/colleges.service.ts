@@ -278,7 +278,10 @@ export class CollegesService {
     };
   }
 
-  async list(correlation_id: string, filters: FilterDto) {
+  async list(
+    correlation_id: string,
+    filters: FilterDto & { page?: number; limit?: number },
+  ) {
     this.logger.setContext(this.constructor.name);
     this.logger.debug(correlation_id, 'Starting college listing process');
     this.logger.debug(
@@ -288,6 +291,8 @@ export class CollegesService {
 
     this.logger.debug(correlation_id, 'Building database query');
     const qb = this.repo.createQueryBuilder('c');
+
+    qb.where('c.is_deleted = :is_deleted', { is_deleted: false });
 
     if (filters.q) {
       this.logger.debug(correlation_id, 'Applying search filter');
@@ -321,9 +326,18 @@ export class CollegesService {
 
     qb.orderBy('c.ranking', 'ASC');
 
+    const page = filters.page || 1;
+    const limit = Math.min(filters.limit || 20, 100);
+    const offset = (page - 1) * limit;
+
+    qb.skip(offset).take(limit);
+
     this.logger.debug(correlation_id, 'Executing database query');
-    const results = await qb.getMany();
-    this.logger.debug(correlation_id, `Found ${results.length} colleges`);
+    const [results, total] = await qb.getManyAndCount();
+    this.logger.debug(
+      correlation_id,
+      `Found ${results.length} colleges out of ${total} total`,
+    );
 
     return {
       message: 'Colleges retrieved successfully',

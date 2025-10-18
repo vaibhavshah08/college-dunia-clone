@@ -1,5 +1,5 @@
 import apiClient from "../apiClient";
-import type { User, PaginatedResponse } from "../../types/api";
+import type { User } from "../../types/api";
 
 export interface AdminDashboardStats {
   totalUsers: number;

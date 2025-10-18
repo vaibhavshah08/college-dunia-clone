@@ -2,7 +2,6 @@ import React from "react";
 import {
   AppBar,
   Toolbar,
-  Typography,
   Button,
   Container,
   Box,
@@ -23,7 +22,6 @@ import {
 import {
   Menu as MenuIcon,
   School,
-  Dashboard,
   Person,
   Description,
   AccountBalance,

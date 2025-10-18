@@ -6,7 +6,6 @@ import axios, {
 } from "axios";
 import { getAuthToken, removeToken } from "../utils/tokenManager";
 
-// Global toast functions - will be set by the app
 let globalToast: {
   success: (message: string) => void;
   error: (message: string) => void;
@@ -14,12 +13,10 @@ let globalToast: {
   warning: (message: string) => void;
 } | null = null;
 
-// Function to set global toast from the app
 export const setGlobalToast = (toast: typeof globalToast) => {
   globalToast = toast;
 };
 
-// Fallback toast function
 function showToast(
   message: string,
   type: "error" | "success" | "info" | "warning" = "error"
@@ -42,9 +39,10 @@ const pendingRequests = new Map<string, AbortController>();
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds
+  timeout: 15000, // Reduced to 15 seconds for faster failure detection
   headers: {
     "Content-Type": "application/json",
+    "Accept-Encoding": "gzip, deflate, br", // Enable compression
   },
   withCredentials: true, // For cookies if needed
 });

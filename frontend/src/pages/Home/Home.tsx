@@ -70,7 +70,7 @@ const Home: React.FC = () => {
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
-            backgroundImage: `linear-gradient(rgba(25, 118, 210, 0.9), rgba(25, 118, 210, 0.9)), url(https://images.unsplash.com/photo-1523050854058-8df90110c9e1?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=2070&q=80)`,
+            backgroundImage: "url(/assests/college.png)",
             minHeight: { xs: "50vh", sm: "60vh" },
             display: "flex",
             alignItems: "center",

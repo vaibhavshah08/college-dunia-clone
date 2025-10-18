@@ -7,7 +7,6 @@ import type {
   CollegeFilters,
   CompareRequest,
   CompareResponse,
-  PaginatedResponse,
   CollegePlacement,
 } from "../../types/api";
 

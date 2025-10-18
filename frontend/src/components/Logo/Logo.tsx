@@ -1,6 +1,5 @@
 import React from "react";
-import { Box, Typography, Avatar } from "@mui/material";
-import { height } from "@mui/system";
+import { Box, Typography } from "@mui/material";
 
 interface LogoProps {
   size?: "small" | "medium" | "large";

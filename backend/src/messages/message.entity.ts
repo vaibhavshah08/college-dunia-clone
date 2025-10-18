@@ -4,9 +4,13 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('messages')
+@Index(['is_read', 'is_deleted'])
+@Index(['created_at'])
+@Index(['email'])
 export class Message {
   @PrimaryColumn('varchar')
   message_id: string;
@@ -35,4 +39,3 @@ export class Message {
   @UpdateDateColumn()
   updated_at: Date;
 }
-

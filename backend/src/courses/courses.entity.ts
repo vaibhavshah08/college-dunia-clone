@@ -4,9 +4,16 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 @Entity('courses')
+@Index(['name'])
+@Index(['stream'])
+@Index(['duration_years'])
+@Index(['is_deleted'])
+@Index(['stream', 'duration_years'])
+@Index(['created_at'])
 export class Course {
   @PrimaryColumn('varchar')
   id: string;
