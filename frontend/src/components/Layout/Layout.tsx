@@ -35,6 +35,7 @@ import { useAuth } from "../../lib/hooks/useAuth";
 import Footer from "./Footer";
 import Logo from "../Logo/Logo";
 import FloatingWhatsApp from "../FloatingWhatsApp/FloatingWhatsApp";
+import GlobalSearch from "../Search/GlobalSearch";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -105,6 +106,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
       <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
         <Logo variant="header" />
       </Box>
+
+      {/* Mobile Global Search */}
+      <Box sx={{ p: 2, borderBottom: 1, borderColor: "divider" }}>
+        <GlobalSearch />
+      </Box>
+
       <List sx={{ pt: 1 }}>
         {menuItems.map((item, index) => (
           <ListItem
@@ -148,7 +155,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
 
   return (
     <Box sx={{ display: "flex", flexDirection: "column", minHeight: "100vh" }}>
-      <AppBar position="static" elevation={1}>
+      <AppBar position="sticky" elevation={1}>
         <Toolbar sx={{ px: { xs: 1, sm: 2 }, color: "text.primary" }}>
           {isMobile && (
             <Tooltip title="Open Menu">
@@ -170,6 +177,13 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           >
             <Logo variant="header" />
           </Box>
+
+          {/* Global Search */}
+          {!isMobile && (
+            <Box sx={{ flexGrow: 1, maxWidth: 400, mx: 3 }}>
+              <GlobalSearch />
+            </Box>
+          )}
 
           {!isMobile && (
             <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>

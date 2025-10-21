@@ -131,7 +131,6 @@ const Loans: React.FC = () => {
           whatsapp_number: "",
           description: "",
         });
-        toast.success("Loan application submitted successfully");
         setTimeout(() => setMutationInProgress(false), 1000);
       }
     },

@@ -62,15 +62,19 @@ apiClient.interceptors.request.use(
       config.headers["X-Correlation-ID"] = correlationId;
     }
 
-    // Handle request cancellation
-    const requestKey = `${config.method}-${config.url}`;
-    if (pendingRequests.has(requestKey)) {
-      pendingRequests.get(requestKey)?.abort();
-    }
+    // Handle request cancellation - only for specific cases
+    // Disable automatic cancellation to prevent CanceledError
+    // const requestKey = `${config.method}-${config.url}`;
+    // const existingController = pendingRequests.get(requestKey);
 
-    const controller = new AbortController();
-    config.signal = controller.signal;
-    pendingRequests.set(requestKey, controller);
+    // Only cancel if there's an existing request and it's not already aborted
+    // if (existingController && !existingController.signal.aborted) {
+    //   existingController.abort();
+    // }
+
+    // const controller = new AbortController();
+    // config.signal = controller.signal;
+    // pendingRequests.set(requestKey, controller);
 
     return config;
   },
@@ -82,9 +86,9 @@ apiClient.interceptors.request.use(
 // Response interceptor
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Clean up pending request
-    const requestKey = `${response.config.method}-${response.config.url}`;
-    pendingRequests.delete(requestKey);
+    // Clean up pending request - disabled since we're not using request cancellation
+    // const requestKey = `${response.config.method}-${response.config.url}`;
+    // pendingRequests.delete(requestKey);
 
     // Extract data from the new response format
     if (response.data && response.data.data !== undefined) {
@@ -171,11 +175,11 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // Clean up pending request
-    if (error.config) {
-      const requestKey = `${error.config.method}-${error.config.url}`;
-      pendingRequests.delete(requestKey);
-    }
+    // Clean up pending request - disabled since we're not using request cancellation
+    // if (error.config) {
+    //   const requestKey = `${error.config.method}-${error.config.url}`;
+    //   pendingRequests.delete(requestKey);
+    // }
 
     // Handle different error types
     if (error.response) {
@@ -262,6 +266,12 @@ apiClient.interceptors.response.use(
     } else if (error.request) {
       // Network error
       showToast("Network error. Please check your connection and try again.");
+    } else if (
+      error.code === "ERR_CANCELED" ||
+      error.name === "CanceledError"
+    ) {
+      // Request was cancelled - don't show error toast
+      console.log("Request was cancelled:", error.message);
     } else {
       // Other error
       showToast("An unexpected error occurred");

@@ -14,14 +14,14 @@ import {
   AccountBalance,
   Description,
 } from "@mui/icons-material";
-import { useNavigate, Link as RouterLink } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
 import {
   AnimatedPage,
   AnimatedList,
   AnimatedCard,
-  AnimatedButton,
 } from "../../components/Motion";
+import CoursesSection from "../../components/Home/CoursesSection";
 
 const Home: React.FC = () => {
   const navigate = useNavigate();
@@ -66,12 +66,12 @@ const Home: React.FC = () => {
             position: "relative",
             backgroundColor: "primary.main",
             color: "#fff",
-            mb: 4,
+            mb: 2,
             backgroundSize: "cover",
             backgroundRepeat: "no-repeat",
             backgroundPosition: "center",
             backgroundImage: "url(/assests/college.png)",
-            minHeight: { xs: "50vh", sm: "60vh" },
+            minHeight: { xs: "40vh", sm: "45vh" },
             display: "flex",
             alignItems: "center",
           }}
@@ -156,15 +156,18 @@ const Home: React.FC = () => {
           </Container>
         </Paper>
 
+        {/* Courses Section */}
+        <CoursesSection />
+
         {/* Features Section */}
-        <Container maxWidth="lg" sx={{ py: 8 }}>
+        <Container maxWidth="lg" sx={{ py: 3 }}>
           <Typography
             component="h2"
             variant="h3"
             align="center"
             color="text.primary"
             gutterBottom
-            sx={{ mb: 6 }}
+            sx={{ mb: 3 }}
           >
             Why Choose Meraki?
           </Typography>

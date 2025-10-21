@@ -145,11 +145,15 @@ const Colleges: React.FC = () => {
   );
 
   // Fetch course details to get stream names
-  const { data: coursesData = [] } = useQuery(
+  const { data: coursesData = [], error: coursesError } = useQuery(
     ["courses", "byIds", allCourseIds],
     () => coursesApi.getCoursesByIds(allCourseIds),
     {
       enabled: isAuthenticated && allCourseIds.length > 0,
+      retry: false,
+      onError: (error) => {
+        console.error("Error fetching courses by IDs:", error);
+      },
     }
   );
 
@@ -175,28 +179,46 @@ const Colleges: React.FC = () => {
 
   // Apply frontend course filtering
   const colleges = useMemo(() => {
-    if (filters.coursesOffered.length === 0) {
+    try {
+      if (filters.coursesOffered.length === 0) {
+        return backendFilteredColleges;
+      }
+
+      // Skip course filtering if there's an error with courses data
+      if (coursesError || !Array.isArray(coursesData)) {
+        console.warn("Skipping course filtering due to courses data error");
+        return backendFilteredColleges;
+      }
+
+      // Get course IDs for selected streams
+      const selectedCourseIds = coursesData
+        .filter(
+          (course: any) =>
+            course?.stream && filters.coursesOffered.includes(course.stream)
+        )
+        .map((course: any) => course?.id)
+        .filter(Boolean);
+
+      if (selectedCourseIds.length === 0) {
+        return backendFilteredColleges;
+      }
+
+      // Filter colleges that have any of the selected courses
+      return backendFilteredColleges.filter((college) =>
+        college.course_ids_json?.some((courseId) =>
+          selectedCourseIds.includes(courseId)
+        )
+      );
+    } catch (error) {
+      console.error("Error in course filtering:", error);
       return backendFilteredColleges;
     }
-
-    // Get course IDs for selected streams
-    const selectedCourseIds = coursesData
-      .filter((course: any) =>
-        filters.coursesOffered.includes(course.stream || "")
-      )
-      .map((course: any) => course.id);
-
-    if (selectedCourseIds.length === 0) {
-      return backendFilteredColleges;
-    }
-
-    // Filter colleges that have any of the selected courses
-    return backendFilteredColleges.filter((college) =>
-      college.course_ids_json?.some((courseId) =>
-        selectedCourseIds.includes(courseId)
-      )
-    );
-  }, [backendFilteredColleges, filters.coursesOffered, coursesData]);
+  }, [
+    backendFilteredColleges,
+    filters.coursesOffered,
+    coursesData,
+    coursesError,
+  ]);
 
   // Type assertion to fix TypeScript issue
   const isLoadingTyped = isLoading as boolean;
@@ -211,9 +233,19 @@ const Colleges: React.FC = () => {
   ).sort();
 
   // Extract unique stream names from courses data
-  const uniqueStreams = Array.from(
-    new Set(coursesData.map((course) => course.stream).filter(Boolean))
-  ).sort();
+  const uniqueStreams = useMemo(() => {
+    try {
+      if (coursesError || !Array.isArray(coursesData)) {
+        return [];
+      }
+      return Array.from(
+        new Set(coursesData.map((course) => course?.stream).filter(Boolean))
+      ).sort();
+    } catch (error) {
+      console.error("Error extracting unique streams:", error);
+      return [];
+    }
+  }, [coursesData, coursesError]);
 
   const handleCollegeClick = (collegeId: string) => {
     navigate(`/colleges/${collegeId}`);
