@@ -24,7 +24,7 @@ class GoogleAuthService {
 
   async signInWithGoogle(): Promise<GoogleAuthResponse> {
     // Redirect to backend OAuth endpoint
-    const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:7001";
+    const apiUrl = process.env.REACT_APP_API_URL || "/api";
     window.location.href = `${apiUrl}/auth/google`;
 
     // This will never resolve as the page will redirect

@@ -33,8 +33,7 @@ function showToast(
 
 // Environment configuration
 // const API_BASE_URL = "https://66mz5dpp-7001.inc1.devtunnels.ms";
-const API_BASE_URL =
-  process.env.REACT_APP_API_BASE_URL || "http://localhost:7001";
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api";
 
 // Request cancellation
 const pendingRequests = new Map<string, AbortController>();

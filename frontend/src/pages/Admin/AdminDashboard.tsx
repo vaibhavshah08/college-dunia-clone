@@ -72,8 +72,7 @@ import { getErrorMessage } from "../../utils/errorHandler";
 
 // Get file URL for preview
 const getFileUrl = (documentPath: string) => {
-  const API_BASE_URL =
-    process.env.REACT_APP_API_BASE_URL || "http://localhost:7001";
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api";
   return `${API_BASE_URL}${documentPath}`;
 };
 
