@@ -84,9 +84,8 @@ export class CollegesController {
       minFees: query.minFees ? Number(query.minFees) : undefined,
       maxFees: query.maxFees ? Number(query.maxFees) : undefined,
       ranking: query.ranking ? Number(query.ranking) : undefined,
-      courses_offered: query.coursesOffered
-        ? query.coursesOffered.split(',')
-        : undefined,
+      page: query.page ? Number(query.page) : undefined,
+      limit: query.limit ? Number(query.limit) : undefined,
     });
   }
 

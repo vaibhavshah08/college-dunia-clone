@@ -77,13 +77,13 @@ const CollegeComparison: React.FC = () => {
   const hasCommonCourses = React.useMemo(() => {
     if (selectedColleges.length <= 1) return true; // Single college or no colleges
 
-    // Find common courses across all selected colleges
+    // Find common courses across all selected colleges using linked courses
     const commonCourses = selectedColleges.reduce((common, college, index) => {
-      if (index === 0) return college.courses_offered;
-      return common.filter((course) =>
-        college.courses_offered.includes(course)
+      if (index === 0) return college.course_ids_json || [];
+      return common.filter((courseId) =>
+        (college.course_ids_json || []).includes(courseId)
       );
-    }, selectedColleges[0]?.courses_offered || []);
+    }, selectedColleges[0]?.course_ids_json || []);
 
     return commonCourses.length > 0;
   }, [selectedColleges]);
@@ -100,10 +100,10 @@ const CollegeComparison: React.FC = () => {
           return true;
         }
 
-        // Check if this college has any common courses with selected colleges
+        // Check if this college has any common courses with selected colleges using linked courses
         return selectedColleges.some((selectedCollege) =>
-          selectedCollege.courses_offered.some((course) =>
-            college.courses_offered.includes(course)
+          (selectedCollege.course_ids_json || []).some((courseId) =>
+            (college.course_ids_json || []).includes(courseId)
           )
         );
       });
@@ -117,8 +117,8 @@ const CollegeComparison: React.FC = () => {
       // Check if the college has any common courses with already selected colleges
       if (selectedColleges.length > 0) {
         const hasCommonCourse = selectedColleges.some((selectedCollege) =>
-          selectedCollege.courses_offered.some((course) =>
-            college.courses_offered.includes(course)
+          (selectedCollege.course_ids_json || []).some((courseId) =>
+            (college.course_ids_json || []).includes(courseId)
           )
         );
 
@@ -223,7 +223,9 @@ const CollegeComparison: React.FC = () => {
               : "-";
             break;
           case "courses_offered":
-            value = college.courses_offered.join(", ");
+            value = college.course_ids_json
+              ? `${college.course_ids_json.length} linked courses`
+              : "No courses linked";
             break;
           case "top_recruiters":
             value = college.top_recruiters
@@ -282,7 +284,7 @@ const CollegeComparison: React.FC = () => {
     },
     { label: "Affiliation", key: "affiliation", category: "Academic" },
     { label: "Accreditation", key: "accreditation", category: "Academic" },
-    { label: "Courses Offered", key: "courses_offered", category: "Academic" },
+    { label: "Linked Courses", key: "courses_offered", category: "Academic" },
 
     // Financial Information
     { label: "Annual Fees", key: "fees", category: "Financial" },
@@ -380,12 +382,12 @@ const CollegeComparison: React.FC = () => {
                   {(() => {
                     const commonCourses = selectedColleges.reduce(
                       (common, college, index) => {
-                        if (index === 0) return college.courses_offered;
-                        return common.filter((course) =>
-                          college.courses_offered.includes(course)
+                        if (index === 0) return college.course_ids_json || [];
+                        return common.filter((courseId) =>
+                          (college.course_ids_json || []).includes(courseId)
                         );
                       },
-                      selectedColleges[0]?.courses_offered || []
+                      selectedColleges[0]?.course_ids_json || []
                     );
 
                     return commonCourses.length > 0 ? (
@@ -429,8 +431,8 @@ const CollegeComparison: React.FC = () => {
                   const hasCommonCourse =
                     selectedColleges.length === 0 ||
                     selectedColleges.some((selectedCollege) =>
-                      selectedCollege.courses_offered.some((course) =>
-                        college.courses_offered.includes(course)
+                      (selectedCollege.course_ids_json || []).some((courseId) =>
+                        (college.course_ids_json || []).includes(courseId)
                       )
                     );
 
@@ -770,14 +772,20 @@ const CollegeComparison: React.FC = () => {
                                       gap: 0.5,
                                     }}
                                   >
-                                    {college.courses_offered.map(
-                                      (course, i) => (
-                                        <Chip
-                                          key={i}
-                                          label={course}
-                                          size="small"
-                                        />
-                                      )
+                                    {college.course_ids_json &&
+                                    college.course_ids_json.length > 0 ? (
+                                      <Chip
+                                        label={`${college.course_ids_json.length} linked courses`}
+                                        size="small"
+                                        color="primary"
+                                      />
+                                    ) : (
+                                      <Chip
+                                        label="No courses linked"
+                                        size="small"
+                                        color="default"
+                                        variant="outlined"
+                                      />
                                     )}
                                   </Box>
                                 );

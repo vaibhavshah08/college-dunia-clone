@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import {
   Container,
   Typography,
@@ -17,8 +17,23 @@ import {
   AccountBalance,
   Description,
 } from "@mui/icons-material";
+import {
+  AnimatedPage,
+  AnimatedList,
+  AnimatedCard,
+  AnimatedButton,
+} from "../../components/Motion";
 
 const FAQ: React.FC = () => {
+  // Smooth scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, []);
+
   const faqs = [
     {
       question: "How do I apply for a loan?",
@@ -89,80 +104,84 @@ const FAQ: React.FC = () => {
   ];
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Typography
-        variant="h3"
-        component="h1"
-        gutterBottom
-        sx={{ fontWeight: "bold", mb: 4, textAlign: "center" }}
-      >
-        FAQ's
-      </Typography>
-
-      {/* Support Categories */}
-      <Box sx={{ mb: 6 }}>
+    <AnimatedPage>
+      <Container maxWidth="lg" sx={{ py: 4 }}>
         <Typography
-          variant="h5"
+          variant="h3"
+          component="h1"
           gutterBottom
-          sx={{ fontWeight: "bold", mb: 3 }}
+          sx={{ fontWeight: "bold", mb: 4, textAlign: "center" }}
         >
-          How can we help you?
+          FAQ's
         </Typography>
-        <Box
-          sx={{
-            display: "grid",
-            gridTemplateColumns: {
-              xs: "1fr",
-              sm: "repeat(2, 1fr)",
-              md: "repeat(4, 1fr)",
-            },
-            gap: 3,
-          }}
-        >
-          {supportCategories.map((category, index) => (
-            <Card
-              key={index}
-              sx={{ height: "100%", textAlign: "center", p: 2 }}
-            >
-              <CardContent>
-                <Box sx={{ color: "primary.main", mb: 2 }}>{category.icon}</Box>
-                <Typography variant="h6" gutterBottom>
-                  {category.title}
-                </Typography>
-                <Typography variant="body2" color="text.secondary">
-                  {category.description}
-                </Typography>
-              </CardContent>
-            </Card>
-          ))}
+
+        {/* Support Categories */}
+        <Box sx={{ mb: 6 }}>
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{ fontWeight: "bold", mb: 3 }}
+          >
+            How can we help you?
+          </Typography>
+          <Box
+            sx={{
+              display: "grid",
+              gridTemplateColumns: {
+                xs: "1fr",
+                sm: "repeat(2, 1fr)",
+                md: "repeat(4, 1fr)",
+              },
+              gap: 3,
+            }}
+          >
+            {supportCategories.map((category, index) => (
+              <Card
+                key={index}
+                sx={{ height: "100%", textAlign: "center", p: 2 }}
+              >
+                <CardContent>
+                  <Box sx={{ color: "primary.main", mb: 2 }}>
+                    {category.icon}
+                  </Box>
+                  <Typography variant="h6" gutterBottom>
+                    {category.title}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {category.description}
+                  </Typography>
+                </CardContent>
+              </Card>
+            ))}
+          </Box>
         </Box>
-      </Box>
 
-      {/* FAQ Section */}
-      <Box sx={{ mb: 6 }}>
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{ fontWeight: "bold", mb: 3 }}
-        >
-          Frequently Asked Questions
-        </Typography>
-        <Paper elevation={1}>
-          {faqs.map((faq, index) => (
-            <Accordion key={index}>
-              <AccordionSummary expandIcon={<ExpandMore />}>
-                <Typography variant="h6" sx={{ fontWeight: "medium" }}>
-                  {faq.question}
-                </Typography>
-              </AccordionSummary>
-              <AccordionDetails>
-                <Typography variant="body1">{faq.answer}</Typography>
-              </AccordionDetails>
-            </Accordion>
-          ))}
-        </Paper>
-      </Box>
-    </Container>
+        {/* FAQ Section */}
+        <Box sx={{ mb: 6 }}>
+          <Typography
+            variant="h5"
+            gutterBottom
+            sx={{ fontWeight: "bold", mb: 3 }}
+          >
+            Frequently Asked Questions
+          </Typography>
+          <Paper elevation={1}>
+            {faqs.map((faq, index) => (
+              <Accordion key={index}>
+                <AccordionSummary expandIcon={<ExpandMore />}>
+                  <Typography variant="h6" sx={{ fontWeight: "medium" }}>
+                    {faq.question}
+                  </Typography>
+                </AccordionSummary>
+                <AccordionDetails>
+                  <Typography variant="body1">{faq.answer}</Typography>
+                </AccordionDetails>
+              </Accordion>
+            ))}
+          </Paper>
+        </Box>
+      </Container>
+    </AnimatedPage>
   );
 };
 

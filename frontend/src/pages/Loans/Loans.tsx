@@ -25,7 +25,13 @@ import {
   FormControlLabel,
   FormLabel,
 } from "@mui/material";
-import { Add, Visibility, Refresh, Edit } from "@mui/icons-material";
+import {
+  Add,
+  Visibility,
+  Refresh,
+  Edit,
+  MonetizationOn,
+} from "@mui/icons-material";
 import { useQuery, useMutation, useQueryClient } from "react-query";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../lib/hooks/useAuth";
@@ -33,6 +39,12 @@ import loansApi from "../../services/modules/loans.api";
 import collegesApi from "../../services/modules/colleges.api";
 import { Loan, LoanCreate } from "../../types/api";
 import { useToast } from "../../contexts/ToastContext";
+import {
+  AnimatedPage,
+  AnimatedList,
+  AnimatedCard,
+  AnimatedButton,
+} from "../../components/Motion";
 
 const Loans: React.FC = () => {
   const { isAuthenticated } = useAuth();
@@ -42,6 +54,7 @@ const Loans: React.FC = () => {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingLoan, setEditingLoan] = useState<Loan | null>(null);
   const [mutationInProgress, setMutationInProgress] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const [formData, setFormData] = useState<LoanCreate>({
     loan_type: "Education Loan",
     principal_amount: undefined as any,
@@ -118,7 +131,6 @@ const Loans: React.FC = () => {
           whatsapp_number: "",
           description: "",
         });
-        toast.success("Loan application submitted successfully");
         setTimeout(() => setMutationInProgress(false), 1000);
       }
     },
@@ -189,9 +201,14 @@ const Loans: React.FC = () => {
     }
   };
 
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["loans", "me"] });
-    queryClient.invalidateQueries({ queryKey: ["colleges"] });
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await queryClient.invalidateQueries({ queryKey: ["loans", "me"] });
+      await queryClient.invalidateQueries({ queryKey: ["colleges"] });
+    } finally {
+      setIsRefreshing(false);
+    }
   };
 
   const handleEditLoan = (loan: Loan) => {
@@ -295,499 +312,655 @@ const Loans: React.FC = () => {
   }
 
   return (
-    <Container maxWidth="lg">
-      <>
-        <Box
-          display="flex"
-          justifyContent="space-between"
-          alignItems="center"
-          mb={3}
-          sx={{
-            flexDirection: { xs: "column", sm: "row" },
-            gap: { xs: 2, sm: 0 },
-          }}
-        >
-          <Typography variant="h4" component="h1">
-            Loan Applications
-          </Typography>
-          <Box display="flex" gap={2} flexWrap="nowrap">
-            <Button
-              variant="outlined"
-              startIcon={<Refresh />}
-              onClick={handleRefresh}
+    <AnimatedPage>
+      <Container maxWidth="lg">
+        <>
+          {/* Header */}
+          <Box sx={{ mb: 6, textAlign: "center" }}>
+            <Box
               sx={{
-                display: { xs: "none", sm: "flex" },
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: 2,
+                mb: 2,
               }}
             >
-              Refresh
-            </Button>
-            <IconButton
-              onClick={handleRefresh}
-              size="large"
-              sx={{
-                display: { xs: "flex", sm: "none" },
-              }}
-              aria-label="Refresh"
+              <MonetizationOn sx={{ fontSize: 48, color: "#1976D2" }} />
+              <Typography
+                variant="h2"
+                component="h1"
+                gutterBottom
+                fontWeight="bold"
+                sx={{
+                  background: "linear-gradient(45deg, #1976D2, #42A5F5)",
+                  backgroundClip: "text",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                  mb: 0,
+                }}
+              >
+                Loan Applications
+              </Typography>
+            </Box>
+            <Typography
+              variant="h5"
+              color="text.secondary"
+              sx={{ maxWidth: 700, mx: "auto", mb: 3 }}
             >
-              <Refresh />
-            </IconButton>
-            <Button
-              variant="contained"
-              startIcon={<Add />}
-              onClick={() => setOpenDialog(true)}
-              sx={{
-                minWidth: { xs: "auto", sm: "auto" },
-                px: { xs: 2, sm: 3 },
-              }}
-            >
-              <Box sx={{ display: { xs: "none", sm: "inline" } }}>
-                Apply for Loan
-              </Box>
-              <Box sx={{ display: { xs: "inline", sm: "none" } }}>Apply</Box>
-            </Button>
+              Apply for education loans and manage your loan applications. Track
+              your application status and requirements.
+            </Typography>
           </Box>
-        </Box>
 
-        {/* Loading State */}
-        {isLoading && (
-          <Box
-            display="flex"
-            justifyContent="center"
-            alignItems="center"
-            minHeight="200px"
-          >
-            <CircularProgress />
-          </Box>
-        )}
-
-        {/* Error State */}
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            Failed to load loan applications. Please try again.
-          </Alert>
-        )}
-
-        {/* Loans List */}
-        {!isLoading && !error && (
-          <Box
+          {/* Application Section */}
+          <Card
             sx={{
-              display: "grid",
-              gridTemplateColumns: {
-                xs: "1fr",
-                sm: "repeat(2, 1fr)",
-                md: "repeat(3, 1fr)",
-              },
-              gap: 3,
+              mb: 4,
+              background: "linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%)",
+              border: "none",
+              boxShadow: "0 8px 32px rgba(0,0,0,0.1)",
+              borderRadius: 3,
             }}
           >
-            {loans.length === 0 ? (
-              <Box sx={{ gridColumn: "1 / -1" }}>
-                <Alert severity="info">
-                  No loan applications found. Apply for a loan to get started.
-                </Alert>
-              </Box>
-            ) : (
-              getPaginatedData(loans, page, itemsPerPage).map((loan: Loan) => (
-                <Card
-                  key={loan.loan_id}
-                  sx={{
-                    height: "100%",
-                    display: "flex",
-                    flexDirection: "column",
-                  }}
-                >
-                  <CardContent
-                    sx={{ flex: 1, display: "flex", flexDirection: "column" }}
-                  >
-                    {/* Header with status */}
-                    <Box
-                      display="flex"
-                      justifyContent="space-between"
-                      alignItems="flex-start"
-                      mb={2}
-                    >
-                      <Typography variant="h6" component="h3">
-                        {loan.loan_type}
-                      </Typography>
-                      <Chip
-                        label={loan.status.replace("_", " ").toUpperCase()}
-                        color={getStatusColor(loan.status) as any}
-                        size="small"
-                      />
-                    </Box>
-
-                    {/* Loan details */}
-                    <Box flex={1} mb={3}>
-                      <Typography
-                        variant="h5"
-                        color="primary.main"
-                        fontWeight="bold"
-                        gutterBottom
-                      >
-                        ₹{loan.principal_amount.toLocaleString()}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        gutterBottom
-                      >
-                        Interest Rate: {loan.interest_rate}%
-                      </Typography>
-                      <Typography variant="body2" color="text.secondary">
-                        Term: {loan.term_months} months
-                      </Typography>
-                    </Box>
-
-                    {/* Action buttons */}
-                    <Box
-                      display="flex"
-                      gap={1}
-                      flexWrap="wrap"
-                      justifyContent="center"
-                    >
-                      <Button
-                        variant="outlined"
-                        size="small"
-                        startIcon={<Visibility />}
-                        onClick={() => navigate(`/loans/${loan.loan_id}`)}
-                        sx={{ minWidth: "auto", flex: 1 }}
-                      >
-                        View Details
-                      </Button>
-                      {loan.status === "submitted" ? (
-                        <Button
-                          variant="contained"
-                          size="small"
-                          startIcon={<Edit />}
-                          onClick={() => handleEditLoan(loan)}
-                          color="primary"
-                          sx={{ minWidth: "auto", flex: 1 }}
-                        >
-                          Edit
-                        </Button>
-                      ) : (
-                        <Button
-                          variant="outlined"
-                          size="small"
-                          startIcon={<Edit />}
-                          disabled
-                          sx={{
-                            minWidth: "auto",
-                            flex: 1,
-                            opacity: 0.5,
-                            color: "text.disabled",
-                            borderColor: "text.disabled",
-                          }}
-                          title={`Only pending loans can be edited. This loan is ${loan.status
-                            .replace("_", " ")
-                            .toLowerCase()}.`}
-                        >
-                          Edit
-                        </Button>
-                      )}
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </Box>
-        )}
-
-        {/* Pagination */}
-        {!isLoading && !error && loans.length > itemsPerPage && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-            <Pagination
-              count={getTotalPages(loans, itemsPerPage)}
-              page={page}
-              onChange={handlePageChange}
-              color="primary"
-              size="large"
-              showFirstButton
-              showLastButton
-            />
-          </Box>
-        )}
-
-        {/* Loan Application Dialog */}
-        <Dialog
-          open={openDialog}
-          onClose={() => setOpenDialog(false)}
-          maxWidth="md"
-          fullWidth
-        >
-          <DialogTitle>
-            {editingLoan
-              ? "Edit Education Loan Application"
-              : "Apply for Education Loan"}
-          </DialogTitle>
-          <DialogContent>
-            <Box
-              sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
-            >
-              {/* Name Fields */}
-              <Box sx={{ display: "flex", gap: 2 }}>
-                <TextField
-                  fullWidth
-                  label="First Name"
-                  value={formData.first_name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      first_name: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter your first name"
-                  required
-                  InputLabelProps={{ shrink: true }}
-                />
-                <TextField
-                  fullWidth
-                  label="Last Name"
-                  value={formData.last_name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      last_name: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter your last name"
-                  required
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Box>
-
-              {/* Gender Radio Buttons */}
-              <FormControl fullWidth>
-                <FormLabel>Gender</FormLabel>
-                <RadioGroup
-                  row
-                  value={formData.gender}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      gender: e.target.value,
-                    }))
-                  }
-                >
-                  <FormControlLabel
-                    value="Male"
-                    control={<Radio />}
-                    label="Male"
-                  />
-                  <FormControlLabel
-                    value="Female"
-                    control={<Radio />}
-                    label="Female"
-                  />
-                </RadioGroup>
-              </FormControl>
-
-              {/* College Selection */}
-              <FormControl fullWidth>
-                <InputLabel>College</InputLabel>
-                <Select
-                  value={formData.college_id}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      college_id: e.target.value,
-                    }))
-                  }
-                  label="College"
-                >
-                  {colleges.map((college) => (
-                    <MenuItem
-                      key={college.college_id}
-                      value={college.college_id}
-                    >
-                      {college.college_name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-
-              {/* Phone Number */}
-              <TextField
-                fullWidth
-                label="Phone Number"
-                type="tel"
-                value={formData.phone_number}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    phone_number: e.target.value,
-                  }))
-                }
-                placeholder="Enter your phone number"
-                required
-                InputLabelProps={{ shrink: true }}
-              />
-
-              <FormControl fullWidth>
-                <FormLabel>
-                  Is the phone number above your WhatsApp number?
-                </FormLabel>
-                <RadioGroup
-                  row
-                  value={
-                    formData.phone_number === formData.whatsapp_number
-                      ? "yes"
-                      : "no"
-                  }
-                  onChange={(e) => {
-                    if (e.target.value === "yes") {
-                      setFormData((prev) => ({
-                        ...prev,
-                        whatsapp_number: prev.phone_number,
-                      }));
-                    } else {
-                      setFormData((prev) => ({
-                        ...prev,
-                        whatsapp_number: "",
-                      }));
-                    }
-                  }}
-                >
-                  <FormControlLabel
-                    value="yes"
-                    control={<Radio />}
-                    label="Yes"
-                  />
-                  <FormControlLabel value="no" control={<Radio />} label="No" />
-                </RadioGroup>
-              </FormControl>
-
-              {formData.phone_number !== formData.whatsapp_number && (
-                <TextField
-                  fullWidth
-                  label="WhatsApp Number"
-                  type="tel"
-                  value={formData.whatsapp_number}
-                  onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      whatsapp_number: e.target.value,
-                    }))
-                  }
-                  placeholder="Enter your WhatsApp number"
-                  InputLabelProps={{ shrink: true }}
-                />
-              )}
-
-              <TextField
-                fullWidth
-                label="Principal Amount (₹)"
-                type="number"
-                value={formData.principal_amount || ""}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    principal_amount: e.target.value
-                      ? Number(e.target.value)
-                      : (undefined as any),
-                  }))
-                }
-                placeholder="Enter loan amount"
-                InputLabelProps={{ shrink: true }}
-              />
-
-              <TextField
-                fullWidth
-                label="Interest Rate (%)"
-                type="number"
-                value={formData.interest_rate}
-                disabled
+            <CardContent sx={{ p: 3 }}>
+              <Box
+                display="flex"
+                justifyContent="space-between"
+                alignItems="center"
                 sx={{
-                  "& .MuiInputBase-input.Mui-disabled": {
-                    WebkitTextFillColor: "rgba(0, 0, 0, 0.6)",
-                  },
+                  flexDirection: { xs: "column", sm: "row" },
+                  gap: { xs: 2, sm: 0 },
                 }}
-                helperText="Interest rate is fixed by the bank"
-              />
+              >
+                <Typography
+                  variant="h6"
+                  sx={{ fontWeight: 600, color: "#2c3e50" }}
+                >
+                  💰 Loan Management
+                </Typography>
+                <Box display="flex" gap={2} flexWrap="nowrap">
+                  <Button
+                    variant="outlined"
+                    startIcon={
+                      isRefreshing ? (
+                        <CircularProgress size={16} />
+                      ) : (
+                        <Refresh />
+                      )
+                    }
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    sx={{
+                      display: { xs: "none", sm: "flex" },
+                    }}
+                  >
+                    {isRefreshing ? "Refreshing..." : "Refresh"}
+                  </Button>
+                  <IconButton
+                    onClick={handleRefresh}
+                    disabled={isRefreshing}
+                    size="large"
+                    sx={{
+                      display: { xs: "flex", sm: "none" },
+                    }}
+                    aria-label="Refresh"
+                  >
+                    {isRefreshing ? (
+                      <CircularProgress size={20} />
+                    ) : (
+                      <Refresh />
+                    )}
+                  </IconButton>
+                  <AnimatedButton
+                    variant="contained"
+                    startIcon={<Add />}
+                    onClick={() => setOpenDialog(true)}
+                    sx={{
+                      minWidth: { xs: "auto", sm: "auto" },
+                      px: { xs: 2, sm: 3 },
+                      background: "linear-gradient(45deg, #1976D2, #42A5F5)",
+                      fontWeight: 600,
+                      "&:hover": {
+                        background: "linear-gradient(45deg, #1565C0, #1976D2)",
+                      },
+                    }}
+                  >
+                    <Box sx={{ display: { xs: "none", sm: "inline" } }}>
+                      Apply for Loan
+                    </Box>
+                    <Box sx={{ display: { xs: "inline", sm: "none" } }}>
+                      Apply
+                    </Box>
+                  </AnimatedButton>
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
 
-              <FormControl fullWidth>
-                <InputLabel>Tenure (months)</InputLabel>
-                <Select
-                  value={formData.term_months || ""}
+          {/* Loading State */}
+          {isLoading && (
+            <Box
+              display="flex"
+              justifyContent="center"
+              alignItems="center"
+              minHeight="200px"
+            >
+              <CircularProgress />
+            </Box>
+          )}
+
+          {/* Error State */}
+          {error && (
+            <Alert severity="error" sx={{ mb: 3 }}>
+              Failed to load loan applications. Please try again.
+            </Alert>
+          )}
+
+          {/* Loans List */}
+          {!isLoading && !error && (
+            <AnimatedList
+              sx={{
+                display: "grid",
+                gridTemplateColumns: {
+                  xs: "1fr",
+                  sm: "repeat(2, 1fr)",
+                  md: "repeat(3, 1fr)",
+                },
+                gap: 3,
+              }}
+              staggerDelay={0.08}
+            >
+              {loans.length === 0 ? (
+                <Box sx={{ gridColumn: "1 / -1" }}>
+                  <Alert severity="info">
+                    No loan applications found. Apply for a loan to get started.
+                  </Alert>
+                </Box>
+              ) : (
+                getPaginatedData(loans, page, itemsPerPage).map(
+                  (loan: Loan, index: number) => (
+                    <AnimatedCard key={loan.loan_id} delay={index * 0.08}>
+                      <Card
+                        sx={{
+                          height: "100%",
+                          display: "flex",
+                          flexDirection: "column",
+                          background:
+                            "linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)",
+                          border: "1px solid rgba(0,0,0,0.05)",
+                          borderRadius: 3,
+                          cursor: "pointer",
+                          position: "relative",
+                          overflow: "hidden",
+                          "&:hover": {
+                            boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                            borderColor: "#1976D2",
+                            "& .loan-card-overlay": {
+                              opacity: 1,
+                            },
+                          },
+                          "&::before": {
+                            content: '""',
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            height: 4,
+                            background:
+                              "linear-gradient(90deg, #1976D2, #42A5F5)",
+                            transform: "scaleX(0)",
+                            transition: "transform 0.3s ease",
+                          },
+                          "&:hover::before": {
+                            transform: "scaleX(1)",
+                          },
+                        }}
+                      >
+                        <Box
+                          className="loan-card-overlay"
+                          sx={{
+                            position: "absolute",
+                            top: 0,
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            background:
+                              "linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(66, 165, 245, 0.1) 100%)",
+                            opacity: 0,
+                            transition: "opacity 0.3s ease",
+                            zIndex: 1,
+                          }}
+                        />
+                        <CardContent
+                          sx={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            position: "relative",
+                            zIndex: 2,
+                          }}
+                        >
+                          {/* Header with status */}
+                          <Box
+                            display="flex"
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            mb={2}
+                          >
+                            <Typography variant="h6" component="h3">
+                              {loan.loan_type}
+                            </Typography>
+                            <Chip
+                              label={loan.status
+                                .replace("_", " ")
+                                .toUpperCase()}
+                              color={getStatusColor(loan.status) as any}
+                              size="small"
+                            />
+                          </Box>
+
+                          {/* Loan details */}
+                          <Box flex={1} mb={3}>
+                            <Typography
+                              variant="h5"
+                              color="primary.main"
+                              fontWeight="bold"
+                              gutterBottom
+                            >
+                              ₹{loan.principal_amount.toLocaleString()}
+                            </Typography>
+                            <Typography
+                              variant="body2"
+                              color="text.secondary"
+                              gutterBottom
+                            >
+                              Interest Rate: {loan.interest_rate}%
+                            </Typography>
+                            <Typography variant="body2" color="text.secondary">
+                              Term: {loan.term_months} months
+                            </Typography>
+                          </Box>
+
+                          {/* Action buttons */}
+                          <Box
+                            display="flex"
+                            gap={1}
+                            flexWrap="wrap"
+                            justifyContent="center"
+                          >
+                            <AnimatedButton
+                              variant="outlined"
+                              size="small"
+                              startIcon={<Visibility />}
+                              onClick={() => navigate(`/loans/${loan.loan_id}`)}
+                              sx={{
+                                minWidth: "auto",
+                                flex: 1,
+                                fontWeight: 600,
+                                borderRadius: 2,
+                                "&:hover": {
+                                  background:
+                                    "linear-gradient(45deg, #1976D2, #42A5F5)",
+                                  color: "white",
+                                  borderColor: "transparent",
+                                },
+                              }}
+                            >
+                              View Details
+                            </AnimatedButton>
+                            {loan.status === "submitted" ? (
+                              <AnimatedButton
+                                variant="contained"
+                                size="small"
+                                startIcon={<Edit />}
+                                onClick={() => handleEditLoan(loan)}
+                                sx={{
+                                  minWidth: "auto",
+                                  flex: 1,
+                                  background:
+                                    "linear-gradient(45deg, #1976D2, #42A5F5)",
+                                  fontWeight: 600,
+                                  borderRadius: 2,
+                                  "&:hover": {
+                                    background:
+                                      "linear-gradient(45deg, #1565C0, #1976D2)",
+                                  },
+                                }}
+                              >
+                                Edit
+                              </AnimatedButton>
+                            ) : (
+                              <AnimatedButton
+                                variant="outlined"
+                                size="small"
+                                startIcon={<Edit />}
+                                disabled
+                                sx={{
+                                  minWidth: "auto",
+                                  flex: 1,
+                                  opacity: 0.5,
+                                  color: "text.disabled",
+                                  borderColor: "text.disabled",
+                                }}
+                                title={`Only pending loans can be edited. This loan is ${loan.status
+                                  .replace("_", " ")
+                                  .toLowerCase()}.`}
+                              >
+                                Edit
+                              </AnimatedButton>
+                            )}
+                          </Box>
+                        </CardContent>
+                      </Card>
+                    </AnimatedCard>
+                  )
+                )
+              )}
+            </AnimatedList>
+          )}
+
+          {/* Pagination */}
+          {!isLoading && !error && loans.length > itemsPerPage && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+              <Pagination
+                count={getTotalPages(loans, itemsPerPage)}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                size="large"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          )}
+
+          {/* Loan Application Dialog */}
+          <Dialog
+            open={openDialog}
+            onClose={() => setOpenDialog(false)}
+            maxWidth="md"
+            fullWidth
+          >
+            <DialogTitle>
+              {editingLoan
+                ? "Edit Education Loan Application"
+                : "Apply for Education Loan"}
+            </DialogTitle>
+            <DialogContent>
+              <Box
+                sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}
+              >
+                {/* Name Fields */}
+                <Box sx={{ display: "flex", gap: 2 }}>
+                  <TextField
+                    fullWidth
+                    label="First Name"
+                    value={formData.first_name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        first_name: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter your first name"
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                  <TextField
+                    fullWidth
+                    label="Last Name"
+                    value={formData.last_name}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        last_name: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter your last name"
+                    required
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Box>
+
+                {/* Gender Radio Buttons */}
+                <FormControl fullWidth>
+                  <FormLabel>Gender</FormLabel>
+                  <RadioGroup
+                    row
+                    value={formData.gender}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        gender: e.target.value,
+                      }))
+                    }
+                  >
+                    <FormControlLabel
+                      value="Male"
+                      control={<Radio />}
+                      label="Male"
+                    />
+                    <FormControlLabel
+                      value="Female"
+                      control={<Radio />}
+                      label="Female"
+                    />
+                  </RadioGroup>
+                </FormControl>
+
+                {/* College Selection */}
+                <FormControl fullWidth>
+                  <InputLabel>College</InputLabel>
+                  <Select
+                    value={formData.college_id}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        college_id: e.target.value,
+                      }))
+                    }
+                    label="College"
+                  >
+                    {colleges.map((college) => (
+                      <MenuItem
+                        key={college.college_id}
+                        value={college.college_id}
+                      >
+                        {college.college_name}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+
+                {/* Phone Number */}
+                <TextField
+                  fullWidth
+                  label="Phone Number"
+                  type="tel"
+                  value={formData.phone_number}
                   onChange={(e) =>
                     setFormData((prev) => ({
                       ...prev,
-                      term_months: e.target.value
+                      phone_number: e.target.value,
+                    }))
+                  }
+                  placeholder="Enter your phone number"
+                  required
+                  InputLabelProps={{ shrink: true }}
+                />
+
+                <FormControl fullWidth>
+                  <FormLabel>
+                    Is the phone number above your WhatsApp number?
+                  </FormLabel>
+                  <RadioGroup
+                    row
+                    value={
+                      formData.phone_number === formData.whatsapp_number
+                        ? "yes"
+                        : "no"
+                    }
+                    onChange={(e) => {
+                      if (e.target.value === "yes") {
+                        setFormData((prev) => ({
+                          ...prev,
+                          whatsapp_number: prev.phone_number,
+                        }));
+                      } else {
+                        setFormData((prev) => ({
+                          ...prev,
+                          whatsapp_number: "",
+                        }));
+                      }
+                    }}
+                  >
+                    <FormControlLabel
+                      value="yes"
+                      control={<Radio />}
+                      label="Yes"
+                    />
+                    <FormControlLabel
+                      value="no"
+                      control={<Radio />}
+                      label="No"
+                    />
+                  </RadioGroup>
+                </FormControl>
+
+                {formData.phone_number !== formData.whatsapp_number && (
+                  <TextField
+                    fullWidth
+                    label="WhatsApp Number"
+                    type="tel"
+                    value={formData.whatsapp_number}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        whatsapp_number: e.target.value,
+                      }))
+                    }
+                    placeholder="Enter your WhatsApp number"
+                    InputLabelProps={{ shrink: true }}
+                  />
+                )}
+
+                <TextField
+                  fullWidth
+                  label="Principal Amount (₹)"
+                  type="number"
+                  value={formData.principal_amount || ""}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      principal_amount: e.target.value
                         ? Number(e.target.value)
                         : (undefined as any),
                     }))
                   }
-                  label="Tenure (months)"
-                >
-                  <MenuItem value={6}>6 months</MenuItem>
-                  <MenuItem value={9}>9 months</MenuItem>
-                  <MenuItem value={12}>12 months</MenuItem>
-                  <MenuItem value={18}>18 months</MenuItem>
-                  <MenuItem value={24}>24 months</MenuItem>
-                  <MenuItem value={36}>36 months</MenuItem>
-                  <MenuItem value={48}>48 months</MenuItem>
-                  <MenuItem value={60}>60 months</MenuItem>
-                </Select>
-              </FormControl>
+                  placeholder="Enter loan amount"
+                  InputLabelProps={{ shrink: true }}
+                />
 
-              <TextField
-                fullWidth
-                label="Description (Optional)"
-                multiline
-                rows={3}
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
+                <TextField
+                  fullWidth
+                  label="Interest Rate (%)"
+                  type="number"
+                  value={formData.interest_rate}
+                  disabled
+                  sx={{
+                    "& .MuiInputBase-input.Mui-disabled": {
+                      WebkitTextFillColor: "rgba(0, 0, 0, 0.6)",
+                    },
+                  }}
+                  helperText="Interest rate is fixed by the bank"
+                />
+
+                <FormControl fullWidth>
+                  <InputLabel>Tenure (months)</InputLabel>
+                  <Select
+                    value={formData.term_months || ""}
+                    onChange={(e) =>
+                      setFormData((prev) => ({
+                        ...prev,
+                        term_months: e.target.value
+                          ? Number(e.target.value)
+                          : (undefined as any),
+                      }))
+                    }
+                    label="Tenure (months)"
+                  >
+                    <MenuItem value={6}>6 months</MenuItem>
+                    <MenuItem value={9}>9 months</MenuItem>
+                    <MenuItem value={12}>12 months</MenuItem>
+                    <MenuItem value={18}>18 months</MenuItem>
+                    <MenuItem value={24}>24 months</MenuItem>
+                    <MenuItem value={36}>36 months</MenuItem>
+                    <MenuItem value={48}>48 months</MenuItem>
+                    <MenuItem value={60}>60 months</MenuItem>
+                  </Select>
+                </FormControl>
+
+                <TextField
+                  fullWidth
+                  label="Description (Optional)"
+                  multiline
+                  rows={3}
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      description: e.target.value,
+                    }))
+                  }
+                />
+              </Box>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                onClick={() => {
+                  setOpenDialog(false);
+                  setEditingLoan(null);
+                  setFormData({
+                    loan_type: "Education Loan",
+                    principal_amount: undefined as any,
+                    interest_rate: 8.5,
+                    term_months: undefined as any,
+                    college_id: "",
+                    phone_number: "",
+                    first_name: "",
+                    last_name: "",
+                    gender: "",
+                    whatsapp_number: "",
+                    description: "",
+                  });
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleSubmit}
+                variant="contained"
+                disabled={
+                  createLoanMutation.isLoading ||
+                  updateLoanMutation.isLoading ||
+                  mutationInProgress
                 }
-              />
-            </Box>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              onClick={() => {
-                setOpenDialog(false);
-                setEditingLoan(null);
-                setFormData({
-                  loan_type: "Education Loan",
-                  principal_amount: undefined as any,
-                  interest_rate: 8.5,
-                  term_months: undefined as any,
-                  college_id: "",
-                  phone_number: "",
-                  first_name: "",
-                  last_name: "",
-                  gender: "",
-                  whatsapp_number: "",
-                  description: "",
-                });
-              }}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handleSubmit}
-              variant="contained"
-              disabled={
-                createLoanMutation.isLoading ||
-                updateLoanMutation.isLoading ||
-                mutationInProgress
-              }
-            >
-              {createLoanMutation.isLoading || updateLoanMutation.isLoading ? (
-                <CircularProgress size={24} />
-              ) : editingLoan ? (
-                "Update Application"
-              ) : (
-                "Submit Application"
-              )}
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </>
-    </Container>
+              >
+                {createLoanMutation.isLoading ||
+                updateLoanMutation.isLoading ? (
+                  <CircularProgress size={24} />
+                ) : editingLoan ? (
+                  "Update Application"
+                ) : (
+                  "Submit Application"
+                )}
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </>
+      </Container>
+    </AnimatedPage>
   );
 };
 

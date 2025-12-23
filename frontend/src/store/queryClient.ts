@@ -8,15 +8,14 @@ export const queryClient = new QueryClient({
         if (error?.status >= 400 && error?.status < 500) {
           return false;
         }
-        // Retry up to 3 times for other errors
-        return failureCount < 3;
+        return failureCount < 2;
       },
-      retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
+      retryDelay: (attemptIndex) => Math.min(500 * 2 ** attemptIndex, 5000), // Faster retry delays
       refetchOnWindowFocus: false,
       refetchOnReconnect: true,
-      staleTime: 5 * 60 * 1000, // 5 minutes
-      cacheTime: 10 * 60 * 1000, // 10 minutes
-      refetchOnMount: true,
+      staleTime: 10 * 60 * 1000,
+      cacheTime: 30 * 60 * 1000,
+      refetchOnMount: "always",
     },
     mutations: {
       retry: false,
@@ -48,6 +47,28 @@ export const queryKeys = {
     adminList: () => [...queryKeys.loans.all, "admin", "list"] as const,
     details: () => [...queryKeys.loans.all, "detail"] as const,
     detail: (id: string) => [...queryKeys.loans.details(), id] as const,
+  },
+  courses: {
+    all: ["courses"] as const,
+    lists: () => [...queryKeys.courses.all, "list"] as const,
+    list: (filters: any) => [...queryKeys.courses.lists(), filters] as const,
+    details: () => [...queryKeys.courses.all, "detail"] as const,
+    detail: (id: string) => [...queryKeys.courses.details(), id] as const,
+    byIds: (ids: string[]) => [...queryKeys.courses.all, "byIds", ids] as const,
+  },
+  documents: {
+    all: ["documents"] as const,
+    lists: () => [...queryKeys.documents.all, "list"] as const,
+    list: (filters: any) => [...queryKeys.documents.lists(), filters] as const,
+    userList: (userId: string) =>
+      [...queryKeys.documents.all, "user", userId] as const,
+    adminList: () => [...queryKeys.documents.all, "admin", "list"] as const,
+  },
+  messages: {
+    all: ["messages"] as const,
+    lists: () => [...queryKeys.messages.all, "list"] as const,
+    list: (filters: any) => [...queryKeys.messages.lists(), filters] as const,
+    unreadCount: ["messages", "unreadCount"] as const,
   },
   reviews: {
     all: ["reviews"] as const,

@@ -33,6 +33,12 @@ import { useAuth } from "../../lib/hooks/useAuth";
 import loansApi from "../../services/modules/loans.api";
 import collegesApi from "../../services/modules/colleges.api";
 import { Loan } from "../../types/api";
+import {
+  AnimatedPage,
+  AnimatedList,
+  AnimatedCard,
+  AnimatedButton,
+} from "../../components/Motion";
 
 const LoanDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -179,362 +185,364 @@ const LoanDetail: React.FC = () => {
   const totalAmount = loan.principal_amount + totalInterest;
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mb: 3 }}>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBack />}
-          onClick={() => navigate("/loans")}
-          sx={{ mb: 2 }}
+    <AnimatedPage>
+      <Container maxWidth="lg">
+        <Box sx={{ mb: 3 }}>
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBack />}
+            onClick={() => navigate("/loans")}
+            sx={{ mb: 2 }}
+          >
+            Back to Loans
+          </Button>
+          <Typography variant="h4" component="h1" gutterBottom>
+            Loan Application Details
+          </Typography>
+        </Box>
+
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: { xs: "column", md: "row" },
+            gap: 3,
+          }}
         >
-          Back to Loans
-        </Button>
-        <Typography variant="h4" component="h1" gutterBottom>
-          Loan Application Details
-        </Typography>
-      </Box>
-
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: { xs: "column", md: "row" },
-          gap: 3,
-        }}
-      >
-        {/* Loan Overview */}
-        <Box sx={{ flex: { md: 2 } }}>
-          <Card sx={{ mb: 3 }}>
-            <CardContent>
-              <Box
-                display="flex"
-                justifyContent="space-between"
-                alignItems="center"
-                mb={3}
-              >
-                <Typography variant="h5" component="h2">
-                  {loan.loan_type}
-                </Typography>
-                <Chip
-                  icon={getStatusIcon(loan.status)}
-                  label={loan.status.replace("_", " ").toUpperCase()}
-                  color={getStatusColor(loan.status) as any}
-                  variant="outlined"
-                />
-              </Box>
-
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
-                  gap: 3,
-                }}
-              >
-                <Box display="flex" alignItems="center" mb={2}>
-                  <AttachMoney sx={{ mr: 1, color: "primary.main" }} />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Principal Amount
-                    </Typography>
-                    <Typography variant="h6">
-                      ₹{loan.principal_amount.toLocaleString()}
-                    </Typography>
-                  </Box>
+          {/* Loan Overview */}
+          <Box sx={{ flex: { md: 2 } }}>
+            <Card sx={{ mb: 3 }}>
+              <CardContent>
+                <Box
+                  display="flex"
+                  justifyContent="space-between"
+                  alignItems="center"
+                  mb={3}
+                >
+                  <Typography variant="h5" component="h2">
+                    {loan.loan_type}
+                  </Typography>
+                  <Chip
+                    icon={getStatusIcon(loan.status)}
+                    label={loan.status.replace("_", " ").toUpperCase()}
+                    color={getStatusColor(loan.status) as any}
+                    variant="outlined"
+                  />
                 </Box>
 
-                <Box display="flex" alignItems="center" mb={2}>
-                  <RateReview sx={{ mr: 1, color: "primary.main" }} />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Interest Rate
-                    </Typography>
-                    <Typography variant="h6">
-                      {loan.interest_rate}% per annum
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box display="flex" alignItems="center" mb={2}>
-                  <Schedule sx={{ mr: 1, color: "primary.main" }} />
-                  <Box>
-                    <Typography variant="body2" color="text.secondary">
-                      Loan Term
-                    </Typography>
-                    <Typography variant="h6">
-                      {loan.term_months} months
-                    </Typography>
-                  </Box>
-                </Box>
-
-                <Box display="flex" alignItems="center" mb={2}>
-                  <School sx={{ mr: 1, color: "primary.main" }} />
-                  <Box sx={{ flex: 1 }}>
-                    <Typography variant="body2" color="text.secondary">
-                      College
-                    </Typography>
-                    {collegeError ? (
-                      <Typography
-                        variant="h6"
-                        sx={{
-                          color: "#d32f2f",
-                          fontSize: "1rem",
-                          fontWeight: 500,
-                          display: "flex",
-                          alignItems: "center",
-                          gap: 0.5,
-                        }}
-                      >
-                        <Cancel sx={{ color: "#d32f2f", fontSize: "1rem" }} />
-                        College not found
-                      </Typography>
-                    ) : collegeLoading ? (
-                      <Typography variant="h6">Loading...</Typography>
-                    ) : (
-                      <Typography variant="h6">
-                        {college?.college_name || "Unknown College"}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
-
-                {loan.description && (
-                  <Box
-                    display="flex"
-                    alignItems="flex-start"
-                    mb={2}
-                    sx={{ gridColumn: { xs: "1", sm: "1 / -1" } }}
-                  >
-                    <Description
-                      sx={{ mr: 1, color: "primary.main", mt: 0.5 }}
-                    />
-                    <Box sx={{ flex: 1 }}>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "1fr", sm: "repeat(2, 1fr)" },
+                    gap: 3,
+                  }}
+                >
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <AttachMoney sx={{ mr: 1, color: "primary.main" }} />
+                    <Box>
                       <Typography variant="body2" color="text.secondary">
-                        Description
+                        Principal Amount
                       </Typography>
-                      <Typography variant="h6">{loan.description}</Typography>
+                      <Typography variant="h6">
+                        ₹{loan.principal_amount.toLocaleString()}
+                      </Typography>
                     </Box>
                   </Box>
-                )}
-              </Box>
-            </CardContent>
-          </Card>
 
-          {/* Payment Breakdown */}
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Payment Breakdown
-              </Typography>
-              <Box
-                sx={{
-                  display: "grid",
-                  gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
-                  gap: 2,
-                }}
-              >
-                <Box>
-                  <Box
-                    textAlign="center"
-                    p={2}
-                    bgcolor="grey.50"
-                    borderRadius={1}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      Monthly Payment
-                    </Typography>
-                    <Typography variant="h5" color="primary.main">
-                      ₹{monthlyPayment.toLocaleString()}
-                    </Typography>
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <RateReview sx={{ mr: 1, color: "primary.main" }} />
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Interest Rate
+                      </Typography>
+                      <Typography variant="h6">
+                        {loan.interest_rate}% per annum
+                      </Typography>
+                    </Box>
                   </Box>
-                </Box>
-                <Box>
-                  <Box
-                    textAlign="center"
-                    p={2}
-                    bgcolor="grey.50"
-                    borderRadius={1}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      Total Interest
-                    </Typography>
-                    <Typography variant="h5" color="secondary.main">
-                      ₹{totalInterest.toLocaleString()}
-                    </Typography>
-                  </Box>
-                </Box>
-                <Box>
-                  <Box
-                    textAlign="center"
-                    p={2}
-                    bgcolor="grey.50"
-                    borderRadius={1}
-                  >
-                    <Typography variant="body2" color="text.secondary">
-                      Total Amount
-                    </Typography>
-                    <Typography variant="h5" color="success.main">
-                      ₹{totalAmount.toLocaleString()}
-                    </Typography>
-                  </Box>
-                </Box>
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
 
-        {/* Loan Information */}
-        <Box sx={{ flex: { md: 1 } }}>
-          <Card>
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Loan Information
-              </Typography>
-              <List dense>
-                <ListItem>
-                  <ListItemText
-                    primary="Application Date"
-                    secondary={new Date(loan.created_at).toLocaleDateString()}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Loan ID" secondary={loan.loan_id} />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Status"
-                    secondary={
-                      <Chip
-                        label={loan.status.replace("_", " ").toUpperCase()}
-                        color={getStatusColor(loan.status) as any}
-                        size="small"
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <Schedule sx={{ mr: 1, color: "primary.main" }} />
+                    <Box>
+                      <Typography variant="body2" color="text.secondary">
+                        Loan Term
+                      </Typography>
+                      <Typography variant="h6">
+                        {loan.term_months} months
+                      </Typography>
+                    </Box>
+                  </Box>
+
+                  <Box display="flex" alignItems="center" mb={2}>
+                    <School sx={{ mr: 1, color: "primary.main" }} />
+                    <Box sx={{ flex: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        College
+                      </Typography>
+                      {collegeError ? (
+                        <Typography
+                          variant="h6"
+                          sx={{
+                            color: "#d32f2f",
+                            fontSize: "1rem",
+                            fontWeight: 500,
+                            display: "flex",
+                            alignItems: "center",
+                            gap: 0.5,
+                          }}
+                        >
+                          <Cancel sx={{ color: "#d32f2f", fontSize: "1rem" }} />
+                          College not found
+                        </Typography>
+                      ) : collegeLoading ? (
+                        <Typography variant="h6">Loading...</Typography>
+                      ) : (
+                        <Typography variant="h6">
+                          {college?.college_name || "Unknown College"}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+
+                  {loan.description && (
+                    <Box
+                      display="flex"
+                      alignItems="flex-start"
+                      mb={2}
+                      sx={{ gridColumn: { xs: "1", sm: "1 / -1" } }}
+                    >
+                      <Description
+                        sx={{ mr: 1, color: "primary.main", mt: 0.5 }}
                       />
-                    }
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Applicant Name"
-                    secondary={`${loan.first_name} ${loan.last_name}`}
-                  />
-                </ListItem>
-                <ListItem>
-                  <ListItemText primary="Gender" secondary={loan.gender} />
-                </ListItem>
-                <ListItem>
-                  <ListItemText
-                    primary="Phone Number"
-                    secondary={loan.phone_number}
-                  />
-                </ListItem>
-                {loan.whatsapp_number && (
+                      <Box sx={{ flex: 1 }}>
+                        <Typography variant="body2" color="text.secondary">
+                          Description
+                        </Typography>
+                        <Typography variant="h6">{loan.description}</Typography>
+                      </Box>
+                    </Box>
+                  )}
+                </Box>
+              </CardContent>
+            </Card>
+
+            {/* Payment Breakdown */}
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Payment Breakdown
+                </Typography>
+                <Box
+                  sx={{
+                    display: "grid",
+                    gridTemplateColumns: { xs: "1fr", sm: "repeat(3, 1fr)" },
+                    gap: 2,
+                  }}
+                >
+                  <Box>
+                    <Box
+                      textAlign="center"
+                      p={2}
+                      bgcolor="grey.50"
+                      borderRadius={1}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        Monthly Payment
+                      </Typography>
+                      <Typography variant="h5" color="primary.main">
+                        ₹{monthlyPayment.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Box
+                      textAlign="center"
+                      p={2}
+                      bgcolor="grey.50"
+                      borderRadius={1}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        Total Interest
+                      </Typography>
+                      <Typography variant="h5" color="secondary.main">
+                        ₹{totalInterest.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                  <Box>
+                    <Box
+                      textAlign="center"
+                      p={2}
+                      bgcolor="grey.50"
+                      borderRadius={1}
+                    >
+                      <Typography variant="body2" color="text.secondary">
+                        Total Amount
+                      </Typography>
+                      <Typography variant="h5" color="success.main">
+                        ₹{totalAmount.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              </CardContent>
+            </Card>
+          </Box>
+
+          {/* Loan Information */}
+          <Box sx={{ flex: { md: 1 } }}>
+            <Card>
+              <CardContent>
+                <Typography variant="h6" gutterBottom>
+                  Loan Information
+                </Typography>
+                <List dense>
                   <ListItem>
                     <ListItemText
-                      primary="WhatsApp Number"
-                      secondary={loan.whatsapp_number}
+                      primary="Application Date"
+                      secondary={new Date(loan.created_at).toLocaleDateString()}
                     />
                   </ListItem>
-                )}
-              </List>
+                  <ListItem>
+                    <ListItemText primary="Loan ID" secondary={loan.loan_id} />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="Status"
+                      secondary={
+                        <Chip
+                          label={loan.status.replace("_", " ").toUpperCase()}
+                          color={getStatusColor(loan.status) as any}
+                          size="small"
+                        />
+                      }
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="Applicant Name"
+                      secondary={`${loan.first_name} ${loan.last_name}`}
+                    />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText primary="Gender" secondary={loan.gender} />
+                  </ListItem>
+                  <ListItem>
+                    <ListItemText
+                      primary="Phone Number"
+                      secondary={loan.phone_number}
+                    />
+                  </ListItem>
+                  {loan.whatsapp_number && (
+                    <ListItem>
+                      <ListItemText
+                        primary="WhatsApp Number"
+                        secondary={loan.whatsapp_number}
+                      />
+                    </ListItem>
+                  )}
+                </List>
 
-              <Divider sx={{ my: 2 }} />
+                <Divider sx={{ my: 2 }} />
 
-              <Typography variant="h6" gutterBottom>
-                Next Steps
-              </Typography>
-              <List dense>
-                {loan.status === "submitted" && (
-                  <>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Pending color="warning" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Application Under Review"
-                        secondary="Your application is being reviewed by our team"
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Schedule color="info" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Processing Time"
-                        secondary="Typically 3-5 business days"
-                      />
-                    </ListItem>
-                  </>
-                )}
-                {loan.status === "under_review" && (
-                  <>
-                    <ListItem>
-                      <ListItemIcon>
-                        <RateReview color="info" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Detailed Review"
-                        secondary="Your application is being thoroughly reviewed"
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Schedule color="info" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Expected Decision"
-                        secondary="Within 2-3 business days"
-                      />
-                    </ListItem>
-                  </>
-                )}
-                {loan.status === "approved" && (
-                  <>
-                    <ListItem>
-                      <ListItemIcon>
-                        <CheckCircle color="success" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Congratulations!"
-                        secondary="Your loan has been approved"
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon>
-                        <AttachMoney color="success" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Disbursement"
-                        secondary="Funds will be disbursed within 1-2 business days"
-                      />
-                    </ListItem>
-                  </>
-                )}
-                {loan.status === "rejected" && (
-                  <>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Cancel color="error" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Application Rejected"
-                        secondary="Please contact support for more information"
-                      />
-                    </ListItem>
-                    <ListItem>
-                      <ListItemIcon>
-                        <Schedule color="info" />
-                      </ListItemIcon>
-                      <ListItemText
-                        primary="Reapply"
-                        secondary="You can submit a new application after 30 days"
-                      />
-                    </ListItem>
-                  </>
-                )}
-              </List>
-            </CardContent>
-          </Card>
+                <Typography variant="h6" gutterBottom>
+                  Next Steps
+                </Typography>
+                <List dense>
+                  {loan.status === "submitted" && (
+                    <>
+                      <ListItem>
+                        <ListItemIcon>
+                          <Pending color="warning" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Application Under Review"
+                          secondary="Your application is being reviewed by our team"
+                        />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon>
+                          <Schedule color="info" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Processing Time"
+                          secondary="Typically 3-5 business days"
+                        />
+                      </ListItem>
+                    </>
+                  )}
+                  {loan.status === "under_review" && (
+                    <>
+                      <ListItem>
+                        <ListItemIcon>
+                          <RateReview color="info" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Detailed Review"
+                          secondary="Your application is being thoroughly reviewed"
+                        />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon>
+                          <Schedule color="info" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Expected Decision"
+                          secondary="Within 2-3 business days"
+                        />
+                      </ListItem>
+                    </>
+                  )}
+                  {loan.status === "approved" && (
+                    <>
+                      <ListItem>
+                        <ListItemIcon>
+                          <CheckCircle color="success" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Congratulations!"
+                          secondary="Your loan has been approved"
+                        />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon>
+                          <AttachMoney color="success" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Disbursement"
+                          secondary="Funds will be disbursed within 1-2 business days"
+                        />
+                      </ListItem>
+                    </>
+                  )}
+                  {loan.status === "rejected" && (
+                    <>
+                      <ListItem>
+                        <ListItemIcon>
+                          <Cancel color="error" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Application Rejected"
+                          secondary="Please contact support for more information"
+                        />
+                      </ListItem>
+                      <ListItem>
+                        <ListItemIcon>
+                          <Schedule color="info" />
+                        </ListItemIcon>
+                        <ListItemText
+                          primary="Reapply"
+                          secondary="You can submit a new application after 30 days"
+                        />
+                      </ListItem>
+                    </>
+                  )}
+                </List>
+              </CardContent>
+            </Card>
+          </Box>
         </Box>
-      </Box>
-    </Container>
+      </Container>
+    </AnimatedPage>
   );
 };
 

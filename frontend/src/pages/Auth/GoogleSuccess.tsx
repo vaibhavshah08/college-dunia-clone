@@ -3,7 +3,6 @@ import {
   Container,
   Paper,
   Typography,
-  Box,
   CircularProgress,
   Alert,
 } from "@mui/material";

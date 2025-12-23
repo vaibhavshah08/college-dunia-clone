@@ -4,11 +4,20 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 
 export type DocumentStatus = 'pending' | 'approved' | 'rejected';
 
 @Entity('documents')
+@Index(['user_id']) // Index for user-based queries
+@Index(['loan_id']) // Index for loan-based queries
+@Index(['status']) // Index for status-based filtering
+@Index(['is_deleted']) // Index for soft delete filtering
+@Index(['uploaded_at']) // Index for date-based sorting
+@Index(['document_type']) // Index for type-based filtering
+@Index(['user_id', 'status']) // Composite index for user status queries
+@Index(['reviewed_by']) // Index for reviewer-based queries
 export class Document {
   @PrimaryColumn('varchar')
   document_id: string;

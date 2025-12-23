@@ -4,10 +4,15 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  Index,
 } from 'typeorm';
 import { Exclude } from 'class-transformer';
 
 @Entity('users')
+@Index(['email'])
+@Index(['google_id'])
+@Index(['is_admin', 'is_active', 'is_deleted'])
+@Index(['created_at'])
 export class User {
   @PrimaryColumn('varchar')
   user_id: string;

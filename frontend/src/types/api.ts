@@ -149,7 +149,6 @@ export interface CollegeListQuery {
   minFees?: number;
   maxFees?: number;
   ranking?: number;
-  coursesOffered?: string;
 }
 
 export interface College {
@@ -161,7 +160,6 @@ export interface College {
   landmark?: string;
   fees: number;
   ranking: number;
-  courses_offered: string[];
   placement_ratio: number;
   year_of_establishment: number;
   affiliation: string;
@@ -173,6 +171,7 @@ export interface College {
   placement_rate?: number;
   top_recruiters?: string[];
   placement_last_updated?: string;
+  course_ids_json?: string[];
   created_at: string;
 }
 
@@ -361,6 +360,26 @@ export interface PageUpdate {
   title?: string;
   body?: string;
   metaDescription?: string;
+}
+
+// Message Types
+export interface Message {
+  message_id: string;
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
+  is_read: boolean;
+  is_deleted: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateMessageDto {
+  name: string;
+  email: string;
+  subject: string;
+  message: string;
 }
 
 // Admin Types

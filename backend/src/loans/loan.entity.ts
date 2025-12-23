@@ -1,8 +1,20 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
 
 export type LoanStatus = 'submitted' | 'under_review' | 'approved' | 'rejected';
 
 @Entity('loans')
+@Index(['user_id'])
+@Index(['status'])
+@Index(['college_id'])
+@Index(['is_deleted'])
+@Index(['created_at'])
+@Index(['user_id', 'status'])
 export class LoanApplication {
   @PrimaryColumn('varchar')
   loan_id: string;

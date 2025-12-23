@@ -6,7 +6,6 @@ import axios, {
 } from "axios";
 import { getAuthToken, removeToken } from "../utils/tokenManager";
 
-// Global toast functions - will be set by the app
 let globalToast: {
   success: (message: string) => void;
   error: (message: string) => void;
@@ -14,12 +13,10 @@ let globalToast: {
   warning: (message: string) => void;
 } | null = null;
 
-// Function to set global toast from the app
 export const setGlobalToast = (toast: typeof globalToast) => {
   globalToast = toast;
 };
 
-// Fallback toast function
 function showToast(
   message: string,
   type: "error" | "success" | "info" | "warning" = "error"
@@ -41,9 +38,10 @@ const pendingRequests = new Map<string, AbortController>();
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 30000, // 30 seconds
+  timeout: 15000, // Reduced to 15 seconds for faster failure detection
   headers: {
     "Content-Type": "application/json",
+    "Accept-Encoding": "gzip, deflate, br", // Enable compression
   },
   withCredentials: true, // For cookies if needed
 });
@@ -63,15 +61,19 @@ apiClient.interceptors.request.use(
       config.headers["X-Correlation-ID"] = correlationId;
     }
 
-    // Handle request cancellation
-    const requestKey = `${config.method}-${config.url}`;
-    if (pendingRequests.has(requestKey)) {
-      pendingRequests.get(requestKey)?.abort();
-    }
+    // Handle request cancellation - only for specific cases
+    // Disable automatic cancellation to prevent CanceledError
+    // const requestKey = `${config.method}-${config.url}`;
+    // const existingController = pendingRequests.get(requestKey);
 
-    const controller = new AbortController();
-    config.signal = controller.signal;
-    pendingRequests.set(requestKey, controller);
+    // Only cancel if there's an existing request and it's not already aborted
+    // if (existingController && !existingController.signal.aborted) {
+    //   existingController.abort();
+    // }
+
+    // const controller = new AbortController();
+    // config.signal = controller.signal;
+    // pendingRequests.set(requestKey, controller);
 
     return config;
   },
@@ -83,9 +85,9 @@ apiClient.interceptors.request.use(
 // Response interceptor
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
-    // Clean up pending request
-    const requestKey = `${response.config.method}-${response.config.url}`;
-    pendingRequests.delete(requestKey);
+    // Clean up pending request - disabled since we're not using request cancellation
+    // const requestKey = `${response.config.method}-${response.config.url}`;
+    // pendingRequests.delete(requestKey);
 
     // Extract data from the new response format
     if (response.data && response.data.data !== undefined) {
@@ -121,6 +123,12 @@ apiClient.interceptors.response.use(
           successMessage = "Loan application submitted successfully!";
         } else if (url.includes("/documents")) {
           successMessage = "Document uploaded successfully!";
+        } else if (url.includes("/courses")) {
+          // Don't show automatic toast for courses - handled by component
+          successMessage = "";
+        } else if (url.includes("/messages")) {
+          // Don't show automatic toast for messages - handled by component
+          successMessage = "";
         } else {
           successMessage = "Created successfully!";
         }
@@ -135,6 +143,9 @@ apiClient.interceptors.response.use(
           successMessage = "Loan updated successfully!";
         } else if (url.includes("/documents/")) {
           successMessage = "Document updated successfully!";
+        } else if (url.includes("/courses/")) {
+          // Don't show automatic toast for courses - handled by component
+          successMessage = "";
         } else {
           successMessage = "Updated successfully!";
         }
@@ -147,6 +158,9 @@ apiClient.interceptors.response.use(
           successMessage = "Loan deleted successfully!";
         } else if (url.includes("/documents/")) {
           successMessage = "Document deleted successfully!";
+        } else if (url.includes("/courses/")) {
+          // Don't show automatic toast for courses - handled by component
+          successMessage = "";
         } else {
           successMessage = "Deleted successfully!";
         }
@@ -160,11 +174,11 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error: AxiosError) => {
-    // Clean up pending request
-    if (error.config) {
-      const requestKey = `${error.config.method}-${error.config.url}`;
-      pendingRequests.delete(requestKey);
-    }
+    // Clean up pending request - disabled since we're not using request cancellation
+    // if (error.config) {
+    //   const requestKey = `${error.config.method}-${error.config.url}`;
+    //   pendingRequests.delete(requestKey);
+    // }
 
     // Handle different error types
     if (error.response) {
@@ -251,6 +265,12 @@ apiClient.interceptors.response.use(
     } else if (error.request) {
       // Network error
       showToast("Network error. Please check your connection and try again.");
+    } else if (
+      error.code === "ERR_CANCELED" ||
+      error.name === "CanceledError"
+    ) {
+      // Request was cancelled - don't show error toast
+      console.log("Request was cancelled:", error.message);
     } else {
       // Other error
       showToast("An unexpected error occurred");

@@ -1,7 +1,15 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Container, Typography, Box, Paper } from "@mui/material";
 
 const TermsOfService: React.FC = () => {
+  // Smooth scroll to top on mount
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "smooth",
+    });
+  }, []);
   return (
     <Container maxWidth="md" sx={{ py: 4 }}>
       <Paper elevation={2} sx={{ p: 4 }}>

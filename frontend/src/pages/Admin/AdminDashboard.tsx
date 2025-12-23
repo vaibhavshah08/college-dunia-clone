@@ -66,9 +66,19 @@ import collegesApi from "../../services/modules/colleges.api";
 import loansApi from "../../services/modules/loans.api";
 import documentsApi from "../../services/modules/documents.api";
 import adminApi from "../../services/modules/admin.api";
-import { College, Loan, Document, User, DocumentStatus } from "../../types/api";
+import coursesApi from "../../services/modules/courses.api";
+import {
+  College,
+  Loan,
+  Document,
+  User,
+  DocumentStatus,
+  Message,
+} from "../../types/api";
 import { downloadCsvTemplate, parseCsvFile } from "../../utils/excelUtils";
 import { getErrorMessage } from "../../utils/errorHandler";
+import CoursesManagement from "../../components/Admin/CoursesManagement";
+import MessagesManagement from "../../components/Admin/MessagesManagement";
 
 // Get file URL for preview
 const getFileUrl = (documentPath: string) => {
@@ -101,6 +111,7 @@ function TabPanel(props: TabPanelProps) {
 const AdminDashboard: React.FC = () => {
   const { isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
+  const [isRefreshing, setIsRefreshing] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
   const theme = useTheme();
@@ -119,7 +130,6 @@ const AdminDashboard: React.FC = () => {
     landmark: "",
     fees: "",
     ranking: "",
-    courses_offered: "",
     placement_ratio: "",
     year_of_establishment: "",
     affiliation: "",
@@ -130,6 +140,7 @@ const AdminDashboard: React.FC = () => {
     highest_package: "",
     placement_rate: "",
     top_recruiters: "",
+    courseIds: [] as string[],
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Separate search states for each table
@@ -323,6 +334,15 @@ const AdminDashboard: React.FC = () => {
     enabled: isAuthenticated,
   });
 
+  // Fetch courses for course selection
+  const { data: coursesData, isLoading: coursesLoading } = useQuery({
+    queryKey: ["courses", "all"],
+    queryFn: () => coursesApi.getCourses({ page: 1, limit: 1000 }),
+    keepPreviousData: true,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+
   const documents = documentsData?.documents || [];
   const users = usersData?.users || [];
 
@@ -339,8 +359,8 @@ const AdminDashboard: React.FC = () => {
         landmark: "",
         fees: "",
         ranking: "",
-        courses_offered: "",
         placement_ratio: "",
+        courseIds: [],
         year_of_establishment: "",
         affiliation: "",
         accreditation: "",
@@ -473,9 +493,8 @@ const AdminDashboard: React.FC = () => {
       college.state
         .toLowerCase()
         .includes(debouncedCollegeSearchQuery.toLowerCase()) ||
-      college.courses_offered.some((course) =>
-        course.toLowerCase().includes(debouncedCollegeSearchQuery.toLowerCase())
-      )
+      // Search in linked courses will be handled by the backend
+      false
   );
 
   // Filter data based on filter states
@@ -574,14 +593,12 @@ const AdminDashboard: React.FC = () => {
         landmark: collegeForm.landmark,
         fees: Number(collegeForm.fees),
         ranking: Number(collegeForm.ranking),
-        courses_offered: collegeForm.courses_offered
-          .split(",")
-          .map((c) => c.trim()),
         placement_ratio: Number(collegeForm.placement_ratio),
         year_of_establishment: Number(collegeForm.year_of_establishment),
         affiliation: collegeForm.affiliation,
         accreditation: collegeForm.accreditation,
         is_partnered: collegeForm.is_partnered,
+        courseIds: collegeForm.courseIds,
         avg_package: collegeForm.avg_package
           ? Number(collegeForm.avg_package)
           : undefined,
@@ -625,8 +642,8 @@ const AdminDashboard: React.FC = () => {
       landmark: college.landmark || "",
       fees: college.fees.toString(),
       ranking: college.ranking.toString(),
-      courses_offered: college.courses_offered.join(", "),
       placement_ratio: college.placement_ratio.toString(),
+      courseIds: college.course_ids_json || [],
       year_of_establishment: college.year_of_establishment.toString(),
       affiliation: college.affiliation,
       accreditation: college.accreditation,
@@ -677,8 +694,8 @@ const AdminDashboard: React.FC = () => {
       landmark: "",
       fees: "",
       ranking: "",
-      courses_offered: "",
       placement_ratio: "",
+      courseIds: [],
       year_of_establishment: "",
       affiliation: "",
       accreditation: "",
@@ -717,7 +734,6 @@ const AdminDashboard: React.FC = () => {
           "Pincode",
           "Fees (₹)",
           "Ranking",
-          "Courses Offered",
           "Placement Ratio",
           "Year of Establish",
           "Affiliation",
@@ -743,7 +759,6 @@ const AdminDashboard: React.FC = () => {
           landmark: row["Landmark"] || "",
           fees: row["Fees (₹)"] || 0,
           ranking: row["Ranking"] || 0,
-          courses_offered: row["Courses Offered"] || [],
           placement_ratio:
             row["Placement Ratio"] || row["Placement Ratio (%)"] || 0,
           year_of_establishment:
@@ -864,13 +879,25 @@ const AdminDashboard: React.FC = () => {
   };
 
   // Refresh all data
-  const handleRefresh = () => {
-    queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] });
-    queryClient.invalidateQueries({ queryKey: ["loans", "admin"] });
-    queryClient.invalidateQueries({ queryKey: ["documents", "admin"] });
-    queryClient.invalidateQueries({ queryKey: ["users", "admin"] });
-    queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] });
-    // Data refresh success handled by API client
+  const handleRefresh = async () => {
+    setIsRefreshing(true);
+    try {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ["colleges", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["loans", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["documents", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["users", "admin"] }),
+        queryClient.invalidateQueries({ queryKey: ["admin", "dashboard"] }),
+      ]);
+      // Data refresh success handled by API client
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      // Add a small delay to show the loading state
+      setTimeout(() => {
+        setIsRefreshing(false);
+      }, 500);
+    }
   };
 
   // Card click handlers to navigate to respective tabs
@@ -1085,24 +1112,28 @@ const AdminDashboard: React.FC = () => {
         <Box display="flex" gap={2} flexWrap="nowrap">
           <Button
             variant="outlined"
-            startIcon={<Refresh />}
+            startIcon={
+              isRefreshing ? <CircularProgress size={16} /> : <Refresh />
+            }
             onClick={handleRefresh}
+            disabled={isRefreshing}
             sx={{
               minWidth: 120,
               display: { xs: "none", sm: "flex" },
             }}
           >
-            Refresh
+            {isRefreshing ? "Refreshing..." : "Refresh"}
           </Button>
           <IconButton
             onClick={handleRefresh}
+            disabled={isRefreshing}
             size="large"
             sx={{
               display: { xs: "flex", sm: "none" },
             }}
             aria-label="Refresh"
           >
-            <Refresh />
+            {isRefreshing ? <CircularProgress size={20} /> : <Refresh />}
           </IconButton>
         </Box>
       </Box>
@@ -1242,9 +1273,11 @@ const AdminDashboard: React.FC = () => {
           sx={{ borderBottom: 1, borderColor: "divider" }}
         >
           <Tab label="Colleges" />
+          <Tab label="Courses" />
           <Tab label="Users" />
           <Tab label="Documents" />
           <Tab label="Loans" />
+          <Tab label="Messages" />
         </Tabs>
 
         {/* Colleges Tab */}
@@ -1429,21 +1462,28 @@ const AdminDashboard: React.FC = () => {
                                 gap: 0.5,
                               }}
                             >
-                              {college.courses_offered
-                                .slice(0, 2)
-                                .map((course: string, index: number) => (
+                              {college.course_ids_json &&
+                              college.course_ids_json.length > 0 ? (
+                                <>
                                   <Chip
-                                    key={index}
-                                    label={course}
+                                    label={`${college.course_ids_json.length} linked courses`}
                                     size="small"
+                                    color="primary"
                                   />
-                                ))}
-                              {college.courses_offered.length > 2 && (
+                                  {college.course_ids_json.length > 1 && (
+                                    <Chip
+                                      label="View details"
+                                      size="small"
+                                      variant="outlined"
+                                    />
+                                  )}
+                                </>
+                              ) : (
                                 <Chip
-                                  label={`+${
-                                    college.courses_offered.length - 2
-                                  }`}
+                                  label="No courses linked"
                                   size="small"
+                                  color="default"
+                                  variant="outlined"
                                 />
                               )}
                             </Box>
@@ -1505,8 +1545,23 @@ const AdminDashboard: React.FC = () => {
           </Card>
         </TabPanel>
 
-        {/* Users Tab */}
+        {/* Courses Tab */}
         <TabPanel value={tabValue} index={1}>
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              Manage Courses
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              Create, edit, and manage course information. Import/export course
+              data.
+            </Typography>
+          </Box>
+
+          <CoursesManagement />
+        </TabPanel>
+
+        {/* Users Tab */}
+        <TabPanel value={tabValue} index={2}>
           <Box sx={{ mb: 3 }}>
             <Typography variant="h5" gutterBottom>
               Manage Users
@@ -1728,7 +1783,7 @@ const AdminDashboard: React.FC = () => {
         </TabPanel>
 
         {/* Documents Tab */}
-        <TabPanel value={tabValue} index={2}>
+        <TabPanel value={tabValue} index={3}>
           <Box sx={{ mb: 3 }}>
             <Typography variant="h5" gutterBottom>
               Manage Documents
@@ -1996,7 +2051,7 @@ const AdminDashboard: React.FC = () => {
         </TabPanel>
 
         {/* Loans Tab */}
-        <TabPanel value={tabValue} index={3}>
+        <TabPanel value={tabValue} index={4}>
           <Box sx={{ mb: 3 }}>
             <Typography variant="h5" gutterBottom>
               Manage Loan Applications
@@ -2214,6 +2269,11 @@ const AdminDashboard: React.FC = () => {
               />
             </Box>
           )}
+        </TabPanel>
+
+        {/* Messages Tab */}
+        <TabPanel value={tabValue} index={5}>
+          <MessagesManagement />
         </TabPanel>
       </Paper>
 
@@ -2530,12 +2590,31 @@ const AdminDashboard: React.FC = () => {
                   color="text.secondary"
                   gutterBottom
                 >
-                  Courses Offered
+                  Linked Courses
                 </Typography>
                 <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
-                  {selectedCollege.courses_offered?.map((course, index) => (
-                    <Chip key={index} label={course} size="small" />
-                  ))}
+                  {selectedCollege.course_ids_json &&
+                  selectedCollege.course_ids_json.length > 0 ? (
+                    <>
+                      <Chip
+                        label={`${selectedCollege.course_ids_json.length} courses linked`}
+                        size="small"
+                        color="primary"
+                      />
+                      <Chip
+                        label="View in College Details"
+                        size="small"
+                        variant="outlined"
+                      />
+                    </>
+                  ) : (
+                    <Chip
+                      label="No courses linked"
+                      size="small"
+                      color="default"
+                      variant="outlined"
+                    />
+                  )}
                 </Box>
               </Box>
 
@@ -2797,16 +2876,6 @@ const AdminDashboard: React.FC = () => {
               <TextField
                 required
                 fullWidth
-                label="Courses Offered (comma-separated)"
-                name="courses_offered"
-                value={collegeForm.courses_offered}
-                onChange={handleCollegeFormChange}
-                disabled={isSubmitting}
-                placeholder="Engineering, Medical, Arts"
-              />
-              <TextField
-                required
-                fullWidth
                 label="Placement Ratio (%)"
                 name="placement_ratio"
                 type="number"
@@ -2936,6 +3005,75 @@ const AdminDashboard: React.FC = () => {
                   placeholder="Google, Microsoft, Amazon"
                 />
               </Box>
+            </Box>
+
+            {/* Course Selection */}
+            <Box sx={{ mt: 3 }}>
+              <Typography variant="h6" gutterBottom>
+                Linked Courses
+              </Typography>
+              <FormControl fullWidth variant="outlined">
+                <InputLabel id="courses-label">Select Courses</InputLabel>
+                <Select
+                  labelId="courses-label"
+                  multiple
+                  value={collegeForm.courseIds}
+                  onChange={(e) => {
+                    const value = e.target.value as string[];
+                    setCollegeForm((prev) => ({
+                      ...prev,
+                      courseIds: value,
+                    }));
+                  }}
+                  label="Select Courses"
+                  disabled={isSubmitting || coursesLoading}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
+                      {(selected as string[]).map((value) => {
+                        const course = coursesData?.courses?.find(
+                          (c: any) => c.id === value
+                        );
+                        return (
+                          <Chip
+                            key={value}
+                            label={
+                              course
+                                ? `${course.name}${
+                                    course.stream ? ` (${course.stream})` : ""
+                                  }`
+                                : value
+                            }
+                            size="small"
+                          />
+                        );
+                      })}
+                    </Box>
+                  )}
+                >
+                  {coursesData?.courses?.map((course: any) => (
+                    <MenuItem key={course.id} value={course.id}>
+                      <Box>
+                        <Typography variant="body2" fontWeight="bold">
+                          {course.name}
+                        </Typography>
+                        {course.stream && (
+                          <Typography variant="caption" color="text.secondary">
+                            {course.stream} • {course.duration_years} years
+                          </Typography>
+                        )}
+                      </Box>
+                    </MenuItem>
+                  )) || []}
+                </Select>
+              </FormControl>
+              {coursesLoading && (
+                <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                  <CircularProgress size={16} />
+                  <Typography variant="body2" sx={{ ml: 1 }}>
+                    Loading courses...
+                  </Typography>
+                </Box>
+              )}
             </Box>
           </Box>
         </DialogContent>

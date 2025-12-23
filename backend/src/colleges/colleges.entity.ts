@@ -1,6 +1,21 @@
-import { Entity, PrimaryColumn, Column, CreateDateColumn } from 'typeorm';
+import {
+  Entity,
+  PrimaryColumn,
+  Column,
+  CreateDateColumn,
+  Index,
+} from 'typeorm';
 
 @Entity('colleges')
+@Index(['state'])
+@Index(['city'])
+@Index(['state', 'city'])
+@Index(['fees'])
+@Index(['ranking'])
+@Index(['is_partnered'])
+@Index(['college_name'])
+@Index(['is_deleted'])
+@Index(['created_at'])
 export class College {
   @PrimaryColumn('varchar')
   college_id: string;
@@ -25,9 +40,6 @@ export class College {
 
   @Column('int', { nullable: false })
   ranking: number;
-
-  @Column('simple-array', { nullable: false })
-  courses_offered: string[]; // [CSE, ME, ECE]
 
   @Column('float', { nullable: false })
   placement_ratio: number;
@@ -64,6 +76,9 @@ export class College {
 
   @Column('boolean', { default: false })
   is_deleted: boolean;
+
+  @Column('json', { nullable: true })
+  course_ids_json: string[];
 
   @CreateDateColumn()
   created_at: Date;

@@ -15,7 +15,10 @@ interface FilterDto {
   minFees?: number;
   maxFees?: number;
   ranking?: number;
-  courses_offered?: string[];
+}
+
+interface CollegeCreateData extends Partial<College> {
+  courseIds?: string[];
 }
 
 @Injectable()
@@ -27,7 +30,7 @@ export class CollegesService {
     private readonly logger: CustomLogger,
   ) {}
 
-  async create(correlation_id: string, data: Partial<College>) {
+  async create(correlation_id: string, data: CollegeCreateData) {
     this.logger.setContext(this.constructor.name);
     this.logger.debug(correlation_id, 'Starting college creation process');
     this.logger.debug(
@@ -42,6 +45,7 @@ export class CollegesService {
     const entity = this.repo.create({
       ...data,
       college_id: college_id,
+      course_ids_json: data.courseIds || [],
     });
 
     this.logger.debug(correlation_id, 'Saving college to database');
@@ -62,7 +66,6 @@ export class CollegesService {
         landmark: saved_entity.landmark,
         fees: saved_entity.fees,
         ranking: saved_entity.ranking,
-        courses_offered: saved_entity.courses_offered,
         placement_ratio: saved_entity.placement_ratio,
         year_of_establishment: saved_entity.year_of_establishment,
         affiliation: saved_entity.affiliation,
@@ -75,11 +78,12 @@ export class CollegesService {
         placement_rate: saved_entity.placement_rate,
         top_recruiters: saved_entity.top_recruiters,
         placement_last_updated: saved_entity.placement_last_updated,
+        course_ids_json: saved_entity.course_ids_json,
       },
     };
   }
 
-  async update(correlation_id: string, id: string, data: Partial<College>) {
+  async update(correlation_id: string, id: string, data: CollegeCreateData) {
     this.logger.setContext(this.constructor.name);
     this.logger.debug(
       correlation_id,
@@ -103,7 +107,11 @@ export class CollegesService {
     }
 
     this.logger.debug(correlation_id, 'Updating college entity');
-    Object.assign(existing, data);
+    const updateData: any = { ...data };
+    if (data.courseIds !== undefined) {
+      updateData.course_ids_json = data.courseIds;
+    }
+    Object.assign(existing, updateData);
 
     this.logger.debug(correlation_id, 'Saving updated college to database');
     const saved_entity = await this.repo.save(existing);
@@ -120,7 +128,6 @@ export class CollegesService {
         landmark: saved_entity.landmark,
         fees: saved_entity.fees,
         ranking: saved_entity.ranking,
-        courses_offered: saved_entity.courses_offered,
         placement_ratio: saved_entity.placement_ratio,
         year_of_establishment: saved_entity.year_of_establishment,
         affiliation: saved_entity.affiliation,
@@ -133,6 +140,7 @@ export class CollegesService {
         placement_rate: saved_entity.placement_rate,
         top_recruiters: saved_entity.top_recruiters,
         placement_last_updated: saved_entity.placement_last_updated,
+        course_ids_json: saved_entity.course_ids_json,
       },
     };
   }
@@ -253,7 +261,6 @@ export class CollegesService {
         landmark: existing.landmark,
         fees: existing.fees,
         ranking: existing.ranking,
-        courses_offered: existing.courses_offered,
         placement_ratio: existing.placement_ratio,
         year_of_establishment: existing.year_of_establishment,
         affiliation: existing.affiliation,
@@ -266,11 +273,15 @@ export class CollegesService {
         placement_rate: existing.placement_rate,
         top_recruiters: existing.top_recruiters,
         placement_last_updated: existing.placement_last_updated,
+        course_ids_json: existing.course_ids_json,
       },
     };
   }
 
-  async list(correlation_id: string, filters: FilterDto) {
+  async list(
+    correlation_id: string,
+    filters: FilterDto & { page?: number; limit?: number },
+  ) {
     this.logger.setContext(this.constructor.name);
     this.logger.debug(correlation_id, 'Starting college listing process');
     this.logger.debug(
@@ -280,6 +291,8 @@ export class CollegesService {
 
     this.logger.debug(correlation_id, 'Building database query');
     const qb = this.repo.createQueryBuilder('c');
+
+    qb.where('c.is_deleted = :is_deleted', { is_deleted: false });
 
     if (filters.q) {
       this.logger.debug(correlation_id, 'Applying search filter');
@@ -310,28 +323,21 @@ export class CollegesService {
       this.logger.debug(correlation_id, 'Applying ranking filter');
       qb.andWhere('c.ranking <= :ranking', { ranking: filters.ranking });
     }
-    if (filters.courses_offered && filters.courses_offered.length > 0) {
-      this.logger.debug(correlation_id, 'Applying courses offered filter');
-      // For simple-array type, we need to use FIND_IN_SET for MySQL
-      const courseConditions = filters.courses_offered
-        .map(
-          (course, index) => `FIND_IN_SET(:course${index}, c.courses_offered)`,
-        )
-        .join(' OR ');
-      qb.andWhere(
-        `(${courseConditions})`,
-        filters.courses_offered.reduce((params, course, index) => {
-          params[`course${index}`] = course;
-          return params;
-        }, {}),
-      );
-    }
 
     qb.orderBy('c.ranking', 'ASC');
 
+    const page = filters.page || 1;
+    const limit = Math.min(filters.limit || 20, 100);
+    const offset = (page - 1) * limit;
+
+    qb.skip(offset).take(limit);
+
     this.logger.debug(correlation_id, 'Executing database query');
-    const results = await qb.getMany();
-    this.logger.debug(correlation_id, `Found ${results.length} colleges`);
+    const [results, total] = await qb.getManyAndCount();
+    this.logger.debug(
+      correlation_id,
+      `Found ${results.length} colleges out of ${total} total`,
+    );
 
     return {
       message: 'Colleges retrieved successfully',
@@ -344,7 +350,6 @@ export class CollegesService {
         landmark: college.landmark,
         fees: college.fees,
         ranking: college.ranking,
-        courses_offered: college.courses_offered,
         placement_ratio: college.placement_ratio,
         year_of_establishment: college.year_of_establishment,
         affiliation: college.affiliation,
@@ -357,6 +362,7 @@ export class CollegesService {
         placement_rate: college.placement_rate,
         top_recruiters: college.top_recruiters,
         placement_last_updated: college.placement_last_updated,
+        course_ids_json: college.course_ids_json,
       })),
     };
   }
@@ -384,7 +390,6 @@ export class CollegesService {
         landmark: college.landmark,
         fees: college.fees,
         ranking: college.ranking,
-        courses_offered: college.courses_offered,
         placement_ratio: college.placement_ratio,
         year_of_establishment: college.year_of_establishment,
         affiliation: college.affiliation,
@@ -397,6 +402,7 @@ export class CollegesService {
         placement_rate: college.placement_rate,
         top_recruiters: college.top_recruiters,
         placement_last_updated: college.placement_last_updated,
+        course_ids_json: college.course_ids_json,
       })),
     };
   }

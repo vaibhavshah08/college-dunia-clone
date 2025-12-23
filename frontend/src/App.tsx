@@ -5,30 +5,26 @@ import { CssBaseline } from "@mui/material";
 import { QueryClient, QueryClientProvider } from "react-query";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import { setGlobalToast } from "./services/apiClient";
 
-// Layout
 import Layout from "./components/Layout/Layout";
 
-// Contexts
 import { ComparisonProvider } from "./contexts/ComparisonContext";
 import { ToastProvider } from "./contexts/ToastContext";
+import { MotionProvider } from "./contexts/MotionContext";
 
-// Components
 import ToastInitializer from "./components/ToastInitializer";
 
-// Auth Components
 import AdminRoute from "./components/Auth/AdminRoute";
 import ProtectedRoute from "./components/Auth/ProtectedRoute";
 import HomeRoute from "./components/Auth/HomeRoute";
 import UserRoute from "./components/Auth/UserRoute";
 import PublicRoute from "./components/Auth/PublicRoute";
-
-// Pages
 import Home from "./pages/Home/Home";
 import Colleges from "./pages/Colleges/Colleges";
 import CollegeDetail from "./pages/Colleges/CollegeDetail";
 import CollegeComparison from "./pages/Colleges/CollegeComparison";
+import Courses from "./pages/Courses/Courses";
+import CourseDetail from "./pages/Courses/CourseDetail";
 import Loans from "./pages/Loans/Loans";
 import LoanDetail from "./pages/Loans/LoanDetail";
 import Documents from "./pages/Documents/Documents";
@@ -45,29 +41,28 @@ import FAQ from "./pages/Static/FAQ";
 import ContactUs from "./pages/Static/ContactUs";
 import AboutUs from "./pages/Static/AboutUs";
 
-// Create a modern, high-contrast theme
 const theme = createTheme({
   palette: {
-    mode: "light", // Switch to light mode for better readability
+    mode: "light",
     primary: {
-      main: "#1976D2", // Deep blue
+      main: "#1976D2",
       light: "#42A5F5",
       dark: "#1565C0",
       contrastText: "#FFFFFF",
     },
     secondary: {
-      main: "#FF6F00", // Orange for accents
+      main: "#FF6F00",
       light: "#FF8F00",
       dark: "#E65100",
       contrastText: "#FFFFFF",
     },
     background: {
-      default: "#FAFAFA", // Very light grey background
-      paper: "#FFFFFF", // Pure white for cards
+      default: "#FAFAFA",
+      paper: "#FFFFFF",
     },
     text: {
-      primary: "#212121", // Dark grey for excellent contrast
-      secondary: "#757575", // Medium grey for secondary text
+      primary: "#212121",
+      secondary: "#757575",
     },
     success: {
       main: "#10b981",
@@ -133,7 +128,6 @@ const theme = createTheme({
           fontWeight: 600,
           textTransform: "none",
           transition: "all 0.2s ease",
-          // Mobile responsive sizing
           "@media (max-width: 600px)": {
             padding: "8px 16px",
             fontSize: "0.875rem",
@@ -170,7 +164,6 @@ const theme = createTheme({
     MuiIconButton: {
       styleOverrides: {
         root: {
-          // Mobile responsive sizing for IconButton
           "@media (max-width: 600px)": {
             padding: "8px",
             minHeight: 36,
@@ -182,10 +175,10 @@ const theme = createTheme({
     MuiCard: {
       styleOverrides: {
         root: {
-          backgroundColor: "#FFFFFF", // Pure white for maximum contrast
+          backgroundColor: "#FFFFFF",
           boxShadow: "0 2px 8px rgba(0,0,0,0.1), 0 1px 3px rgba(0,0,0,0.08)",
           borderRadius: 12,
-          border: "1px solid #E0E0E0", // Light border
+          border: "1px solid #E0E0E0",
           transition: "all 0.2s ease",
           "&:hover": {
             boxShadow: "0 8px 24px rgba(0,0,0,0.15), 0 4px 8px rgba(0,0,0,0.1)",
@@ -208,8 +201,8 @@ const theme = createTheme({
       styleOverrides: {
         root: {
           borderRadius: 12,
-          backgroundColor: "#FFFFFF", // Pure white
-          border: "1px solid #E0E0E0", // Light border
+          backgroundColor: "#FFFFFF",
+          border: "1px solid #E0E0E0",
         },
       },
     },
@@ -382,13 +375,12 @@ const theme = createTheme({
   },
 });
 
-// Create a query client
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
       retry: 1,
       refetchOnWindowFocus: false,
-      staleTime: 5 * 60 * 1000, // 5 minutes
+      staleTime: 5 * 60 * 1000,
     },
   },
 });
@@ -400,116 +392,137 @@ function App() {
         <CssBaseline />
         <ToastProvider>
           <ToastInitializer />
-          <ComparisonProvider>
-            <Router>
-              <Layout>
-                <Routes>
-                  <Route
-                    path="/"
-                    element={
-                      <HomeRoute>
-                        <Home />
-                      </HomeRoute>
-                    }
-                  />
-                  <Route
-                    path="/colleges"
-                    element={
-                      <UserRoute>
-                        <Colleges />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/colleges/:id"
-                    element={
-                      <UserRoute>
-                        <CollegeDetail />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/colleges/compare"
-                    element={
-                      <UserRoute>
-                        <CollegeComparison />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/loans"
-                    element={
-                      <UserRoute>
-                        <Loans />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/loans/:id"
-                    element={
-                      <UserRoute>
-                        <LoanDetail />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/documents"
-                    element={
-                      <UserRoute>
-                        <Documents />
-                      </UserRoute>
-                    }
-                  />
-                  <Route
-                    path="/profile"
-                    element={
-                      <ProtectedRoute>
-                        <Profile />
-                      </ProtectedRoute>
-                    }
-                  />
-                  <Route
-                    path="/admin"
-                    element={
-                      <AdminRoute>
-                        <AdminDashboard />
-                      </AdminRoute>
-                    }
-                  />
-                  <Route
-                    path="/login"
-                    element={
-                      <PublicRoute>
-                        <Login />
-                      </PublicRoute>
-                    }
-                  />
-                  <Route
-                    path="/register"
-                    element={
-                      <PublicRoute>
-                        <Register />
-                      </PublicRoute>
-                    }
-                  />
-                  <Route
-                    path="/auth/google/success"
-                    element={<GoogleSuccess />}
-                  />
-                  <Route path="/auth/google/error" element={<GoogleError />} />
-                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                  <Route
-                    path="/terms-of-service"
-                    element={<TermsOfService />}
-                  />
-                  <Route path="/help-support" element={<FAQ />} />
-                  <Route path="/contact-us" element={<ContactUs />} />
-                  <Route path="/about-us" element={<AboutUs />} />
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
-              </Layout>
-            </Router>
-          </ComparisonProvider>
+          <MotionProvider>
+            <ComparisonProvider>
+              <Router>
+                <Layout>
+                  <Routes>
+                    <Route
+                      path="/"
+                      element={
+                        <HomeRoute>
+                          <Home />
+                        </HomeRoute>
+                      }
+                    />
+                    <Route
+                      path="/colleges"
+                      element={
+                        <UserRoute>
+                          <Colleges />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/colleges/:id"
+                      element={
+                        <UserRoute>
+                          <CollegeDetail />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/colleges/compare"
+                      element={
+                        <UserRoute>
+                          <CollegeComparison />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/courses"
+                      element={
+                        <UserRoute>
+                          <Courses />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/courses/:id"
+                      element={
+                        <UserRoute>
+                          <CourseDetail />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/loans"
+                      element={
+                        <UserRoute>
+                          <Loans />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/loans/:id"
+                      element={
+                        <UserRoute>
+                          <LoanDetail />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/documents"
+                      element={
+                        <UserRoute>
+                          <Documents />
+                        </UserRoute>
+                      }
+                    />
+                    <Route
+                      path="/profile"
+                      element={
+                        <ProtectedRoute>
+                          <Profile />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/admin"
+                      element={
+                        <AdminRoute>
+                          <AdminDashboard />
+                        </AdminRoute>
+                      }
+                    />
+                    <Route
+                      path="/login"
+                      element={
+                        <PublicRoute>
+                          <Login />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route
+                      path="/register"
+                      element={
+                        <PublicRoute>
+                          <Register />
+                        </PublicRoute>
+                      }
+                    />
+                    <Route
+                      path="/auth/google/success"
+                      element={<GoogleSuccess />}
+                    />
+                    <Route
+                      path="/auth/google/error"
+                      element={<GoogleError />}
+                    />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route
+                      path="/terms-of-service"
+                      element={<TermsOfService />}
+                    />
+                    <Route path="/help-support" element={<FAQ />} />
+                    <Route path="/contact-us" element={<ContactUs />} />
+                    <Route path="/about-us" element={<AboutUs />} />
+                    <Route path="*" element={<NotFound />} />
+                  </Routes>
+                </Layout>
+              </Router>
+            </ComparisonProvider>
+          </MotionProvider>
         </ToastProvider>
         <ToastContainer
           position="bottom-center"
