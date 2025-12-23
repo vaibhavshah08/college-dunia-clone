@@ -48,8 +48,7 @@ import {
 
 // Get file URL for preview
 const getFileUrl = (documentPath: string) => {
-  const API_BASE_URL =
-    process.env.REACT_APP_API_BASE_URL || "http://localhost:7001";
+  const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "/api";
   return `${API_BASE_URL}${documentPath}`;
 };
 
@@ -496,8 +495,6 @@ const Documents: React.FC = () => {
         )}
 
         {/* Message State */}
-
-        {/* Empty State */}
         {!isLoading && !error && documents.length === 0 && (
           <Box sx={{ width: "100%", mb: 4 }}>
             <Alert severity="info" sx={{ width: "100%" }}>
@@ -627,10 +624,10 @@ const Documents: React.FC = () => {
                             document.status === "approved"
                               ? "success"
                               : document.status === "rejected"
-                              ? "error"
-                              : document.status === "pending"
-                              ? "warning"
-                              : "default"
+                                ? "error"
+                                : document.status === "pending"
+                                  ? "warning"
+                                  : "default"
                           }
                           size="small"
                         />
