@@ -1540,14 +1540,25 @@ const AdminDashboard: React.FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-              {collegesPagination && collegesPagination.totalPages > 1 && (
-                <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+              {/* Pagination - Show if we have pagination data and more than one page */}
+              {(collegesPagination?.totalPages ?? 0) > 1 && (
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "center",
+                    mt: 3,
+                    mb: 2,
+                    py: 2,
+                  }}
+                >
                   <Pagination
-                    count={collegesPagination.totalPages}
+                    count={collegesPagination?.totalPages || 1}
                     page={collegesPage}
                     onChange={handleCollegesPageChange}
                     color="primary"
                     size="large"
+                    showFirstButton
+                    showLastButton
                   />
                 </Box>
               )}
