@@ -100,37 +100,55 @@ export class LoansService {
     };
   }
 
-  async listMine(correlation_id: string, user_id: string) {
+  async listMine(
+    correlation_id: string,
+    user_id: string,
+    page: number = 1,
+    limit: number = 10,
+  ) {
     this.logger.setContext(this.constructor.name);
     this.logger.debug(correlation_id, 'Starting loan listing process for user');
     this.logger.debug(correlation_id, `Listing loans for user ${user_id}`);
 
     this.logger.debug(correlation_id, 'Querying database for user loans');
-    const results = await this.repo.find({ where: { user_id: user_id } });
+    const [results, total] = await this.repo.findAndCount({
+      where: { user_id: user_id },
+      order: { created_at: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
     this.logger.debug(
       correlation_id,
-      `Found ${results.length} loans for user ${user_id}`,
+      `Found ${results.length} loans for user ${user_id} out of ${total} total`,
     );
 
     return {
       message: 'Loans retrieved successfully',
-      data: results.map((loan) => ({
-        loan_id: loan.loan_id,
-        user_id: loan.user_id,
-        loan_type: loan.loan_type,
-        principal_amount: loan.principal_amount,
-        interest_rate: loan.interest_rate,
-        term_months: loan.term_months,
-        status: loan.status,
-        college_id: loan.college_id,
-        phone_number: loan.phone_number,
-        first_name: loan.first_name,
-        last_name: loan.last_name,
-        gender: loan.gender,
-        whatsapp_number: loan.whatsapp_number,
-        description: loan.description,
-        created_at: loan.created_at,
-      })),
+      data: {
+        loans: results.map((loan) => ({
+          loan_id: loan.loan_id,
+          user_id: loan.user_id,
+          loan_type: loan.loan_type,
+          principal_amount: loan.principal_amount,
+          interest_rate: loan.interest_rate,
+          term_months: loan.term_months,
+          status: loan.status,
+          college_id: loan.college_id,
+          phone_number: loan.phone_number,
+          first_name: loan.first_name,
+          last_name: loan.last_name,
+          gender: loan.gender,
+          whatsapp_number: loan.whatsapp_number,
+          description: loan.description,
+          created_at: loan.created_at,
+        })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
     };
   }
 

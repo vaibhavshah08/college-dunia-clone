@@ -8,17 +8,33 @@ import type {
   CompareRequest,
   CompareResponse,
   CollegePlacement,
+  CollegeListResponse,
 } from "../../types/api";
 
 export const collegesApi = {
   /**
    * Get colleges list with filters and pagination
+   * Returns paginated response if page/limit are provided, otherwise returns array for backward compatibility
    */
-  async getColleges(params: CollegeListQuery): Promise<College[]> {
-    const response = await apiClient.get<College[]>(COLLEGE_ENDPOINTS.LIST, {
-      params,
-    });
-    return response.data;
+  async getColleges(
+    params: CollegeListQuery
+  ): Promise<College[] | CollegeListResponse> {
+    const response = await apiClient.get<College[] | CollegeListResponse>(
+      COLLEGE_ENDPOINTS.LIST,
+      {
+        params,
+      }
+    );
+    // After the interceptor, response.data is already extracted
+    // If response has pagination structure, return it; otherwise return array for backward compatibility
+    if (
+      response.data &&
+      typeof response.data === "object" &&
+      "colleges" in response.data
+    ) {
+      return response.data as CollegeListResponse;
+    }
+    return response.data as College[];
   },
 
   /**

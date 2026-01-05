@@ -38,11 +38,20 @@ export const documentsApi = {
   },
 
   /**
-   * Get user documents
+   * Get user documents with pagination
    */
-  async getUserDocuments(): Promise<Document[]> {
-    const response = await apiClient.get<Document[]>("/documents/my-documents");
-    return response.data;
+  async getUserDocuments(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ documents: Document[]; pagination: any } | Document[]> {
+    const response = await apiClient.get<{ documents: Document[]; pagination: any } | Document[]>(
+      `/documents/my-documents?page=${page}&limit=${limit}`
+    );
+    // Handle both paginated and non-paginated responses for backward compatibility
+    if (response.data && typeof response.data === 'object' && 'documents' in response.data) {
+      return response.data;
+    }
+    return response.data as Document[];
   },
 
   /**

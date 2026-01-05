@@ -17,11 +17,20 @@ export const loansApi = {
   },
 
   /**
-   * Get user's loan applications
+   * Get user's loan applications with pagination
    */
-  async getMyLoans(): Promise<Loan[]> {
-    const response = await apiClient.get<Loan[]>(LOAN_ENDPOINTS.LIST_MINE);
-    return response.data;
+  async getMyLoans(
+    page: number = 1,
+    limit: number = 10
+  ): Promise<{ loans: Loan[]; pagination: any } | Loan[]> {
+    const response = await apiClient.get<{ loans: Loan[]; pagination: any } | Loan[]>(
+      `${LOAN_ENDPOINTS.LIST_MINE}?page=${page}&limit=${limit}`
+    );
+    // Handle both paginated and non-paginated responses for backward compatibility
+    if (response.data && typeof response.data === 'object' && 'loans' in response.data) {
+      return response.data;
+    }
+    return response.data as Loan[];
   },
 
   /**

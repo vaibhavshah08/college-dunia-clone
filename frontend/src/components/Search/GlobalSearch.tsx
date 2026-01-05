@@ -105,7 +105,7 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
     error: documentsError,
   } = useQuery(
     ["search", "documents", debouncedSearchTerm],
-    () => documentsApi.getUserDocuments(),
+    () => documentsApi.getUserDocuments(1, 100),
     {
       enabled: !!debouncedSearchTerm && debouncedSearchTerm.length >= 2,
       staleTime: 0,
@@ -136,7 +136,8 @@ const GlobalSearch: React.FC<GlobalSearchProps> = ({
 
     // Add colleges
     if (collegesData) {
-      collegesData.slice(0, 5).forEach((college) => {
+      const colleges = Array.isArray(collegesData) ? collegesData : (collegesData.colleges || []);
+      colleges.slice(0, 5).forEach((college) => {
         newResults.push({
           id: college.college_id,
           title: college.college_name,

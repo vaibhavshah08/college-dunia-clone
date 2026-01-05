@@ -92,23 +92,45 @@ const Loans: React.FC = () => {
   const [page, setPage] = useState(1);
   const [itemsPerPage] = useState(6);
 
-  // Fetch user's loans
+  // Fetch user's loans with server-side pagination
   const {
-    data: loans = [],
+    data: loansResponse,
     isLoading,
     error,
-  } = useQuery<Loan[], Error>({
-    queryKey: ["loans", "me"],
-    queryFn: loansApi.getMyLoans,
+  } = useQuery({
+    queryKey: ["loans", "me", page],
+    queryFn: async () => {
+      const response = await loansApi.getMyLoans(page, itemsPerPage);
+      // Handle both paginated and non-paginated responses
+      if (response && typeof response === "object" && "loans" in response) {
+        return response;
+      }
+      return {
+        loans: response as Loan[],
+        pagination: {
+          page: 1,
+          limit: itemsPerPage,
+          total: (response as Loan[]).length,
+          totalPages: 1,
+        },
+      };
+    },
     enabled: isAuthenticated,
+    keepPreviousData: true,
   });
 
+  const loans = loansResponse?.loans || [];
+  const loansPagination = loansResponse?.pagination;
+
   // Fetch colleges for loan form
-  const { data: colleges = [] } = useQuery({
-    queryKey: ["colleges"],
-    queryFn: () => collegesApi.getColleges({}),
+  const { data: collegesResponse } = useQuery({
+    queryKey: ["colleges", "all"],
+    queryFn: () => collegesApi.getColleges({ limit: 1000 }),
     enabled: isAuthenticated,
   });
+  const colleges = Array.isArray(collegesResponse)
+    ? collegesResponse
+    : collegesResponse?.colleges || [];
 
   // Create loan mutation
   const createLoanMutation = useMutation({
@@ -250,21 +272,6 @@ const Loans: React.FC = () => {
       description: "",
     });
     setOpenDialog(true);
-  };
-
-  // Pagination helper functions
-  const getPaginatedData = (
-    data: Loan[],
-    page: number,
-    itemsPerPage: number
-  ) => {
-    const startIndex = (page - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return data.slice(startIndex, endIndex);
-  };
-
-  const getTotalPages = (data: Loan[], itemsPerPage: number) => {
-    return Math.ceil(data.length / itemsPerPage);
   };
 
   const handlePageChange = (
@@ -478,202 +485,201 @@ const Loans: React.FC = () => {
                   </Alert>
                 </Box>
               ) : (
-                getPaginatedData(loans, page, itemsPerPage).map(
-                  (loan: Loan, index: number) => (
-                    <AnimatedCard key={loan.loan_id} delay={index * 0.08}>
-                      <Card
+                loans.map((loan: Loan, index: number) => (
+                  <AnimatedCard key={loan.loan_id} delay={index * 0.08}>
+                    <Card
+                      sx={{
+                        height: "100%",
+                        display: "flex",
+                        flexDirection: "column",
+                        background:
+                          "linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)",
+                        border: "1px solid rgba(0,0,0,0.05)",
+                        borderRadius: 3,
+                        cursor: "pointer",
+                        position: "relative",
+                        overflow: "hidden",
+                        "&:hover": {
+                          boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                          borderColor: "#1976D2",
+                          "& .loan-card-overlay": {
+                            opacity: 1,
+                          },
+                        },
+                        "&::before": {
+                          content: '""',
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          height: 4,
+                          background:
+                            "linear-gradient(90deg, #1976D2, #42A5F5)",
+                          transform: "scaleX(0)",
+                          transition: "transform 0.3s ease",
+                        },
+                        "&:hover::before": {
+                          transform: "scaleX(1)",
+                        },
+                      }}
+                    >
+                      <Box
+                        className="loan-card-overlay"
                         sx={{
-                          height: "100%",
+                          position: "absolute",
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          background:
+                            "linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(66, 165, 245, 0.1) 100%)",
+                          opacity: 0,
+                          transition: "opacity 0.3s ease",
+                          zIndex: 1,
+                        }}
+                      />
+                      <CardContent
+                        sx={{
+                          flex: 1,
                           display: "flex",
                           flexDirection: "column",
-                          background:
-                            "linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)",
-                          border: "1px solid rgba(0,0,0,0.05)",
-                          borderRadius: 3,
-                          cursor: "pointer",
                           position: "relative",
-                          overflow: "hidden",
-                          "&:hover": {
-                            boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
-                            borderColor: "#1976D2",
-                            "& .loan-card-overlay": {
-                              opacity: 1,
-                            },
-                          },
-                          "&::before": {
-                            content: '""',
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            height: 4,
-                            background:
-                              "linear-gradient(90deg, #1976D2, #42A5F5)",
-                            transform: "scaleX(0)",
-                            transition: "transform 0.3s ease",
-                          },
-                          "&:hover::before": {
-                            transform: "scaleX(1)",
-                          },
+                          zIndex: 2,
                         }}
                       >
+                        {/* Header with status */}
                         <Box
-                          className="loan-card-overlay"
-                          sx={{
-                            position: "absolute",
-                            top: 0,
-                            left: 0,
-                            right: 0,
-                            bottom: 0,
-                            background:
-                              "linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(66, 165, 245, 0.1) 100%)",
-                            opacity: 0,
-                            transition: "opacity 0.3s ease",
-                            zIndex: 1,
-                          }}
-                        />
-                        <CardContent
-                          sx={{
-                            flex: 1,
-                            display: "flex",
-                            flexDirection: "column",
-                            position: "relative",
-                            zIndex: 2,
-                          }}
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="flex-start"
+                          mb={2}
                         >
-                          {/* Header with status */}
-                          <Box
-                            display="flex"
-                            justifyContent="space-between"
-                            alignItems="flex-start"
-                            mb={2}
-                          >
-                            <Typography variant="h6" component="h3">
-                              {loan.loan_type}
-                            </Typography>
-                            <Chip
-                              label={loan.status
-                                .replace("_", " ")
-                                .toUpperCase()}
-                              color={getStatusColor(loan.status) as any}
-                              size="small"
-                            />
-                          </Box>
+                          <Typography variant="h6" component="h3">
+                            {loan.loan_type}
+                          </Typography>
+                          <Chip
+                            label={loan.status.replace("_", " ").toUpperCase()}
+                            color={getStatusColor(loan.status) as any}
+                            size="small"
+                          />
+                        </Box>
 
-                          {/* Loan details */}
-                          <Box flex={1} mb={3}>
-                            <Typography
-                              variant="h5"
-                              color="primary.main"
-                              fontWeight="bold"
-                              gutterBottom
-                            >
-                              ₹{loan.principal_amount.toLocaleString()}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              color="text.secondary"
-                              gutterBottom
-                            >
-                              Interest Rate: {loan.interest_rate}%
-                            </Typography>
-                            <Typography variant="body2" color="text.secondary">
-                              Term: {loan.term_months} months
-                            </Typography>
-                          </Box>
-
-                          {/* Action buttons */}
-                          <Box
-                            display="flex"
-                            gap={1}
-                            flexWrap="wrap"
-                            justifyContent="center"
+                        {/* Loan details */}
+                        <Box flex={1} mb={3}>
+                          <Typography
+                            variant="h5"
+                            color="primary.main"
+                            fontWeight="bold"
+                            gutterBottom
                           >
+                            ₹{loan.principal_amount.toLocaleString()}
+                          </Typography>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            gutterBottom
+                          >
+                            Interest Rate: {loan.interest_rate}%
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Term: {loan.term_months} months
+                          </Typography>
+                        </Box>
+
+                        {/* Action buttons */}
+                        <Box
+                          display="flex"
+                          gap={1}
+                          flexWrap="wrap"
+                          justifyContent="center"
+                        >
+                          <AnimatedButton
+                            variant="outlined"
+                            size="small"
+                            startIcon={<Visibility />}
+                            onClick={() => navigate(`/loans/${loan.loan_id}`)}
+                            sx={{
+                              minWidth: "auto",
+                              flex: 1,
+                              fontWeight: 600,
+                              borderRadius: 2,
+                              "&:hover": {
+                                background:
+                                  "linear-gradient(45deg, #1976D2, #42A5F5)",
+                                color: "white",
+                                borderColor: "transparent",
+                              },
+                            }}
+                          >
+                            View Details
+                          </AnimatedButton>
+                          {loan.status === "submitted" ? (
                             <AnimatedButton
-                              variant="outlined"
+                              variant="contained"
                               size="small"
-                              startIcon={<Visibility />}
-                              onClick={() => navigate(`/loans/${loan.loan_id}`)}
+                              startIcon={<Edit />}
+                              onClick={() => handleEditLoan(loan)}
                               sx={{
                                 minWidth: "auto",
                                 flex: 1,
+                                background:
+                                  "linear-gradient(45deg, #1976D2, #42A5F5)",
                                 fontWeight: 600,
                                 borderRadius: 2,
                                 "&:hover": {
                                   background:
-                                    "linear-gradient(45deg, #1976D2, #42A5F5)",
-                                  color: "white",
-                                  borderColor: "transparent",
+                                    "linear-gradient(45deg, #1565C0, #1976D2)",
                                 },
                               }}
                             >
-                              View Details
+                              Edit
                             </AnimatedButton>
-                            {loan.status === "submitted" ? (
-                              <AnimatedButton
-                                variant="contained"
-                                size="small"
-                                startIcon={<Edit />}
-                                onClick={() => handleEditLoan(loan)}
-                                sx={{
-                                  minWidth: "auto",
-                                  flex: 1,
-                                  background:
-                                    "linear-gradient(45deg, #1976D2, #42A5F5)",
-                                  fontWeight: 600,
-                                  borderRadius: 2,
-                                  "&:hover": {
-                                    background:
-                                      "linear-gradient(45deg, #1565C0, #1976D2)",
-                                  },
-                                }}
-                              >
-                                Edit
-                              </AnimatedButton>
-                            ) : (
-                              <AnimatedButton
-                                variant="outlined"
-                                size="small"
-                                startIcon={<Edit />}
-                                disabled
-                                sx={{
-                                  minWidth: "auto",
-                                  flex: 1,
-                                  opacity: 0.5,
-                                  color: "text.disabled",
-                                  borderColor: "text.disabled",
-                                }}
-                                title={`Only pending loans can be edited. This loan is ${loan.status
-                                  .replace("_", " ")
-                                  .toLowerCase()}.`}
-                              >
-                                Edit
-                              </AnimatedButton>
-                            )}
-                          </Box>
-                        </CardContent>
-                      </Card>
-                    </AnimatedCard>
-                  )
-                )
+                          ) : (
+                            <AnimatedButton
+                              variant="outlined"
+                              size="small"
+                              startIcon={<Edit />}
+                              disabled
+                              sx={{
+                                minWidth: "auto",
+                                flex: 1,
+                                opacity: 0.5,
+                                color: "text.disabled",
+                                borderColor: "text.disabled",
+                              }}
+                              title={`Only pending loans can be edited. This loan is ${loan.status
+                                .replace("_", " ")
+                                .toLowerCase()}.`}
+                            >
+                              Edit
+                            </AnimatedButton>
+                          )}
+                        </Box>
+                      </CardContent>
+                    </Card>
+                  </AnimatedCard>
+                ))
               )}
             </AnimatedList>
           )}
 
           {/* Pagination */}
-          {!isLoading && !error && loans.length > itemsPerPage && (
-            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-              <Pagination
-                count={getTotalPages(loans, itemsPerPage)}
-                page={page}
-                onChange={handlePageChange}
-                color="primary"
-                size="large"
-                showFirstButton
-                showLastButton
-              />
-            </Box>
-          )}
+          {!isLoading &&
+            !error &&
+            loansPagination &&
+            loansPagination.totalPages > 1 && (
+              <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+                <Pagination
+                  count={loansPagination.totalPages}
+                  page={page}
+                  onChange={handlePageChange}
+                  color="primary"
+                  size="large"
+                  showFirstButton
+                  showLastButton
+                />
+              </Box>
+            )}
 
           {/* Loan Application Dialog */}
           <Dialog

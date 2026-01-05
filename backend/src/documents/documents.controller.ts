@@ -124,10 +124,14 @@ export class DocumentsController {
   async getUserDocuments(
     @Correlation() correlation_id: string,
     @GetUser() user: any,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('limit', new ParseIntPipe({ optional: true })) limit?: number,
   ) {
     return await this.documentsService.getUserDocuments(
       correlation_id,
       user.user_id,
+      page || 1,
+      limit || 10,
     );
   }
 

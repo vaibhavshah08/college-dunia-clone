@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Container,
   Typography,
@@ -69,6 +69,7 @@ import adminApi from "../../services/modules/admin.api";
 import coursesApi from "../../services/modules/courses.api";
 import {
   College,
+  CollegeListResponse,
   Loan,
   Document,
   User,
@@ -209,6 +210,24 @@ const AdminDashboard: React.FC = () => {
   const debouncedCollegeSearchQuery = useDebounce(collegeSearchQuery, 300);
   const debouncedUserFilters = useDebounce(userFilters, 300);
   const debouncedLoanFilters = useDebounce(loanFilters, 300);
+  const debouncedDocumentFilters = useDebounce(documentFilters, 300);
+
+  // Reset to page 1 when search query changes
+  useEffect(() => {
+    setCollegesPage(1);
+  }, [debouncedCollegeSearchQuery]);
+
+  useEffect(() => {
+    setUsersPage(1);
+  }, [debouncedUserFilters]);
+
+  useEffect(() => {
+    setDocumentsPage(1);
+  }, [debouncedDocumentFilters]);
+
+  useEffect(() => {
+    setLoansPage(1);
+  }, [debouncedLoanFilters]);
 
   // Fetch all users for autocomplete
   const fetchAllUsers = async () => {
@@ -279,25 +298,47 @@ const AdminDashboard: React.FC = () => {
       });
     }
   };
-  const debouncedDocumentFilters = useDebounce(documentFilters, 300);
 
-  // Fetch data from APIs
-  const { data: colleges = [], isLoading: collegesLoading } = useQuery({
-    queryKey: ["colleges", "admin"],
-    queryFn: () => collegesApi.getColleges({}),
+  // Fetch data from APIs with server-side pagination
+  const { data: collegesResponse, isLoading: collegesLoading } = useQuery({
+    queryKey: ["colleges", "admin", collegesPage, debouncedCollegeSearchQuery],
+    queryFn: async () => {
+      const response = await collegesApi.getColleges({
+        page: collegesPage,
+        limit: itemsPerPage,
+        q: debouncedCollegeSearchQuery || undefined,
+      });
+      // Handle both paginated and non-paginated responses for backward compatibility
+      if (response && typeof response === "object" && "colleges" in response) {
+        return response;
+      }
+      // Fallback for non-paginated response
+      return {
+        colleges: response as College[],
+        pagination: {
+          page: 1,
+          limit: itemsPerPage,
+          total: (response as College[]).length,
+          totalPages: 1,
+        },
+      };
+    },
     enabled: isAuthenticated,
   });
+
+  const colleges = collegesResponse?.colleges || [];
+  const collegesPagination = collegesResponse?.pagination;
 
   const {
     data: loansData,
     isLoading: loansLoading,
     error: loansError,
   } = useQuery({
-    queryKey: ["loans", "admin", debouncedLoanFilters],
+    queryKey: ["loans", "admin", loansPage, debouncedLoanFilters],
     queryFn: () =>
       loansApi.getAllLoans(
-        1,
-        100,
+        loansPage,
+        itemsPerPage,
         debouncedLoanFilters.status,
         debouncedLoanFilters.userId
       ),
@@ -308,13 +349,14 @@ const AdminDashboard: React.FC = () => {
   });
 
   const loans = loansData?.loans || [];
+  const loansPagination = loansData?.pagination;
 
   const { data: documentsData, isLoading: documentsLoading } = useQuery({
-    queryKey: ["documents", "admin", debouncedDocumentFilters],
+    queryKey: ["documents", "admin", documentsPage, debouncedDocumentFilters],
     queryFn: () =>
       documentsApi.getAllDocuments(
-        1,
-        100,
+        documentsPage,
+        itemsPerPage,
         debouncedDocumentFilters.status,
         debouncedDocumentFilters.userId,
         ""
@@ -323,8 +365,18 @@ const AdminDashboard: React.FC = () => {
   });
 
   const { data: usersData, isLoading: usersLoading } = useQuery({
-    queryKey: ["users", "admin", debouncedUserFilters],
-    queryFn: () => adminApi.getAllUsers(1, 100, ""),
+    queryKey: ["users", "admin", usersPage, debouncedUserFilters],
+    queryFn: () => {
+      // Combine name, email, and id filters into search term for backend
+      const searchTerm = [
+        debouncedUserFilters.name,
+        debouncedUserFilters.email,
+        debouncedUserFilters.id,
+      ]
+        .filter(Boolean)
+        .join(" ");
+      return adminApi.getAllUsers(usersPage, itemsPerPage, searchTerm || "");
+    },
     enabled: isAuthenticated,
   });
 
@@ -344,7 +396,9 @@ const AdminDashboard: React.FC = () => {
   });
 
   const documents = documentsData?.documents || [];
+  const documentsPagination = documentsData?.pagination;
   const users = usersData?.users || [];
+  const usersPagination = usersData?.pagination;
 
   // Create college mutation
   const createCollegeMutation = useMutation({
@@ -481,87 +535,45 @@ const AdminDashboard: React.FC = () => {
     },
   });
 
-  // Filter data based on debounced search query
-  const filteredColleges = colleges.filter(
-    (college) =>
-      college.college_name
-        .toLowerCase()
-        .includes(debouncedCollegeSearchQuery.toLowerCase()) ||
-      college.city
-        .toLowerCase()
-        .includes(debouncedCollegeSearchQuery.toLowerCase()) ||
-      college.state
-        .toLowerCase()
-        .includes(debouncedCollegeSearchQuery.toLowerCase()) ||
-      // Search in linked courses will be handled by the backend
-      false
-  );
+  // Server-side search is handled by the backend, so we use colleges directly
+  // No client-side filtering needed since search is done server-side
+  const filteredColleges = colleges;
 
   // Filter data based on filter states
+  // Server-side filtering for status and userId is handled by backend
+  // Only filter by document ID client-side if needed
   const filteredDocuments = documents.filter((document) => {
     const matchesId =
       !debouncedDocumentFilters.id ||
       document.document_id
         .toLowerCase()
         .includes(debouncedDocumentFilters.id.toLowerCase());
-    const matchesUserId =
-      !debouncedDocumentFilters.userId ||
-      document.user_id
-        .toLowerCase()
-        .includes(debouncedDocumentFilters.userId.toLowerCase());
-    const matchesStatus =
-      !debouncedDocumentFilters.status ||
-      document.status.toLowerCase() ===
-        debouncedDocumentFilters.status.toLowerCase();
-
-    return matchesId && matchesUserId && matchesStatus;
+    return matchesId;
   });
 
+  // Server-side filtering for status and userId is handled by backend
+  // Only filter by loan ID and college ID client-side if needed
   const filteredLoans = loans.filter((loan) => {
     const matchesId =
       !debouncedLoanFilters.id ||
       loan.loan_id
         .toLowerCase()
         .includes(debouncedLoanFilters.id.toLowerCase());
-    const matchesUserId =
-      !debouncedLoanFilters.userId ||
-      loan.user_id
-        .toLowerCase()
-        .includes(debouncedLoanFilters.userId.toLowerCase());
     const matchesCollegeId =
       !debouncedLoanFilters.collegeId ||
       loan.college_id
         .toLowerCase()
         .includes(debouncedLoanFilters.collegeId.toLowerCase());
-    const matchesStatus =
-      !debouncedLoanFilters.status ||
-      loan.status.toLowerCase() === debouncedLoanFilters.status.toLowerCase();
-
-    return matchesId && matchesUserId && matchesCollegeId && matchesStatus;
+    return matchesId && matchesCollegeId;
   });
 
+  // Server-side search is handled by backend, but status filtering is still client-side
   const filteredUsers = users.filter((user) => {
-    const matchesId =
-      !debouncedUserFilters.id ||
-      user.user_id
-        .toLowerCase()
-        .includes(debouncedUserFilters.id.toLowerCase());
-    const matchesName =
-      !debouncedUserFilters.name ||
-      `${user.first_name} ${user.last_name}`
-        .toLowerCase()
-        .includes(debouncedUserFilters.name.toLowerCase());
-    const matchesEmail =
-      !debouncedUserFilters.email ||
-      user.email
-        .toLowerCase()
-        .includes(debouncedUserFilters.email.toLowerCase());
     const matchesStatus =
       !debouncedUserFilters.status ||
       (debouncedUserFilters.status === "active" && user.is_active) ||
       (debouncedUserFilters.status === "inactive" && !user.is_active);
-
-    return matchesId && matchesName && matchesEmail && matchesStatus;
+    return matchesStatus;
   });
 
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
@@ -1364,7 +1376,9 @@ const AdminDashboard: React.FC = () => {
                 <Typography variant="h6">Existing Colleges</Typography>
                 <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
                   <Typography variant="body2" color="text.secondary">
-                    {filteredColleges.length} of {colleges.length} colleges
+                    {collegesPagination
+                      ? `Showing ${colleges.length} of ${collegesPagination.total} colleges`
+                      : `${colleges.length} colleges`}
                   </Typography>
                 </Box>
               </Box>
@@ -1433,11 +1447,7 @@ const AdminDashboard: React.FC = () => {
                         </TableCell>
                       </TableRow>
                     ) : (
-                      getPaginatedData(
-                        filteredColleges,
-                        collegesPage,
-                        itemsPerPage
-                      ).map((college) => (
+                      filteredColleges.map((college) => (
                         <TableRow key={college.college_id}>
                           <TableCell>
                             <Typography
@@ -1530,10 +1540,10 @@ const AdminDashboard: React.FC = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
-              {filteredColleges.length > itemsPerPage && (
+              {collegesPagination && collegesPagination.totalPages > 1 && (
                 <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
                   <Pagination
-                    count={getTotalPages(filteredColleges, itemsPerPage)}
+                    count={collegesPagination.totalPages}
                     page={collegesPage}
                     onChange={handleCollegesPageChange}
                     color="primary"
@@ -1703,76 +1713,74 @@ const AdminDashboard: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  getPaginatedData(filteredUsers, usersPage, itemsPerPage).map(
-                    (user: User) => (
-                      <TableRow key={user.user_id}>
-                        <TableCell>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.75rem",
-                            }}
-                          >
-                            {user.user_id}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          {user.first_name} {user.last_name}
-                        </TableCell>
-                        <TableCell>{user.email}</TableCell>
-                        <TableCell>{user.phone_number || "N/A"}</TableCell>
-                        <TableCell>
-                          <Chip
-                            label={user.is_admin ? "Admin" : "User"}
-                            color={user.is_admin ? "primary" : "default"}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={user.is_active ? "Active" : "Inactive"}
-                            color={user.is_active ? "success" : "error"}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          {new Date(user.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <IconButton
-                            size="small"
-                            color="info"
-                            onClick={() => handleUserView(user)}
-                          >
-                            <Visibility />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleEditUser(user)}
-                          >
-                            <Edit />
-                          </IconButton>
-                          <IconButton
-                            size="small"
-                            color="error"
-                            onClick={() => handleDeleteUser(user)}
-                          >
-                            <Delete />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
-                    )
-                  )
+                  filteredUsers.map((user: User) => (
+                    <TableRow key={user.user_id}>
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {user.user_id}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        {user.first_name} {user.last_name}
+                      </TableCell>
+                      <TableCell>{user.email}</TableCell>
+                      <TableCell>{user.phone_number || "N/A"}</TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.is_admin ? "Admin" : "User"}
+                          color={user.is_admin ? "primary" : "default"}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={user.is_active ? "Active" : "Inactive"}
+                          color={user.is_active ? "success" : "error"}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        {new Date(user.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          size="small"
+                          color="info"
+                          onClick={() => handleUserView(user)}
+                        >
+                          <Visibility />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleEditUser(user)}
+                        >
+                          <Edit />
+                        </IconButton>
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => handleDeleteUser(user)}
+                        >
+                          <Delete />
+                        </IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
           </TableContainer>
-          {filteredUsers.length > itemsPerPage && (
+          {usersPagination && usersPagination.totalPages > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
               <Pagination
-                count={getTotalPages(filteredUsers, itemsPerPage)}
+                count={usersPagination.totalPages}
                 page={usersPage}
                 onChange={handleUsersPageChange}
                 color="primary"
@@ -1902,11 +1910,7 @@ const AdminDashboard: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  getPaginatedData(
-                    filteredDocuments,
-                    documentsPage,
-                    itemsPerPage
-                  ).map((document: Document) => (
+                  filteredDocuments.map((document: Document) => (
                     <TableRow key={document.document_id}>
                       <TableCell>
                         <Typography
@@ -2037,10 +2041,10 @@ const AdminDashboard: React.FC = () => {
               </TableBody>
             </Table>
           </TableContainer>
-          {filteredDocuments.length > itemsPerPage && (
+          {documentsPagination && documentsPagination.totalPages > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
               <Pagination
-                count={getTotalPages(filteredDocuments, itemsPerPage)}
+                count={documentsPagination.totalPages}
                 page={documentsPage}
                 onChange={handleDocumentsPageChange}
                 color="primary"
@@ -2171,97 +2175,92 @@ const AdminDashboard: React.FC = () => {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  getPaginatedData(filteredLoans, loansPage, itemsPerPage).map(
-                    (loan) => (
-                      <TableRow key={loan.loan_id}>
-                        <TableCell>
-                          <Typography
-                            variant="body2"
-                            sx={{
-                              fontFamily: "monospace",
-                              fontSize: "0.75rem",
-                            }}
-                          >
-                            {loan.loan_id}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip title={`User ID: ${loan.user_id}`} arrow>
-                            <span>
-                              {loan.first_name && loan.last_name
-                                ? `${loan.first_name} ${loan.last_name}`
-                                : `User ${loan.user_id}`}
-                            </span>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell>{loan.loan_type}</TableCell>
-                        <TableCell>
-                          ₹{loan.principal_amount.toLocaleString()}
-                        </TableCell>
-                        <TableCell>
-                          <Tooltip
-                            title={`College ID: ${loan.college_id}`}
-                            arrow
-                          >
-                            <span>
-                              {loan.college
-                                ? loan.college.college_name
-                                : `College ${loan.college_id}`}
-                            </span>
-                          </Tooltip>
-                        </TableCell>
-                        <TableCell>
-                          {new Date(loan.created_at).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <Chip
-                            label={loan.status.replace("_", " ").toUpperCase()}
-                            color={getStatusColor(loan.status) as any}
-                            size="small"
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <IconButton
-                            size="small"
-                            color="primary"
-                            onClick={() => handleLoanView(loan)}
-                          >
-                            <Visibility />
-                          </IconButton>
-                          {loan.status === "submitted" && (
-                            <>
-                              <IconButton
-                                size="small"
-                                color="success"
-                                onClick={() =>
-                                  handleLoanAction(loan.loan_id, "approve")
-                                }
-                              >
-                                <CheckCircle />
-                              </IconButton>
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() =>
-                                  handleLoanAction(loan.loan_id, "reject")
-                                }
-                              >
-                                <Cancel />
-                              </IconButton>
-                            </>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )
-                  )
+                  filteredLoans.map((loan) => (
+                    <TableRow key={loan.loan_id}>
+                      <TableCell>
+                        <Typography
+                          variant="body2"
+                          sx={{
+                            fontFamily: "monospace",
+                            fontSize: "0.75rem",
+                          }}
+                        >
+                          {loan.loan_id}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title={`User ID: ${loan.user_id}`} arrow>
+                          <span>
+                            {loan.first_name && loan.last_name
+                              ? `${loan.first_name} ${loan.last_name}`
+                              : `User ${loan.user_id}`}
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>{loan.loan_type}</TableCell>
+                      <TableCell>
+                        ₹{loan.principal_amount.toLocaleString()}
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title={`College ID: ${loan.college_id}`} arrow>
+                          <span>
+                            {loan.college
+                              ? loan.college.college_name
+                              : `College ${loan.college_id}`}
+                          </span>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>
+                        {new Date(loan.created_at).toLocaleDateString()}
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          label={loan.status.replace("_", " ").toUpperCase()}
+                          color={getStatusColor(loan.status) as any}
+                          size="small"
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <IconButton
+                          size="small"
+                          color="primary"
+                          onClick={() => handleLoanView(loan)}
+                        >
+                          <Visibility />
+                        </IconButton>
+                        {loan.status === "submitted" && (
+                          <>
+                            <IconButton
+                              size="small"
+                              color="success"
+                              onClick={() =>
+                                handleLoanAction(loan.loan_id, "approve")
+                              }
+                            >
+                              <CheckCircle />
+                            </IconButton>
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() =>
+                                handleLoanAction(loan.loan_id, "reject")
+                              }
+                            >
+                              <Cancel />
+                            </IconButton>
+                          </>
+                        )}
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>
           </TableContainer>
-          {filteredLoans.length > itemsPerPage && (
+          {loansPagination && loansPagination.totalPages > 1 && (
             <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
               <Pagination
-                count={getTotalPages(filteredLoans, itemsPerPage)}
+                count={loansPagination.totalPages}
                 page={loansPage}
                 onChange={handleLoansPageChange}
                 color="primary"

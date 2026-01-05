@@ -42,7 +42,7 @@ import { useComparison } from "../../contexts/ComparisonContext";
 import collegesApi from "../../services/modules/colleges.api";
 import coursesApi from "../../services/modules/courses.api";
 import ImagePlaceholder from "../../components/ImagePlaceholder/ImagePlaceholder";
-import { College } from "../../types/api";
+import { College, CollegeListResponse } from "../../types/api";
 import {
   AnimatedPage,
   AnimatedList,
@@ -93,20 +93,10 @@ const Colleges: React.FC = () => {
     }
   };
 
-  // Pagination helper functions
-  const getPaginatedData = (
-    data: College[],
-    page: number,
-    itemsPerPage: number
-  ) => {
-    const startIndex = (page - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return data.slice(startIndex, endIndex);
-  };
-
-  const getTotalPages = (data: College[], itemsPerPage: number) => {
-    return Math.ceil(data.length / itemsPerPage);
-  };
+  // Reset page to 1 when filters change
+  React.useEffect(() => {
+    setPage(1);
+  }, [filters.q, filters.state, filters.city, filters.minFees, filters.maxFees, filters.ranking]);
 
   const handlePageChange = (
     event: React.ChangeEvent<unknown>,
@@ -129,11 +119,16 @@ const Colleges: React.FC = () => {
   };
 
   // First, fetch ALL colleges without any filters to get all course IDs and filter options
-  const { data: allColleges = [] } = useQuery<College[], Error>({
+  const { data: allCollegesResponse } = useQuery({
     queryKey: ["colleges", "all"],
     queryFn: () => collegesApi.getColleges({}),
     enabled: isAuthenticated,
   });
+
+  // Extract colleges array from response (handle both paginated and non-paginated)
+  const allColleges = Array.isArray(allCollegesResponse) 
+    ? allCollegesResponse 
+    : (allCollegesResponse?.colleges || []);
 
   // Get all unique course IDs from all colleges
   const allCourseIds = Array.from(
@@ -157,15 +152,16 @@ const Colleges: React.FC = () => {
     }
   );
 
-  // Fetch colleges with backend-supported filters
+  // Fetch colleges with backend-supported filters and pagination
   const {
-    data: backendFilteredColleges = [],
+    data: collegesResponse,
     isLoading,
     error,
-  } = useQuery<College[], Error>({
+  } = useQuery<College[] | CollegeListResponse, Error>({
     queryKey: [
       "colleges",
       "filtered",
+      page,
       filters.q,
       filters.state,
       filters.city,
@@ -173,9 +169,31 @@ const Colleges: React.FC = () => {
       filters.maxFees,
       filters.ranking,
     ],
-    queryFn: () => collegesApi.getColleges(getApiFilters()),
+    queryFn: async () => {
+      const response = await collegesApi.getColleges({
+        ...getApiFilters(),
+        page,
+        limit: itemsPerPage,
+      });
+      // Handle both paginated and non-paginated responses
+      if (response && typeof response === "object" && "colleges" in response) {
+        return response;
+      }
+      return response as College[];
+    },
     enabled: isAuthenticated,
+    keepPreviousData: true,
   });
+
+  // Extract colleges and pagination from response
+  const backendFilteredColleges = 
+    collegesResponse && typeof collegesResponse === "object" && "colleges" in collegesResponse
+      ? collegesResponse.colleges
+      : (collegesResponse as College[] || []);
+  const collegesPagination = 
+    collegesResponse && typeof collegesResponse === "object" && "pagination" in collegesResponse
+      ? collegesResponse.pagination
+      : null;
 
   // Apply frontend course filtering
   const colleges = useMemo(() => {
@@ -866,7 +884,7 @@ const Colleges: React.FC = () => {
                   </Alert>
                 </Box>
               ) : (
-                getPaginatedData(colleges, page, itemsPerPage).map(
+                colleges.map(
                   (college: College, index: number) => (
                     <AnimatedCard key={college.college_id} delay={index * 0.08}>
                       <Card
@@ -1062,10 +1080,10 @@ const Colleges: React.FC = () => {
             </AnimatedList>
 
             {/* Pagination */}
-            {colleges.length > itemsPerPage && (
+            {collegesPagination && collegesPagination.totalPages > 1 && (
               <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
                 <Pagination
-                  count={getTotalPages(colleges, itemsPerPage)}
+                  count={collegesPagination.totalPages}
                   page={page}
                   onChange={handlePageChange}
                   color="primary"

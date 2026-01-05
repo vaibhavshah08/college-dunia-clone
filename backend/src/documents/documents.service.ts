@@ -142,7 +142,12 @@ export class DocumentsService {
     }
   }
 
-  async getUserDocuments(correlation_id: string, user_id: string) {
+  async getUserDocuments(
+    correlation_id: string,
+    user_id: string,
+    page: number = 1,
+    limit: number = 10,
+  ) {
     this.logger.setContext(this.constructor.name + '/getUserDocuments');
     this.logger.debug(
       correlation_id,
@@ -150,14 +155,24 @@ export class DocumentsService {
     );
 
     try {
-      const documents = await this.documentRepo.find({
+      const [documents, total] = await this.documentRepo.findAndCount({
         where: { user_id },
         order: { uploaded_at: 'DESC' },
+        skip: (page - 1) * limit,
+        take: limit,
       });
 
       return {
         message: 'User documents retrieved successfully',
-        data: documents,
+        data: {
+          documents,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit),
+          },
+        },
       };
     } catch (error) {
       this.logger.error(correlation_id, 'Error fetching user documents', error);

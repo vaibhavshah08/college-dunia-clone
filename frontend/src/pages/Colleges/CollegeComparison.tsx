@@ -45,10 +45,15 @@ const CollegeComparison: React.FC = () => {
   const [filteredColleges, setFilteredColleges] = useState<College[]>([]);
 
   // Fetch all colleges for selection
-  const { data: allColleges = [] } = useQuery({
+  const { data: allCollegesResponse } = useQuery({
     queryKey: ["colleges", "all"],
     queryFn: () => collegesApi.getColleges({}),
   });
+
+  // Extract colleges array from response (handle both paginated and non-paginated)
+  const allColleges = Array.isArray(allCollegesResponse) 
+    ? allCollegesResponse 
+    : (allCollegesResponse?.colleges || []);
 
   // Fetch comparison data
   const {

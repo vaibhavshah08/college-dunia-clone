@@ -327,7 +327,7 @@ export class CollegesService {
     qb.orderBy('c.ranking', 'ASC');
 
     const page = filters.page || 1;
-    const limit = Math.min(filters.limit || 20, 100);
+    const limit = Math.min(filters.limit || 20, 1000);
     const offset = (page - 1) * limit;
 
     qb.skip(offset).take(limit);
@@ -341,29 +341,37 @@ export class CollegesService {
 
     return {
       message: 'Colleges retrieved successfully',
-      data: results.map((college) => ({
-        college_id: college.college_id,
-        college_name: college.college_name,
-        state: college.state,
-        city: college.city,
-        pincode: college.pincode,
-        landmark: college.landmark,
-        fees: college.fees,
-        ranking: college.ranking,
-        placement_ratio: college.placement_ratio,
-        year_of_establishment: college.year_of_establishment,
-        affiliation: college.affiliation,
-        accreditation: college.accreditation,
-        created_at: college.created_at,
-        is_partnered: college.is_partnered,
-        avg_package: college.avg_package,
-        median_package: college.median_package,
-        highest_package: college.highest_package,
-        placement_rate: college.placement_rate,
-        top_recruiters: college.top_recruiters,
-        placement_last_updated: college.placement_last_updated,
-        course_ids_json: college.course_ids_json,
-      })),
+      data: {
+        colleges: results.map((college) => ({
+          college_id: college.college_id,
+          college_name: college.college_name,
+          state: college.state,
+          city: college.city,
+          pincode: college.pincode,
+          landmark: college.landmark,
+          fees: college.fees,
+          ranking: college.ranking,
+          placement_ratio: college.placement_ratio,
+          year_of_establishment: college.year_of_establishment,
+          affiliation: college.affiliation,
+          accreditation: college.accreditation,
+          created_at: college.created_at,
+          is_partnered: college.is_partnered,
+          avg_package: college.avg_package,
+          median_package: college.median_package,
+          highest_package: college.highest_package,
+          placement_rate: college.placement_rate,
+          top_recruiters: college.top_recruiters,
+          placement_last_updated: college.placement_last_updated,
+          course_ids_json: college.course_ids_json,
+        })),
+        pagination: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+        },
+      },
     };
   }
 

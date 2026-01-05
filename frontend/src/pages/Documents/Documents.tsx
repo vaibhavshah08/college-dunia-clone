@@ -83,23 +83,45 @@ const Documents: React.FC = () => {
   const [itemsPerPage] = useState(8);
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Fetch user documents
+  // Fetch user documents with server-side pagination
   const {
-    data: documents = [],
+    data: documentsResponse,
     isLoading,
     error,
-  } = useQuery<Document[], Error>({
-    queryKey: ["documents"],
-    queryFn: documentsApi.getUserDocuments,
+  } = useQuery({
+    queryKey: ["documents", page],
+    queryFn: async () => {
+      const response = await documentsApi.getUserDocuments(page, itemsPerPage);
+      // Handle both paginated and non-paginated responses
+      if (response && typeof response === "object" && "documents" in response) {
+        return response;
+      }
+      return {
+        documents: response as Document[],
+        pagination: {
+          page: 1,
+          limit: itemsPerPage,
+          total: (response as Document[]).length,
+          totalPages: 1,
+        },
+      };
+    },
     enabled: isAuthenticated,
+    keepPreviousData: true,
   });
 
-  // Fetch user loans for association
-  const { data: loans = [] } = useQuery<Loan[], Error>({
-    queryKey: ["loans", "me"],
-    queryFn: loansApi.getMyLoans,
+  const documents = documentsResponse?.documents || [];
+  const documentsPagination = documentsResponse?.pagination;
+
+  // Fetch user loans for association (fetch all for form dropdown)
+  const { data: loansResponse } = useQuery({
+    queryKey: ["loans", "me", "all"],
+    queryFn: () => loansApi.getMyLoans(1, 1000),
     enabled: isAuthenticated,
   });
+  const loans = Array.isArray(loansResponse)
+    ? loansResponse
+    : loansResponse?.loans || [];
 
   // Upload document mutation
   const uploadMutation = useMutation({
@@ -284,21 +306,6 @@ const Documents: React.FC = () => {
     } finally {
       setIsRefreshing(false);
     }
-  };
-
-  // Pagination helper functions
-  const getPaginatedData = (
-    data: Document[],
-    page: number,
-    itemsPerPage: number
-  ) => {
-    const startIndex = (page - 1) * itemsPerPage;
-    const endIndex = startIndex + itemsPerPage;
-    return data.slice(startIndex, endIndex);
-  };
-
-  const getTotalPages = (data: Document[], itemsPerPage: number) => {
-    return Math.ceil(data.length / itemsPerPage);
   };
 
   const handlePageChange = (
@@ -518,188 +525,187 @@ const Documents: React.FC = () => {
             }}
             staggerDelay={0.08}
           >
-            {getPaginatedData(documents, page, itemsPerPage).map(
-              (document: Document, index: number) => (
-                <AnimatedCard key={document.document_id} delay={index * 0.08}>
-                  <Card
+            {documents.map((document: Document, index: number) => (
+              <AnimatedCard key={document.document_id} delay={index * 0.08}>
+                <Card
+                  sx={{
+                    height: "100%",
+                    display: "flex",
+                    flexDirection: "column",
+                    background:
+                      "linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)",
+                    border: "1px solid rgba(0,0,0,0.05)",
+                    borderRadius: 3,
+                    cursor: "pointer",
+                    position: "relative",
+                    overflow: "hidden",
+                    "&:hover": {
+                      boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
+                      borderColor: "#1976D2",
+                      "& .document-card-overlay": {
+                        opacity: 1,
+                      },
+                    },
+                    "&::before": {
+                      content: '""',
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      height: 4,
+                      background: "linear-gradient(90deg, #1976D2, #42A5F5)",
+                      transform: "scaleX(0)",
+                      transition: "transform 0.3s ease",
+                    },
+                    "&:hover::before": {
+                      transform: "scaleX(1)",
+                    },
+                  }}
+                >
+                  <Box
+                    className="document-card-overlay"
                     sx={{
-                      height: "100%",
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      background:
+                        "linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(66, 165, 245, 0.1) 100%)",
+                      opacity: 0,
+                      transition: "opacity 0.3s ease",
+                      zIndex: 1,
+                    }}
+                  />
+                  <CardContent
+                    sx={{
+                      flexGrow: 1,
                       display: "flex",
                       flexDirection: "column",
-                      background:
-                        "linear-gradient(145deg, #ffffff 0%, #f8f9fa 100%)",
-                      border: "1px solid rgba(0,0,0,0.05)",
-                      borderRadius: 3,
-                      cursor: "pointer",
                       position: "relative",
-                      overflow: "hidden",
-                      "&:hover": {
-                        boxShadow: "0 20px 40px rgba(0,0,0,0.15)",
-                        borderColor: "#1976D2",
-                        "& .document-card-overlay": {
-                          opacity: 1,
-                        },
-                      },
-                      "&::before": {
-                        content: '""',
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        height: 4,
-                        background: "linear-gradient(90deg, #1976D2, #42A5F5)",
-                        transform: "scaleX(0)",
-                        transition: "transform 0.3s ease",
-                      },
-                      "&:hover::before": {
-                        transform: "scaleX(1)",
-                      },
+                      zIndex: 2,
                     }}
                   >
-                    <Box
-                      className="document-card-overlay"
-                      sx={{
-                        position: "absolute",
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        bottom: 0,
-                        background:
-                          "linear-gradient(135deg, rgba(25, 118, 210, 0.1) 0%, rgba(66, 165, 245, 0.1) 100%)",
-                        opacity: 0,
-                        transition: "opacity 0.3s ease",
-                        zIndex: 1,
-                      }}
-                    />
-                    <CardContent
-                      sx={{
-                        flexGrow: 1,
-                        display: "flex",
-                        flexDirection: "column",
-                        position: "relative",
-                        zIndex: 2,
-                      }}
+                    <Box display="flex" alignItems="center" mb={2}>
+                      {getFileIcon(document.document_path)}
+                      <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
+                        {document.name ||
+                          document.document_path.split("/").pop()}
+                      </Typography>
+                    </Box>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
                     >
-                      <Box display="flex" alignItems="center" mb={2}>
-                        {getFileIcon(document.document_path)}
-                        <Typography variant="h6" sx={{ ml: 1, flex: 1 }}>
-                          {document.name ||
-                            document.document_path.split("/").pop()}
-                        </Typography>
-                      </Box>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        gutterBottom
-                      >
-                        Purpose: {document.purpose}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        gutterBottom
-                      >
-                        Type: {document.type.replace("_", " ")}
-                      </Typography>
-                      <Typography
-                        variant="body2"
-                        color="text.secondary"
-                        gutterBottom
-                      >
-                        Uploaded:{" "}
-                        {new Date(document.uploaded_at).toLocaleDateString()}
-                      </Typography>
-                      <Box
-                        display="flex"
-                        justifyContent="space-between"
-                        alignItems="center"
-                        mt={2}
-                      >
-                        <Chip
-                          label={
-                            document.status?.charAt(0).toUpperCase() +
-                              document.status?.slice(1) || "Uploaded"
-                          }
-                          color={
-                            document.status === "approved"
-                              ? "success"
-                              : document.status === "rejected"
-                                ? "error"
-                                : document.status === "pending"
-                                  ? "warning"
-                                  : "default"
-                          }
-                          size="small"
-                        />
-                        <Box>
-                          <Tooltip title="View Document">
+                      Purpose: {document.purpose}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      Type: {document.type.replace("_", " ")}
+                    </Typography>
+                    <Typography
+                      variant="body2"
+                      color="text.secondary"
+                      gutterBottom
+                    >
+                      Uploaded:{" "}
+                      {new Date(document.uploaded_at).toLocaleDateString()}
+                    </Typography>
+                    <Box
+                      display="flex"
+                      justifyContent="space-between"
+                      alignItems="center"
+                      mt={2}
+                    >
+                      <Chip
+                        label={
+                          document.status?.charAt(0).toUpperCase() +
+                            document.status?.slice(1) || "Uploaded"
+                        }
+                        color={
+                          document.status === "approved"
+                            ? "success"
+                            : document.status === "rejected"
+                              ? "error"
+                              : document.status === "pending"
+                                ? "warning"
+                                : "default"
+                        }
+                        size="small"
+                      />
+                      <Box>
+                        <Tooltip title="View Document">
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDocumentView(document)}
+                          >
+                            <Visibility />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Download Document">
+                          <IconButton
+                            size="small"
+                            color="primary"
+                            onClick={() => handleDocumentDownload(document)}
+                            disabled={downloadingDocuments.has(
+                              document.document_id
+                            )}
+                          >
+                            {downloadingDocuments.has(document.document_id) ? (
+                              <CircularProgress size={16} />
+                            ) : (
+                              <Download />
+                            )}
+                          </IconButton>
+                        </Tooltip>
+                        {document.status === "pending" ? (
+                          <Tooltip title="Delete Document">
                             <IconButton
                               size="small"
-                              onClick={() => handleDocumentView(document)}
+                              color="error"
+                              onClick={() => handleDocumentDelete(document)}
+                              disabled={deleteDocumentMutation.isLoading}
                             >
-                              <Visibility />
+                              <Delete />
                             </IconButton>
                           </Tooltip>
-                          <Tooltip title="Download Document">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handleDocumentDownload(document)}
-                              disabled={downloadingDocuments.has(
-                                document.document_id
-                              )}
-                            >
-                              {downloadingDocuments.has(
-                                document.document_id
-                              ) ? (
-                                <CircularProgress size={16} />
-                              ) : (
-                                <Download />
-                              )}
+                        ) : (
+                          <Tooltip title="Only pending documents can be deleted">
+                            <IconButton size="small" color="error" disabled>
+                              <Delete />
                             </IconButton>
                           </Tooltip>
-                          {document.status === "pending" ? (
-                            <Tooltip title="Delete Document">
-                              <IconButton
-                                size="small"
-                                color="error"
-                                onClick={() => handleDocumentDelete(document)}
-                                disabled={deleteDocumentMutation.isLoading}
-                              >
-                                <Delete />
-                              </IconButton>
-                            </Tooltip>
-                          ) : (
-                            <Tooltip title="Only pending documents can be deleted">
-                              <IconButton size="small" color="error" disabled>
-                                <Delete />
-                              </IconButton>
-                            </Tooltip>
-                          )}
-                        </Box>
+                        )}
                       </Box>
-                    </CardContent>
-                  </Card>
-                </AnimatedCard>
-              )
-            )}
+                    </Box>
+                  </CardContent>
+                </Card>
+              </AnimatedCard>
+            ))}
           </AnimatedList>
         )}
 
         {/* Pagination */}
-        {!isLoading && !error && documents.length > itemsPerPage && (
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
-            <Pagination
-              count={getTotalPages(documents, itemsPerPage)}
-              page={page}
-              onChange={handlePageChange}
-              color="primary"
-              size="large"
-              showFirstButton
-              showLastButton
-            />
-          </Box>
-        )}
+        {!isLoading &&
+          !error &&
+          documentsPagination &&
+          documentsPagination.totalPages > 1 && (
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+              <Pagination
+                count={documentsPagination.totalPages}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                size="large"
+                showFirstButton
+                showLastButton
+              />
+            </Box>
+          )}
 
         {/* Upload Dialog */}
         <Dialog

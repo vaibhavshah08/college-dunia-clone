@@ -149,6 +149,18 @@ export interface CollegeListQuery {
   minFees?: number;
   maxFees?: number;
   ranking?: number;
+  page?: number;
+  limit?: number;
+}
+
+export interface CollegeListResponse {
+  colleges: College[];
+  pagination: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
 }
 
 export interface College {
